@@ -9,9 +9,10 @@ raincloud(
   y = NULL,
   group = NULL,
   facet = NULL,
+  significance = FALSE,
   limits = NULL,
   jitter = NULL,
-  alpha = NULL,
+  alpha = 0.4,
   legend.position = NULL,
   kernel.method = NULL,
   save = FALSE

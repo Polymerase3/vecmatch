@@ -8,11 +8,10 @@ raincloud <- function(data = NULL,
                       y = NULL,
                       group = NULL,
                       facet = NULL,
+                      significance = FALSE,
                       limits = NULL,
                       jitter = NULL,
-                      alpha = NULL,
-                      legend.position = NULL,
-                      kernel.method = NULL,
+                      alpha = 0.4,
                       save = FALSE) {
 
   #--check data frame-----------------------------------------------------------
@@ -30,13 +29,29 @@ raincloud <- function(data = NULL,
   }
 
   #--check y, group and facet---------------------------------------------------
+
+
   ## Check if the provided names are symbols or strings
+  y <- rlang::quo_name(rlang::enquo(y))
+  group <- rlang::quo_name(rlang::enquo(group))
+  facet <- rlang::quo_name(rlang::enquo(facet))
+
+  print(y)
+  chk::chk_valid_name()
+
   tryCatch(
     {
       symlist <- rlang::ensyms(y, facet, group, .ignore_null = 'all')
     }, error = function(e) {
       chk::abort_chk('The provided column names are not symbols or text strings!')
     })
+
+  ## Check if y exists
+  if(is.null(rlang::ensym(y))) chk::abort_chk('The argument `y` is missing with no default!')
+
+
+
+  #names(symlist)[1] <- 'y'
 
   ## Check if there are in the dataframe
   nonames <- .check_name(data, symlist)
@@ -47,5 +62,27 @@ raincloud <- function(data = NULL,
                           paste(nonames, collapse = ', ')
                           ))
   }
+
+  ## Check if significance is logical
+  chk::chk_logical(significance)
+
+  ## Check if limits is a numeric vector of length 2
+  if(!is.null(limits)) {
+    if(!.check_vecl(limits, leng = 2)) {
+      chk::abort_chk('The `limits` argument should be a numeric vector of length
+                     2: c(`min`, `max`)')
+    }
+  }
+
+  ## Check range for jitter
+  if(!is.null(jitter)) chk::chk_range(jitter, range = c(0, 1))
+
+  ## Check range for alpha
+  chk::chk_range(alpha, range = c(0, 1))
+
+  ## Check logical for save
+  chk::chk_logical(save)
+
+  ####################### DATA PROCESSING#######################################
 
 }

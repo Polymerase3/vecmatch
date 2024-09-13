@@ -39,6 +39,11 @@ raincloud <- function(data = NULL,
   print(y)
   chk::chk_valid_name()
 
+  ## make named list from names
+  ## error if y == 'NULL'
+  ## write a function to handle 'NULLs'
+
+
   tryCatch(
     {
       symlist <- rlang::ensyms(y, facet, group, .ignore_null = 'all')

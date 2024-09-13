@@ -15,7 +15,7 @@ test_that('Formals checking: data', {
 ## --testing formals: y, group, facet-------------------------------------------
 test_that('Formals checking: data', {
   data <- data.frame(random = double())
-  expect_error(raincloud(data, c(1, 2)), regexp = 'column names')
+  expect_error(raincloud(data, c(1, 2)), regexp = 'valid')
   expect_error(raincloud(data, facet = random), regexp = 'default')
   expect_no_error(raincloud(data, y = random))
   expect_no_error(raincloud(data, y = 'random'))
@@ -81,4 +81,12 @@ test_that('Formals checking: save', {
   data <- data.frame(random = double())
   expect_error(raincloud(data, random, save = 'asd'),
                regexp = 'logical')
+})
+
+## --testing non-numeric y------------------------------------------------------
+test_that('Data converting: numeric', {
+  data <- data.frame(pass = c(1, 2, 3),
+                     fail = c('a', 'b', 'c'))
+  expect_error(raincloud(data, y = fail), regexp = 'numeric')
+  expect_no_error(raincloud(data, y = pass))
 })

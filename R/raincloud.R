@@ -14,6 +14,7 @@ raincloud <- function(data = NULL,
                       alpha = 0.4,
                       save = FALSE) {
 
+  ############################INPUT CHECKING####################################
   #--check data frame-----------------------------------------------------------
   ## Must be an object of class data frame with at least one numeric column
   if(is.null(data) || !inherits(data, 'data.frame')) {
@@ -30,33 +31,15 @@ raincloud <- function(data = NULL,
 
   #--check y, group and facet---------------------------------------------------
 
-
-  ## Check if the provided names are symbols or strings
-  y <- rlang::quo_name(rlang::enquo(y))
-  group <- rlang::quo_name(rlang::enquo(group))
-  facet <- rlang::quo_name(rlang::enquo(facet))
-
-  print(y)
-  chk::chk_valid_name()
-
-  ## make named list from names
-  ## error if y == 'NULL'
-  ## write a function to handle 'NULLs'
-
-
-  tryCatch(
-    {
-      symlist <- rlang::ensyms(y, facet, group, .ignore_null = 'all')
-    }, error = function(e) {
-      chk::abort_chk('The provided column names are not symbols or text strings!')
-    })
+  ## Check if the provided names are valid names + convert to
+  symlist <- list(y = substitute(y),
+                  group = substitute(group),
+                  facet = substitute(facet))
+  symlist <- .conv_nam(symlist)
 
   ## Check if y exists
-  if(is.null(rlang::ensym(y))) chk::abort_chk('The argument `y` is missing with no default!')
-
-
-
-  #names(symlist)[1] <- 'y'
+  if(is.null(symlist[[1]])) chk::abort_chk('The argument `y` is missing
+                                           with no default!')
 
   ## Check if there are in the dataframe
   nonames <- .check_name(data, symlist)
@@ -88,6 +71,18 @@ raincloud <- function(data = NULL,
   ## Check logical for save
   chk::chk_logical(save)
 
-  ####################### DATA PROCESSING#######################################
+  ####################### DATA PROCESSING ######################################
+  # assure y is numeric
+  if(!is.numeric(data[, symlist$y])) {
+    tryCatch({
+      invisible(data[, symlist$y] <- as.numeric(data[, symlist$y]))
+    }, warning = function(w) {
+      chk::abort_chk(paste0('The variable `', symlist$y,
+                            '` cannot be converted to the type numeric.'))
+    })
+  }
 
+  # convert facet, group to factors
+
+  ####################### PLOTTING #############################################
 }

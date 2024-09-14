@@ -34,4 +34,42 @@
 }
 
 #--convert data with error message----------------------------------------------
+.conv_data <- function(data, type, varname, env) {
+  if(is.null(varname)) invisible(return())
 
+  column <- paste0('data[, "', varname, '"]')
+  cond <- paste0('!is.', type, '(', column, ')')
+  conv_call <- paste0(column, '<- as.', type, '(', column, ')')
+  abort_call <- quote(chk::abort_chk(paste0('The variable `', varname,
+                                      '` cannot be converted to the type ',
+                                      type, '.')))
+
+  if(type == 'factor') {
+    def_type <-  (is.numeric(eval(parse(text = column))) ||
+      is.integer(eval(parse(text = column))) ||
+      is.factor(eval(parse(text = column))) ||
+      is.character(eval(parse(text = column))) ||
+      is.logical(eval(parse(text = column))))
+    if(!def_type) eval(abort_call)
+
+    length_unique <- length(unique(eval(parse(text = column))))
+
+    if(length_unique > 10 && def_type) {
+      chk::wrn(paste0('The variable ', varname,
+                              'has more tha 10 unique values. ',
+                              'Are you sure you want to proceed?'))
+    }
+  }
+
+
+  env$conv_call <- conv_call
+  if(eval(parse(text = cond))) {
+    tryCatch({
+      invisible(with(env, {
+          eval(parse(text = conv_call))
+      }))
+    }, warning = function(w) {
+      eval(abort_call)
+    })
+  }
+}

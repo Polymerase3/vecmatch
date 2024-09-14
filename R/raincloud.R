@@ -72,17 +72,12 @@ raincloud <- function(data = NULL,
   chk::chk_logical(save)
 
   ####################### DATA PROCESSING ######################################
-  # assure y is numeric
-  if(!is.numeric(data[, symlist$y])) {
-    tryCatch({
-      invisible(data[, symlist$y] <- as.numeric(data[, symlist$y]))
-    }, warning = function(w) {
-      chk::abort_chk(paste0('The variable `', symlist$y,
-                            '` cannot be converted to the type numeric.'))
-    })
-  }
-
-  # convert facet, group to factors
+  # assure y is numeric and convert facet, group to factors
+  mapply(.conv_data,
+         type = list('numeric', 'factor', 'factor'),
+         varname = symlist,
+         MoreArgs = list(data = data,
+                         env = environment()))
 
   ####################### PLOTTING #############################################
 }

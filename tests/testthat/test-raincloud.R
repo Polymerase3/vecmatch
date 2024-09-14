@@ -86,7 +86,36 @@ test_that('Formals checking: save', {
 ## --testing non-numeric y------------------------------------------------------
 test_that('Data converting: numeric', {
   data <- data.frame(pass = c(1, 2, 3),
-                     fail = c('a', 'b', 'c'))
+                     fail = c('a', 'b', 'c'),
+                     fail2 = c('1', 'TRUE', 'c'),
+                     pass2 = c('1', '2', '3'),
+                     pass3 = c(TRUE, FALSE, FALSE))
   expect_error(raincloud(data, y = fail), regexp = 'numeric')
-  expect_no_error(raincloud(data, y = pass))
+  expect_error(raincloud(data, y = fail2), regexp = 'numeric')
+  expect_no_error(raincloud(data, y = 'pass'))
+  expect_no_error(raincloud(data, y = pass2))
+  expect_no_error(raincloud(data, y = 'pass3'))
+})
+
+## --testing factor conversion--------------------------------------------------
+test_that('Data converting: factors', {
+  data <- data.frame(y = runif(20),
+                     charr = rep(c('a', 'b', 'c', 'd'), 5),
+                     logg = rep(c(TRUE, FALSE), 10),
+                     int = rep(c(1, 2, 3, 4, 5), 4),
+                     fact = factor(rep(c(1, 2, 3, 4), 5)),
+                     fail1 = c(rep(as.Date('01-01-2021'), 20)),
+                     warning = 1:20)
+
+  expect_no_error(raincloud(data, y, facet = charr))
+  expect_no_error(raincloud(data, y = y, group = 'charr'))
+  expect_no_error(raincloud(data, y = y, group = charr, facet = 'logg'))
+  expect_no_error(raincloud(data, y, facet = logg))
+  expect_no_error(raincloud(data, y = y, group = logg))
+  expect_no_error(raincloud(data, y = 'y', group = logg, facet = int))
+  expect_no_error(raincloud(data, y, facet = 'int'))
+  expect_no_error(raincloud(data, y = y, group = int))
+  expect_no_error(raincloud(data, y = y, group = 'int', facet = 'fact'))
+  expect_error(raincloud(data, y, fail1), regexp = 'converted')
+  expect_warning(raincloud(data, y, facet = 'warning'), regexp = '10')
 })

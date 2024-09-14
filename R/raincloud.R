@@ -86,8 +86,9 @@ raincloud <- function(data = NULL,
                        symlist[['group']], ", color = ", symlist[['group']],
                        "))"))
   )
-  print(main)
+
   rain_height = 0.1
+  '%+replace%' <- ggplot2::'%+replace%'
 
   p <- eval(parse(text = main)) +
     ## halfs of the violin plots
@@ -112,7 +113,13 @@ raincloud <- function(data = NULL,
     ## Defining scales
     ggplot2::scale_x_discrete(name = "", expand = c(rain_height * 3.5, 0, 0, 0.62)) +
     ## Flipping coordinates
-    ggplot2::coord_flip()
+    ggplot2::coord_flip() +
+    ## Defining theme
+    ggplot2::theme_classic() %+replace%
+    ggplot2::theme(axis.ticks.y = ggplot2::element_blank(),
+                   axis.line.y = ggplot2::element_blank(),
+                   legend.position = c(0.1, 0.93),
+                   legend.title = ggplot2::element_text(face = "bold"))
 
   ## Returning a ggplot object
   return(p)

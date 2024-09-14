@@ -80,4 +80,40 @@ raincloud <- function(data = NULL,
                          env = environment()))
 
   ####################### PLOTTING #############################################
+  ## Defining the main ggplot formula
+  main <- paste0("ggplot2::ggplot(data, ggplot2::aes(x = '', y = y",
+                ifelse(is.null(symlist[['group']]), "))", paste0(", fill = ",
+                       symlist[['group']], ", color = ", symlist[['group']],
+                       "))"))
+  )
+  print(main)
+  rain_height = 0.1
+
+  p <- eval(parse(text = main)) +
+    ## halfs of the violin plots
+    geom_flat_violin(
+      trim = FALSE, alpha = alpha,
+      position = ggplot2::position_nudge(x = rain_height + 0.05)
+    ) +
+    ## datapoints
+    ggplot2::geom_jitter(size = 2, alpha = alpha, show.legend = FALSE,
+                   position = ggplot2::position_jitterdodge(
+                     jitter.width = rain_height,
+                                                   dodge.width = 0.25)) +
+    ## boxplot
+    ggplot2::geom_boxplot(
+      width = 0.1, alpha = alpha, show.legend = FALSE,
+      position = ggpp::position_dodgenudge(width = 0.2, x = -0.22)
+    ) +
+    ## stat_summary
+    ggplot2::stat_summary(fun.data = ggplot2::mean_cl_normal, show.legend = FALSE,
+              position = ggpp::position_dodgenudge(width = 0.1,
+                                                   x = rain_height * 3)) +
+    ## Defining scales
+    ggplot2::scale_x_discrete(name = "", expand = c(rain_height * 3.5, 0, 0, 0.62)) +
+    ## Flipping coordinates
+    ggplot2::coord_flip()
+
+  ## Returning a ggplot object
+  return(p)
 }

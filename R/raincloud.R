@@ -87,9 +87,15 @@ raincloud <- function(data = NULL,
                        "))"))
   )
 
+  ## Defining necessary variables
   rain_height = 0.1
   '%+replace%' <- ggplot2::'%+replace%'
 
+  ## Unique values in grouping variables (necessary to define the palette)
+  pal_len <- length(unique(data[, symlist[['group']]]))
+  if(is.null(symlist[['group']]) || pal_len == 0 ) pal_len <- 1
+
+  ## Defining the ggplot object
   p <- eval(parse(text = main)) +
     ## halfs of the violin plots
     geom_flat_violin(
@@ -112,13 +118,14 @@ raincloud <- function(data = NULL,
                                                    x = rain_height * 3)) +
     ## Defining scales
     ggplot2::scale_x_discrete(name = "", expand = c(rain_height * 3.5, 0, 0, 0.62)) +
+    scale_color_vecmatch(n = pal_len, type = 'discrete') +
+    scale_fill_vecmatch(n = pal_len, type = 'discrete') +
     ## Flipping coordinates
     ggplot2::coord_flip() +
     ## Defining theme
     ggplot2::theme_classic() %+replace%
     ggplot2::theme(axis.ticks.y = ggplot2::element_blank(),
                    axis.line.y = ggplot2::element_blank(),
-                   legend.position = c(0.1, 0.93),
                    legend.title = ggplot2::element_text(face = "bold"))
 
   ## Returning a ggplot object

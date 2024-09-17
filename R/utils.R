@@ -73,3 +73,14 @@
     })
   }
 }
+
+#--check if filename has given extension
+.check_extension <- function(name, x_name, ext_vec) {
+  ext <- substr(name, nchar(name) - 3, nchar(name))
+  cond <- ext %in% ext_vec
+  if(!cond) {
+    chk::abort_chk(paste0('The argument ', x_name,
+                          ' is allowed to have the following extensions: ',
+                          paste(ext_vec, collapse = ', ')))
+  }
+}

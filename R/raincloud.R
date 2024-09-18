@@ -19,13 +19,7 @@ raincloud <- function(data = NULL,
   ############################ INPUT CHECKING###################################
   #--check data frame-----------------------------------------------------------
   ## Must be an object of class data frame with at least one numeric column
-  if (is.null(data) || !inherits(data, "data.frame")) {
-    chk::abort_chk("Argument `data` must be an object of class `data.frame`")
-  }
-
-  if (length(data) == 0) {
-    chk::abort_chk("The provided data frame is empty")
-  }
+  .check_df(data)
 
   if (length(data) == 1 && !is.numeric(data[, 1])) {
     chk::abort_chk("The provided data is not numeric")

@@ -9,13 +9,14 @@ raincloud(
   y = NULL,
   group = NULL,
   facet = NULL,
+  ncol = 1,
   significance = FALSE,
   limits = NULL,
-  jitter = NULL,
+  jitter = 0.1,
   alpha = 0.4,
-  legend.position = NULL,
-  kernel.method = NULL,
-  save = FALSE
+  save = FALSE,
+  plot.name = NULL,
+  overwrite = FALSE
 )
 }
 \description{

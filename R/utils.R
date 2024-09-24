@@ -166,7 +166,7 @@
 }
 
 
-#R Processing
+#R Processing-------------------------------------------------------------------
 .make_list <- function(n) {
   if (length(n) == 1L && is.numeric(n)) {
     vector("list", as.integer(n))
@@ -177,16 +177,7 @@
   else stop("'n' must be an integer(ish) scalar or an atomic variable.")
 }
 
-##--list with allowable gps methods and their arguments-------------------------
-.gps_methods <- list(
-  'glm' = list(),
-  'gbm' = list(),
-  'rf' = list(),
-  'bayes' = list(),
-  'multinom' = list()
-)
-
-#Uniqueness
+#Uniqueness---------------------------------------------------------------------
 nunique <- function(x, na.rm = TRUE) {
   if (is.null(x)) return(0)
   if (is.factor(x)) return(nlevels(x))
@@ -197,4 +188,137 @@ nunique <- function(x, na.rm = TRUE) {
 na.rem <- function(x) {
   #A faster na.omit for vectors
   x[!is.na(x)]
+}
+
+##--wordlists for error generation----------------------------------------------
+word_list <- function(word.list = NULL, and.or = "and", is.are = FALSE, quotes = FALSE) {
+  #When given a vector of strings, creates a string of the form "a and b"
+  #or "a, b, and c"
+  #If is.are, adds "is" or "are" appropriately
+
+  word.list <- setdiff(word.list, c(NA_character_, ""))
+
+  if (is.null(word.list)) {
+    out <- ""
+    attr(out, "plural") <- FALSE
+    return(out)
+  }
+
+  word.list <- add_quotes(word.list, quotes)
+
+  L <- length(word.list)
+
+  if (L == 1L) {
+    out <- word.list
+    if (is.are) out <- paste(out, "is")
+    attr(out, "plural") <- FALSE
+    return(out)
+  }
+
+  if (is.null(and.or) || isFALSE(and.or)) {
+    out <- paste(word.list, collapse = ", ")
+  }
+  else {
+    and.or <- match.arg(and.or, c("and", "or"))
+
+    if (L == 2L) {
+      out <- sprintf("%s %s %s",
+                     word.list[1L],
+                     and.or,
+                     word.list[2L])
+    }
+    else {
+      out <- sprintf("%s, %s %s",
+                     paste(word.list[-L], collapse = ", "),
+                     and.or,
+                     word.list[L])
+    }
+  }
+
+  if (is.are) out <- sprintf("%s are", out)
+
+  attr(out, "plural") <- TRUE
+
+  out
+}
+
+add_quotes <- function(x, quotes = 2L) {
+  if (isFALSE(quotes))
+    return(x)
+
+  if (isTRUE(quotes))
+    quotes <- '"'
+
+  if (chk::vld_string(quotes))
+    return(paste0(quotes, x, quotes))
+
+  if (!chk::vld_count(quotes) || quotes > 2) {
+    stop("`quotes` must be boolean, 1, 2, or a string.")
+  }
+
+  if (quotes == 0L)
+    return(x)
+
+  x <- {
+    if (quotes == 1) sprintf("'%s'", x)
+    else sprintf('"%s"', x)
+  }
+
+  x
+}
+expand_grid_string <- function(..., collapse = "") {
+  do.call("paste", c(expand.grid(...), sep = collapse))
+}
+
+##--processing `missing` argument-----------------------------------------------
+.process_missing <- function(missing, method) {
+  if(is.null(method)) {
+    return('')
+  }
+
+  allowable.missings <- .gps_methods[[method]]$missing
+
+  chk::chk_null_or(missing, chk::chk_string)
+
+  if(is.null(missing) || !(missing %in% allowable.missings)) {
+
+    chk::abort_chk(sprintf('Only %s allowed for the argument `missing` with
+                           the method: %s', word_list(allowable.missings,
+                                                      quotes = 2, is.are = TRUE),
+                           method))
+    return(allowable.missings[1])
+  }
+}
+
+##--processing `by` argument----------------------------------------------------
+.process_by <- function(by, data, treat) {
+
+  ##Process by
+  error.by <- FALSE
+  n <- length(treat)
+
+  if(missing(by)) {
+    error.by <- TRUE
+  } else if(is.null(by)) {
+    by <- NULL
+  } else if(chk::vld_string(by) && by %in% colnames(data)) {
+    by <- data[[by]]
+  } else if(length(dim(by)) == 2L && nrow(by) == n) {
+    by <- drop(by[, 1])
+  } else if(rlang::is_formula(by, lhs = FALSE)) {
+    covs <- .get_formula_vars(formula, data)
+    by <- covs[['reported.covs']]
+
+    if(ncol(by) != 1L) {
+      chk::abort_chk('The formula used in the `by` argument is only allowed to
+      have variable on the right side ')
+    }
+  } else {
+    error.by <- TRUE
+  }
+
+  if(error.by) {
+    chk::abort_chk()
+  }
+
 }

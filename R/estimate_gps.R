@@ -46,10 +46,6 @@ estimate_gps <- function(formula,
   }
 
   data.list <- .get_formula_vars(formula, data)
-  args['treat'] <- list(data.list[['treat']])
-  args['covs'] <- list(data.list[['model_covs']])
-  args['.covs'] <- list(data.list[['reported_covs']])
-  args['.formula'] <- list(formula)
 
   if(is.null(args['treat'])) {
     chk::abort_chk('No treatment variable was specified')
@@ -77,7 +73,6 @@ estimate_gps <- function(formula,
 
   #data
   if(!is.null(data)) .check_df(data)
-  args['.data'] <- list(data)
 
   #method
   if(is.null(substitute(method)) || missing(method)) {
@@ -88,8 +83,6 @@ estimate_gps <- function(formula,
     method.name <- deparse1(substitute(method))
     attr(method, "name") <- method.name
   }
-
-  args['method'] <- list(method)
 
   #reference
   levels_treat <- as.character(unique(args[['treat']]))
@@ -105,10 +98,25 @@ estimate_gps <- function(formula,
                    treatment variable')
   }
 
-  args['reference'] <- reference
+  #missing
+  if(is.null(missing)) {
+    missing <- 'complete.cases'
+  } else if (!(is.character(missing) && length(missing) == 1L && !anyNA(missing))) {
+    chk::abort_chk('The argument `missing` must be a single string of length 1')
+  }
 
   # fit.object + verbose.output
   chk::chk_all(list(fit.object, verbose.output), chk::chk_logical)
+
+  # assembling the arguments list
+  args['treat'] <- list(data.list[['treat']])
+  args['covs'] <- list(data.list[['model_covs']])
+  args['.covs'] <- list(data.list[['reported_covs']])
+  args['.formula'] <- list(formula)
+  args['.data'] <- list(data)
+  args['method'] <- list(method)
+  args['reference'] <- reference
+  args[['missing']] <- .process_missing(missing, method)
   args['fit.object'] <- list(fit.object)
   args['verbose.output'] <- list(verbose.output)
 

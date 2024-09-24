@@ -2,7 +2,7 @@
 % Please edit documentation in R/raincloud.R
 \name{raincloud}
 \alias{raincloud}
-\title{Title}
+\title{Examine the Distribution of Continuous Data with Raincloud Plots}
 \usage{
 raincloud(
   data = NULL,
@@ -20,5 +20,14 @@ raincloud(
 )
 }
 \description{
-Title
+The \code{raincloud()} function allows to generate raincloud plots for continuous
+data in an easy and uncomplicated way. Raincloud plots consist of three main
+elements:
+/item{Distribution plots}{For example density plots, histograms or violin
+plots wit the mean values of respective groups}
+/item{Jittered point plots}{Depicting the underlying distribution of the data
+in the rawest form}
+/item{Boxplots}
+The function is based on the \code{ggplot2} package, which must already be
+preinstalled
 }

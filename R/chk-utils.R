@@ -61,7 +61,6 @@
     }
   }
 
-
   env$conv_call <- conv_call
   if(eval(parse(text = cond))) {
     tryCatch({
@@ -93,5 +92,19 @@
 
   if (length(data) == 0) {
     chk::abort_chk("The provided data frame is empty")
+  }
+}
+
+#--check gps methods------------------------------------------------------------
+.check_method <- function(string) {
+  #if (missing(string) || is.null(string)) invisible(return(NULL))
+
+  if(!(is.character(string) && length(string) == 1L && !anyNA(string))) {
+    chk::abort_chk('The argument `method` must be a single string of length 1')
+  }
+
+  if (!(string %in% names(.gps_methods))) {
+    chk::abort_chk(sprintf('The `method` argument has to be one from: %s',
+                           paste0(names(.gps_methods), collapse = ', ')))
   }
 }

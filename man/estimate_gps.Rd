@@ -2,11 +2,11 @@
 % Please edit documentation in R/estimate_gps.R
 \name{estimate_gps}
 \alias{estimate_gps}
-\title{Title}
+\title{Estimate Generalized Propensity Scores with various methods}
 \usage{
 estimate_gps(
   formula,
-  data,
+  data = NULL,
   method = "multinom",
   reference = NULL,
   by = NULL,
@@ -16,6 +16,28 @@ estimate_gps(
   ...
 )
 }
+\arguments{
+\item{formula}{description}
+
+\item{data}{description}
+
+\item{method}{description}
+
+\item{reference}{description}
+
+\item{by}{description}
+
+\item{missing}{description}
+
+\item{fit.object}{description}
+
+\item{verbose.output}{description}
+
+\item{...}{description}
+}
 \description{
-Title
+Estimate Generalized Propensity Scores with various methods
+}
+\details{
+Additional details...
 }

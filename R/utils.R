@@ -5,8 +5,6 @@
   args <- list(...)
   parent_env <- environment(formula)
   eval.model.matrx <- !(any(c("|", "||") %in% all.names(formula)))
-  print(all.names(formula))
-  print(eval.model.matrx)
 
   ## Check data; if not exists the look for the data in the parent env----------
   if(!is.null(data)) {
@@ -177,4 +175,26 @@
     setNames(vector("list", length(n)), as.character(n))
   }
   else stop("'n' must be an integer(ish) scalar or an atomic variable.")
+}
+
+##--list with allowable gps methods and their arguments-------------------------
+.gps_methods <- list(
+  'glm' = list(),
+  'gbm' = list(),
+  'rf' = list(),
+  'bayes' = list(),
+  'multinom' = list()
+)
+
+#Uniqueness
+nunique <- function(x, na.rm = TRUE) {
+  if (is.null(x)) return(0)
+  if (is.factor(x)) return(nlevels(x))
+  if (na.rm && anyNA(x)) x <- na.rem(x)
+  length(unique(x))
+}
+
+na.rem <- function(x) {
+  #A faster na.omit for vectors
+  x[!is.na(x)]
 }

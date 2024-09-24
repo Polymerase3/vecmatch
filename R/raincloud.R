@@ -1,4 +1,19 @@
-#' Title
+#' Examine the Distribution of Continuous Data with Raincloud Plots
+#'
+#' @description
+#' The `raincloud()` function allows to generate raincloud plots for continuous
+#' data in an easy and uncomplicated way. Raincloud plots consist of three main
+#' elements:
+#' /item{Distribution plots}{For example density plots, histograms or violin
+#' plots wit the mean values of respective groups}
+#' /item{Jittered point plots}{Depicting the underlying distribution of the data
+#' in the rawest form}
+#' /item{Boxplots}
+#' The function is based on the `ggplot2` package, which must already be
+#' preinstalled
+#'
+#' @param data A non-empty object of the class `data.frame` with at least one
+#' numeric column
 #'
 #' @return
 #' @export
@@ -178,8 +193,8 @@ raincloud <- function(data = NULL,
   #--save if specified
   ## Saving the plot
   if (save == TRUE) {
-    ggplot2::ggsave(plot.name,
-           plot = p, dpi = 300, create.dir = TRUE
+    suppressMessages(ggplot2::ggsave(plot.name,
+           plot = p, dpi = 300, create.dir = TRUE)
     )
   }
 

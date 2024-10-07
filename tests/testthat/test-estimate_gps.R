@@ -42,7 +42,21 @@ test_that('Formals checking:  method, ref, logicals', {
   expect_no_error(estimate_gps(y ~ pred, data, verbose.output = TRUE))
 })
 
+## --testing formals: missing
+test_that('Formals checking: missing and by', {
+  data <- data.frame(treat = rep(c('A', 'B', 'C'), 7),
+                       y = runif(21),
+                     group = rep(c(TRUE, FALSE, TRUE), 7),
+                     sex = c(rep(c('M', 'F', 'F', 'M'), 5), 'M'))
 
+  #missing
+  expect_error(estimate_gps(data$treat ~ data$y, missing = 'failure'),
+               regexp = 'allowed')
+  expect_error(estimate_gps(data$treat ~ data$y, missing = TRUE),
+               regexp = 'string')
+  expect_no_error(estimate_gps(data$treat ~ data$y,
+                               missing = 'complete.cases'))
+})
 
 
 

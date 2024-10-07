@@ -18,5 +18,6 @@ Imports:
     Hmisc,
     rlang
 Suggests: 
+    nnet,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

@@ -7,7 +7,7 @@
 estimate_gps(
   formula,
   data = NULL,
-  method = "multinom",
+  method = "glm",
   reference = NULL,
   by = NULL,
   missing = NULL,

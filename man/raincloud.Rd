@@ -19,15 +19,17 @@ raincloud(
   overwrite = FALSE
 )
 }
+\arguments{
+\item{data}{A non-empty object of the class \code{data.frame} with at least one
+numeric column}
+}
 \description{
 The \code{raincloud()} function allows to generate raincloud plots for continuous
 data in an easy and uncomplicated way. Raincloud plots consist of three main
 elements:
-/item{Distribution plots}{For example density plots, histograms or violin
-plots wit the mean values of respective groups}
-/item{Jittered point plots}{Depicting the underlying distribution of the data
-in the rawest form}
-/item{Boxplots}
+Distribution plots For example density plots, histograms or violin plots wit the mean values of respective groups
+Jittered point plots Depicting the underlying distribution of the data in the rawest form
+Boxplots
 The function is based on the \code{ggplot2} package, which must already be
 preinstalled
 }

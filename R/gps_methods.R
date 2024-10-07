@@ -13,5 +13,12 @@
                 packages_needed = 'MASS',
                 link_fun = c('logistic', 'probit', 'loglog', 'cloglog', 'cauchit'),
                 description = 'estimating gps for ordered treatments using proportional
-                odds logistic regression from MASS package')
+                odds logistic regression from MASS package'),
+  'nnet' = list(missing = c('complete.cases', 'mean.imputation'),
+                func_used = '.estimate_gps_multinom',
+                alias = 'neuralnet',
+                packages_needed = 'nnet',
+                link_fun = c('softmax'),
+                description = 'estimating gps for ordered treatments using proportional
+                odds logistic regression from MASS package'),)
 )

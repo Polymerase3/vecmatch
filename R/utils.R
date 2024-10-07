@@ -531,3 +531,33 @@ match_add_args <- function(arglist, funlist) {
     return(arglist)
   }
 }
+
+## --getting the treatment type from: binary, ordinal, multinomial--------------
+## --needed for further processing from link and method-------------------------
+## --use after converting treat to factor
+.assign_treatment_type <- function(treat, ordinal.treat) {
+  chk::chk_vector(treat)
+
+  treat <- as.factor(treat)
+
+  if(all_the_same(treat)) {
+    chk::abort_chk('There is no variability in the treatment variable. All datapoints
+                   are the same.')
+  } else if(is_binary(treat, NullOne = FALSE)) {
+    treat.type <- 'binary'
+  } else if(is.factor(treat) && is.ordered(treat) && ordinal.treat) {
+    treat.type <- 'ordinal'
+  } else if(is.factor(treat) && !is.ordered(treat)) {
+    treat.type <- 'multinom'
+  } else {
+    chk::abort_chk('Invalid treatment type. Has to be one from: binary, ordinal,
+                   multinomial (nominal).')
+  }
+
+  attr(treat, "treat.type") <- treat.type
+  treat
+}
+
+.get_treat_type <- function(treat) {
+  attr(treat, 'treat.type')
+}

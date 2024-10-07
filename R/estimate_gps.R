@@ -27,6 +27,7 @@ estimate_gps <- function(formula,
                          by = NULL,
                          missing = NULL,
                          subset = NULL,     #unprocessed
+                         ordinal.treat = NULL,    #unprocessed
                          fit.object = FALSE,
                          verbose.output = FALSE,
                          ...) {
@@ -36,7 +37,7 @@ estimate_gps <- function(formula,
   call <- match.call()
   args <- list(...)
 
-  #formula
+  #formula + ordinal
   if(missing(formula)) {
     chk::abort_chk('The argument `formula` is missing with no default')
   }
@@ -47,6 +48,7 @@ estimate_gps <- function(formula,
   }
 
   data.list <- .get_formula_vars(formula, data)
+
   args['treat'] <- list(data.list[['treat']])
   args['covs'] <- list(data.list[['model_covs']])
 

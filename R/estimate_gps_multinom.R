@@ -43,7 +43,7 @@
       Args <- match_add_args(
         arglist = Args,
         funlist = infos$fun.arg.check
-      ) ## check if works cause funs.arg.check quoted
+      )
 
       ## Fit the multinom
       tryCatch(

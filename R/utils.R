@@ -488,17 +488,17 @@ match_add_args <- function(arglist, funlist) {
     ## Check for doubles and resolve to default if present
     formnames <- names(formlist)
 
-    if(length(funlist) != 1 && !is.function(funlist)) {
+    if (length(funlist) != 1 && !is.function(funlist)) {
       duplicates <- formnames[duplicated(formnames)]
 
       remove_forms <- numeric()
-      for(i in seq_along(duplicates)) {
+      for (i in seq_along(duplicates)) {
         cur_dups <- which(formnames == duplicates[i])
         is_empty <- lapply(formlist[cur_dups], function(x) {
-          is.symbol(x) && as.character(x) == ''
+          is.symbol(x) && as.character(x) == ""
         })
 
-        if(all(unlist(is_empty)) || all(!unlist(is_empty))) {
+        if (all(unlist(is_empty)) || all(!unlist(is_empty))) {
           remove_forms <- c(remove_forms, cur_dups[-1])
         } else {
           not_empty <- cur_dups[!is_empty]
@@ -522,7 +522,7 @@ match_add_args <- function(arglist, funlist) {
     which_undefined <- which(formnames %nin% argnames)
 
     is_empty2 <- lapply(formlist[which_undefined], function(x) {
-      is.symbol(x) && as.character(x) == ''
+      is.symbol(x) && as.character(x) == ""
     })
 
     add_formals <- which_undefined[!unlist(is_empty2)]
@@ -540,15 +540,15 @@ match_add_args <- function(arglist, funlist) {
 
   treat <- as.factor(treat)
 
-  if(all_the_same(treat)) {
-    chk::abort_chk('There is no variability in the treatment variable. All datapoints
-                   are the same.')
-  } else if(is_binary(treat, NullOne = FALSE)) {
-    treat.type <- 'binary'
-  } else if(is.factor(treat) && is.ordered(treat)) {
-    treat.type <- 'ordinal'
+  if (all_the_same(treat)) {
+    chk::abort_chk("There is no variability in the treatment variable. All datapoints
+                   are the same.")
+  } else if (is_binary(treat, NullOne = FALSE)) {
+    treat.type <- "binary"
+  } else if (is.factor(treat) && is.ordered(treat)) {
+    treat.type <- "ordinal"
   } else {
-    treat.type <- 'multinom'
+    treat.type <- "multinom"
   }
 
   attr(treat, "treat.type") <- treat.type
@@ -556,11 +556,13 @@ match_add_args <- function(arglist, funlist) {
 }
 
 .get_treat_type <- function(treat) {
-  attr(treat, 'treat.type')
+  attr(treat, "treat.type")
 }
 
 verbosely <- function(expr, verbose = TRUE) {
-  if (verbose) return(expr)
+  if (verbose) {
+    return(expr)
+  }
 
   void <- utils::capture.output({
     out <- invisible(expr)

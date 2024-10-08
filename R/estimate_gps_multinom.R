@@ -13,7 +13,13 @@
     treat <- treat[subset]
   }
 
-  data <- data.frame(factor(treat), covs)
+  ## Assign and check treatment type
+  treat <- .assign_treatment_type(treat)
+  treat.type <- .get_treat_type(treat)
+
+  ## Process ordinal treat and scale
+
+  data <- data.frame(treat, covs)
   data <- as.data.frame(lapply(data, scale_0_to_1))
 
   ## Defining the list of arguments and processing
@@ -25,16 +31,18 @@
   Args[['model']] <- fit.object
   Args[['verbose']] <- verbose.output
 
-  ## Processing the stuff
-  Args <- match_add_args(arglist = Args,
-                         funlist = list(nnet::multinom,
-                                        nnet::nnet.default,
-                                        nnet::nnet.formula))
-
   ## Fit the model
   if(method == 'multinom') {
-    .gps_methods[['multinom']]
-    rlang::check_installed("nnet")
+    infos <- .gps_methods[['multinom']]
+    rlang::check_installed(infos$packages_needed)
+
+    ## Processing the stuff
+    Args <- match_add_args(arglist = Args,
+                           funlist = infos$fun.arg.check) ## check if works cause funs.arg.check quoted
+
+
+
+
 
 
 

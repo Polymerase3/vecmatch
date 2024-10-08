@@ -37,7 +37,7 @@ estimate_gps <- function(formula,
   call <- match.call()
   args <- list(...)
 
-  #formula + ordinal
+  #formula
   if(missing(formula)) {
     chk::abort_chk('The argument `formula` is missing with no default')
   }
@@ -74,6 +74,19 @@ estimate_gps <- function(formula,
     chk::wrn('The `treatment` variable has more than 7 unique levels. Consider
              dropping the number of groups, as the vector matching algorithm may
              not perform well')
+  }
+
+  #process and check ordinal.treat
+  if(!is.null(ordinal.treat)) {
+    chk::chk_atomic(ordinal.treat)
+    chk::chk_vector(ordinal.treat)
+
+    if(length(ordinal.treat) != length(unique(args[['treat']]))) {
+      chk::abort_chk('The numbers of levels provided in `ordinal.treat` has to
+                     be the same, as the number of unique levels in the treatment
+                     variable.')
+    }
+    args[['treat']] <- factor(args[['treat']], levels = ordinal.treat, ordered = TRUE)
   }
 
   #data

@@ -58,8 +58,19 @@ test_that('Formals checking: missing and by', {
                                missing = 'complete.cases'))
 })
 
+##--testing formals: ordinal.treat----------------------------------------------
+test_that('Formals checking: ordinal.treat', {
+  data <- data.frame(treat = rep(c(1, 2, 3, 4, 5), 20),
+                     pred = runif(100))
+  data$treat <- factor(data$treat, levels = c(1, 2, 3, 4, 5), ordered = TRUE)
 
-
+  expect_error(estimate_gps(treat ~ pred, data, method = 'multinom',
+                            ordinal.treat = list(1)), regexp = 'atomic')
+  expect_error(estimate_gps(treat ~ pred, data, method = 'multinom',
+                            ordinal.treat = c(1, 2, 3)), regexp = 'levels')
+  expect_no_error(estimate_gps(treat ~ pred, data, method = 'multinom',
+                               ordinal.treat = c(1, 3, 2, 5, 4)))
+})
 
 
 

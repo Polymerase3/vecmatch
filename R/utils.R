@@ -447,7 +447,7 @@ scale_0_to_1 <- function(x) {
         x == unique(x)[1]
       }
       x <- ifelse(is_first, 0, 1)
-      return(x)
+      return(as.factor(x))
     }
   } else if (is.factor(x) || all_the_same(x)) {
     return(x)
@@ -545,13 +545,10 @@ match_add_args <- function(arglist, funlist) {
                    are the same.')
   } else if(is_binary(treat, NullOne = FALSE)) {
     treat.type <- 'binary'
-  } else if(is.factor(treat) && is.ordered(treat) && ordinal.treat) {
+  } else if(is.factor(treat) && is.ordered(treat)) {
     treat.type <- 'ordinal'
-  } else if(is.factor(treat) && !is.ordered(treat)) {
-    treat.type <- 'multinom'
   } else {
-    chk::abort_chk('Invalid treatment type. Has to be one from: binary, ordinal,
-                   multinomial (nominal).')
+    treat.type <- 'multinom'
   }
 
   attr(treat, "treat.type") <- treat.type

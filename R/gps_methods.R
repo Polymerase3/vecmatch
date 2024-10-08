@@ -4,6 +4,9 @@
                     func_used = '.estimate_gps_multinom',
                alias = c('mlreg', 'mnom'),
                packages_needed = c('nnet'),
+               fun.arg.check = list(quote(nnet::multinom),
+                                    quote(nnet::nnet.default),
+                                    quote(nnet::nnet.formula)),
                link_fun = c('generalized_logit'),
                description = c('estimating the GPS using multinomial logistic
                                regression model from nnet package')),
@@ -20,5 +23,5 @@
                 packages_needed = 'nnet',
                 link_fun = c('softmax'),
                 description = 'estimating gps for ordered treatments using proportional
-                odds logistic regression from MASS package'),)
+                odds logistic regression from MASS package')
 )

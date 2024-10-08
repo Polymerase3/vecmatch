@@ -89,6 +89,10 @@ estimate_gps <- function(formula,
     args[['treat']] <- factor(args[['treat']], levels = ordinal.treat, ordered = TRUE)
   }
 
+  if(is.null(ordinal.treat)) {
+    args[['treat']] <- factor(args[['treat']], ordered = FALSE)
+  }
+
   #data
   if(!is.null(data)) .check_df(data)
 
@@ -129,7 +133,7 @@ estimate_gps <- function(formula,
   chk::chk_all(list(fit.object, verbose.output), chk::chk_logical)
 
   # assembling the arguments list
-  args['.covs'] <- list(data.list[['reported_covs']])
+  args['covs'] <- list(data.list[['reported_covs']])
   args['.formula'] <- list(formula)
   args['.data'] <- list(data)
   args['method'] <- list(method)
@@ -138,10 +142,21 @@ estimate_gps <- function(formula,
   args[['by']] <- .process_by(by, data, args[['treat']])
   args['fit.object'] <- list(fit.object)
   args['verbose.output'] <- list(verbose.output)
+  args['subset'] <- list(subset)
 
   ####################### FITTING ##############################################
+  fit.func <- .gps_methods[[method]]$func_used
+
+  fitted_object <- do.call(fit.func,
+                           args)
 
   ####################### OUTPUT OBJECT ########################################
-
   #defining the class of the output
+  if(fit.object) {
+    return(fitted_object)
+  } else {
+    gps <- as.matrix(fitted_object$fitted.values)
+    class(gps) <- 'gps'
+    return(gps)
+  }
 }

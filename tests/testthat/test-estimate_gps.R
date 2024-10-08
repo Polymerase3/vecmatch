@@ -71,10 +71,3 @@ test_that('Formals checking: ordinal.treat', {
   expect_no_error(estimate_gps(treat ~ pred, data, method = 'multinom',
                                ordinal.treat = c(1, 3, 2, 5, 4)))
 })
-
-
-
-
-
-
-

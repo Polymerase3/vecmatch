@@ -558,3 +558,13 @@ match_add_args <- function(arglist, funlist) {
 .get_treat_type <- function(treat) {
   attr(treat, 'treat.type')
 }
+
+verbosely <- function(expr, verbose = TRUE) {
+  if (verbose) return(expr)
+
+  void <- utils::capture.output({
+    out <- invisible(expr)
+  })
+
+  out
+}

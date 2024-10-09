@@ -22,13 +22,13 @@ raincloud <- function(data = NULL,
                       group = NULL,
                       facet = NULL,
                       ncol = 1,
-                      significance = FALSE,        ## not functional
+                      significance = FALSE, ## not functional
                       limits = NULL,
                       jitter = 0.1,
                       alpha = 0.4,
                       save = FALSE,
                       plot.name = NULL,
-                      overwrite = FALSE) {        ## not functional
+                      overwrite = FALSE) { ## not functional
   ############################ INPUT CHECKING###################################
   #--check data frame-----------------------------------------------------------
   ## Must be an object of class data frame with at least one numeric column
@@ -84,14 +84,16 @@ raincloud <- function(data = NULL,
   chk::chk_logical(save)
 
   ## Check character and valid name for plot.name
-  if(!is.null(plot.name)) {
+  if (!is.null(plot.name)) {
     chk::chk_character(plot.name)
-    .check_extension(plot.name, x_name = 'plot.name',
-                     ext_vec = c('.png', '.PNG', '.pdf', '.PDF'))
+    .check_extension(plot.name,
+      x_name = "plot.name",
+      ext_vec = c(".png", ".PNG", ".pdf", ".PDF")
+    )
   }
 
-  if(save == TRUE && is.null(plot.name)) {
-    chk::abort_chk('If save == TRUE then the `plot.name` argument has to be specified.')
+  if (save == TRUE && is.null(plot.name)) {
+    chk::abort_chk("If save == TRUE then the `plot.name` argument has to be specified.")
   }
 
   ## Check logical for overwrite
@@ -117,7 +119,7 @@ raincloud <- function(data = NULL,
   pal_len <- length(unique(data[, symlist[["group"]]]))
   if (is.null(symlist[["group"]]) || pal_len == 0) pal_len <- 1
 
-  ##--defining the main ggplot formula------------------------------------------
+  ## --defining the main ggplot formula------------------------------------------
   main <- paste0(
     "ggplot2::ggplot(data, ggplot2::aes(x = '', y = y",
     ifelse(is.null(symlist[["group"]]), "))", paste0(
@@ -127,30 +129,33 @@ raincloud <- function(data = NULL,
     ))
   )
 
-  ##--defining the geom_jitter
+  ## --defining the geom_jitter
   geom_jitter <- paste0(
-    'ggplot2::geom_jitter( size = 2, alpha = alpha, show.legend = FALSE, ',
+    "ggplot2::geom_jitter( size = 2, alpha = alpha, show.legend = FALSE, ",
     ifelse(pal_len == 1,
-           'position = ggplot2::position_jitter(width = jitter))',
-           'position = ggplot2::position_jitterdodge(jitter.width = jitter,
-           dodge.width = 0.25))')
+      "position = ggplot2::position_jitter(width = jitter))",
+      "position = ggplot2::position_jitterdodge(jitter.width = jitter,
+           dodge.width = 0.25))"
+    )
   )
 
-  ##--defining the geom_boxplot
+  ## --defining the geom_boxplot
   geom_boxplot <- paste0(
-    'ggplot2::geom_boxplot(width = 0.1, alpha = alpha, show.legend = FALSE, ',
+    "ggplot2::geom_boxplot(width = 0.1, alpha = alpha, show.legend = FALSE, ",
     ifelse(pal_len == 1,
-           'position = ggplot2::position_nudge(x = -0.22))',
-           'position = ggpp::position_dodgenudge(width = 0.2, x = -0.22))')
+      "position = ggplot2::position_nudge(x = -0.22))",
+      "position = ggpp::position_dodgenudge(width = 0.2, x = -0.22))"
+    )
   )
 
-  ##--defining the stat_summary
+  ## --defining the stat_summary
   stat_summ <- paste0(
-    'ggplot2::stat_summary(fun.data = ggplot2::mean_cl_normal,
-                           show.legend = FALSE, ',
+    "ggplot2::stat_summary(fun.data = ggplot2::mean_cl_normal,
+                           show.legend = FALSE, ",
     ifelse(pal_len == 1,
-           'position = ggplot2::position_nudge(x = rain_height * 3))',
-           'position = ggpp::position_dodgenudge(x = rain_height * 3, width = 0.1))')
+      "position = ggplot2::position_nudge(x = rain_height * 3))",
+      "position = ggpp::position_dodgenudge(x = rain_height * 3, width = 0.1))"
+    )
   )
 
   #--defining the ggplot object-------------------------------------------------
@@ -167,8 +172,10 @@ raincloud <- function(data = NULL,
     ## stat_summary
     eval(parse(text = stat_summ)) +
     ## defining scales
-    ggplot2::scale_x_discrete(name = "",
-                              expand = c(rain_height * 3.5, 0, 0, 0.62)) +
+    ggplot2::scale_x_discrete(
+      name = "",
+      expand = c(rain_height * 3.5, 0, 0, 0.62)
+    ) +
     scale_color_vecmatch(n = pal_len, type = "discrete") +
     scale_fill_vecmatch(n = pal_len, type = "discrete") +
     ## flipping coordinates
@@ -183,17 +190,17 @@ raincloud <- function(data = NULL,
 
 
   #--add facet if not NULL------------------------------------------------------
-  if(!is.null(symlist[['facet']])) {
+  if (!is.null(symlist[["facet"]])) {
     p <- p +
-      ggplot2::facet_wrap(~data[, symlist[['facet']]], ncol = ncol)
+      ggplot2::facet_wrap(~ data[, symlist[["facet"]]], ncol = ncol)
   }
 
   #--save if specified
   ## Saving the plot
   if (save == TRUE) {
     suppressMessages(ggplot2::ggsave(plot.name,
-           plot = p, dpi = 300, create.dir = TRUE)
-    )
+      plot = p, dpi = 300, create.dir = TRUE
+    ))
   }
 
   ## Returning a ggplot object

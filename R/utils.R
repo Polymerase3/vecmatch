@@ -527,7 +527,7 @@ match_add_args <- function(arglist, funlist) {
       is.symbol(x) && as.character(x) == ""
     })
 
-    if(length(is_empty2) != 0) {
+    if (length(is_empty2) != 0) {
       add_formals <- which_undefined[!unlist(is_empty2)]
       arglist <- append(arglist, formlist[add_formals])
     } else {

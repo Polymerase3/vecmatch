@@ -166,6 +166,8 @@
 
       fitted_obj <- fit
     }
+
+    ## --
   } else {
     probably_a_bug <- TRUE
   }

@@ -493,7 +493,8 @@ match_add_args <- function(arglist, funlist) {
 
       remove_forms <- numeric()
       for (i in seq_along(duplicates)) {
-        cur_dups <- which(formnames == duplicates[i])
+        cur_dups <- which(formnames %in% duplicates[i])
+
         is_empty <- lapply(formlist[cur_dups], function(x) {
           is.symbol(x) && as.character(x) == ""
         })
@@ -501,7 +502,7 @@ match_add_args <- function(arglist, funlist) {
         if (all(unlist(is_empty)) || all(!unlist(is_empty))) {
           remove_forms <- c(remove_forms, cur_dups[-1])
         } else {
-          not_empty <- cur_dups[!is_empty]
+          not_empty <- cur_dups[!unlist(is_empty)]
           remove_forms <- c(remove_forms, not_empty[-1])
         }
       }
@@ -510,13 +511,14 @@ match_add_args <- function(arglist, funlist) {
       formnames <- names(formlist)
     }
 
+    ## match the names
     matched_names <- vapply(argnames, function(x) {
-      pmatch(x, formnames, duplicates.ok = FALSE)
+      match(x, formnames)
     }, numeric(1))
 
     ## Set names of present arguments
-    names(arglist) <- formnames[matched_names]
-    arglist <- arglist[!is.na(names(arglist))]
+    choose_names <- names(matched_names[!is.na(matched_names)])
+    arglist <- arglist[names(arglist) %in% choose_names]
 
     ## Add default values of non defined args
     which_undefined <- which(formnames %nin% argnames)
@@ -525,9 +527,13 @@ match_add_args <- function(arglist, funlist) {
       is.symbol(x) && as.character(x) == ""
     })
 
-    add_formals <- which_undefined[!unlist(is_empty2)]
+    if(length(is_empty2) != 0) {
+      add_formals <- which_undefined[!unlist(is_empty2)]
+      arglist <- append(arglist, formlist[add_formals])
+    } else {
+      arglist <- append(arglist, formlist)
+    }
 
-    arglist <- append(arglist, formlist[add_formals])
     return(arglist)
   }
 }

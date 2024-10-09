@@ -155,6 +155,12 @@ estimate_gps <- function(formula,
   # defining the class of the output
   if (fit.object) {
     return(fitted_object)
+  } else if (isS4(fitted_object)) {
+    if(method == 'vglm') {
+      gps <- VGAM::fitted.values(fitted_object)
+      class(gps) <- "gps"
+      return(gps)
+    }
   } else {
     gps <- as.matrix(fitted_object$fitted.values)
     class(gps) <- "gps"

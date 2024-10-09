@@ -6,7 +6,7 @@
                packages_needed = c('nnet'),
                fun.arg.check = list(nnet::multinom,
                                     nnet::nnet.formula),
-               link_fun = c('generalized logit'),
+               link_fun = c('generalized_logit'),
                allowed.treat = c('binary', 'multinom'),
                description = c('estimating the GPS using multinomial logistic
                                regression model from nnet package')),
@@ -23,5 +23,14 @@
                 packages_needed = 'nnet',
                 link_fun = c('softmax'),
                 description = 'estimating gps for ordered treatments using proportional
-                odds logistic regression from MASS package')
+                odds logistic regression from MASS package'),
+  'vglm' = list(missing = c('complete.cases', 'mean.imputation'),
+                func_used = '.estimate_gps_multinom',
+                alias = c('vecGLM'),
+                fun.arg.check = list(VGAM::vglm,
+                                     VGAM::rrvglm),
+                packages_needed = 'VGAM',
+                link_fun = c('multinomial_logit', 'reduced_rank_ml'),
+                allowed.treat = c('binary', 'multinom'),
+                description = 'vector generalized linear models for multinomial data')
 )

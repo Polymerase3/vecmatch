@@ -32,5 +32,15 @@
                 packages_needed = 'VGAM',
                 link_fun = c('multinomial_logit', 'reduced_rank_ml'),
                 allowed.treat = c('binary', 'multinom'),
-                description = 'vector generalized linear models for multinomial data')
+                description = 'vector generalized linear models for multinomial data'),
+  'brglm2' = list(missing = c('complete.cases', 'mean.imputation'),
+                  func_used = '.estimate_gps_multinom',
+                  alias = 'bias_reduced_glm2',
+                  fun.arg.check = list(brglm2::brmultinom),
+                  packages_needed = 'brglm2',
+                  link_fun = 'baseline_category_logit',
+                  allowed.treat = c('binary', 'multinom'),
+                  description = 'bias reduction for multinomial respones models
+                  using the poisson trick')
+
 )

@@ -6,6 +6,7 @@
   ####################### DATA PROCESSING ######################################
   fit_object <- NULL
   Args <- list(...)
+  probably_a_bug <- FALSE
 
   if (!is.null(subset)) {
     covs <- covs[subset, , drop = FALSE]
@@ -34,6 +35,7 @@
 
   ## Fit the model
   if (treat.type == "multinom" || treat.type == "binary") {
+    ## --NNET::multinom()--------------------------------------------------------
     if (method == "multinom") {
       infos <- .gps_methods[["multinom"]]
       rlang::check_installed(infos$packages_needed)
@@ -68,6 +70,7 @@
       fitted_obj <- fit
     }
 
+    ## --VGLM--------------------------------------------------------------------
     if (method == "vglm") {
       infos <- .gps_methods[["vglm"]]
       rlang::check_installed(infos$packages_needed)
@@ -75,7 +78,6 @@
 
       ## Check link
       if (is.null(Args[["link_fun"]])) {
-
         link_fun <- infos$link_fun[1]
         chk::message_chk(sprintf("You can specify the type of %s model using the `link_fun` argument. \n
                                  The default value %s was set.", method, Args[["link_fun"]]))
@@ -86,7 +88,7 @@
             paste(infos$link_fun, collapse = ", ")
           ))
         } else {
-          link_fun <- Args[['link_fun']]
+          link_fun <- Args[["link_fun"]]
         }
       }
 
@@ -97,18 +99,20 @@
       )
 
       ## Overwriting Args
-      Args[['family']] <- VGAM::multinomial
-      Args[['trace']] <- verbose.output
-      Args[['control']] <- VGAM::vglm.control(...)
+      Args[["family"]] <- VGAM::multinomial
+      Args[["trace"]] <- verbose.output
+      Args[["control"]] <- VGAM::vglm.control(...)
 
       ## Fit model
       if (link_fun %in% infos$link_fun) {
         tryCatch(
           verbosely(
             {
-              fit <- do.call(switch(link_fun,
-                                    'multinomial_logit' = VGAM::vglm,
-                                    'reduced_rank_ml' = VGAM::rrvglm),
+              fit <- do.call(
+                switch(link_fun,
+                  "multinomial_logit" = VGAM::vglm,
+                  "reduced_rank_ml" = VGAM::rrvglm
+                ),
                 args = Args
               )
             },
@@ -128,18 +132,49 @@
         probably_a_bug <- TRUE
       }
     }
-  } else {
-    fitted_obj <- NULL
-  }
 
-  if (!is.null(fitted_obj)) {
-    return(fitted_obj)
+    ## --brglm2::brmultinom()------------------------------------------------------------
+    if (method == "brglm2") {
+      infos <- .gps_methods[["brglm2"]]
+      rlang::check_installed(infos$packages_needed)
+      sapply(infos$packages_needed, requireNamespace, quietly = TRUE)
+
+      ## Processing the arguments
+      Args <- match_add_args(
+        arglist = Args,
+        infos$fun.arg.check
+      )
+
+      ## Fit the brglm2
+      tryCatch(
+        verbosely(
+          {
+            fit <- do.call(brglm2::brmultinom,
+              args = Args
+            )
+          },
+          verbose = verbose.output
+        ),
+        error = function(e) {
+          chk::abort_chk(sprintf(
+            "There was a problem fitting the %s regressions with `brglm2::brmultinom()`.\n
+                               Error message: (from `brglm2::brmultinom()`) %s",
+            link_fun, conditionMessage(e)
+          ), tidy = FALSE)
+        }
+      )
+
+      fitted_obj <- fit
+    }
   } else {
     probably_a_bug <- TRUE
   }
 
+  ## Last check of output object
   if (probably_a_bug) {
     chk::abort_chk("The function `estimate_gps()` was not able to estimate the propensity scores.
                    It's probably a bug. Please let the author know.")
+  } else {
+    return(fitted_obj)
   }
 }

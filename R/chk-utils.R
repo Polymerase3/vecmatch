@@ -91,11 +91,8 @@
   ext <- substr(name, nchar(name) - 3, nchar(name))
   cond <- ext %in% ext_vec
   if (!cond) {
-    chk::abort_chk(paste0(
-      "The argument ", x_name,
-      " is allowed to have the following extensions: ",
-      paste(ext_vec, collapse = ", ")
-    ))
+    chk::abort_chk(sprintf('The argument `%s` is allowed to have the following extensions: %s',
+                           x_name, word_list(add_quotes(ext_vec))))
   }
 }
 
@@ -120,8 +117,10 @@
 
   if (!(string %in% names(.gps_methods))) {
     chk::abort_chk(sprintf(
-      "The `method` argument has to be one from: %s",
-      paste0(names(.gps_methods), collapse = ", ")
+      "The argument `method` has to be one from: %s",
+      word_list(add_quotes(names(.gps_methods)))
     ))
   }
 }
+
+#--process link function--------------------------------------------------------

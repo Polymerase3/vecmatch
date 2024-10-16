@@ -415,7 +415,7 @@ expand_grid_string <- function(..., collapse = "") {
 ## --scaling the data------------------------------------------------------------
 is_binary <- function(x, NullOne = TRUE) {
   if (NullOne == TRUE) {
-    return(all(na.omit(x) %in% 0:1))
+    return(all(stats::na.omit(x) %in% 0:1))
   } else {
     return(length(unique(x)) == 2L)
   }

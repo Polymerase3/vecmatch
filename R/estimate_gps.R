@@ -21,7 +21,8 @@
 #' @export
 estimate_gps <- function(formula,
                          data = NULL,
-                         method = "glm",
+                         method = "multinom",
+                         link = NULL,
                          reference = NULL,
                          by = NULL,
                          missing = NULL,
@@ -69,8 +70,8 @@ estimate_gps <- function(formula,
   }
 
   n_levels <- nunique(args[["treat"]])
-  if (n_levels > 7) {
-    chk::wrn("The `treatment` variable has more than 7 unique levels. Consider
+  if (n_levels > 10) {
+    chk::wrn("The `treatment` variable has more than 10 unique levels. Consider
              dropping the number of groups, as the vector matching algorithm may
              not perform well")
   }
@@ -86,10 +87,8 @@ estimate_gps <- function(formula,
                      variable.")
     }
     args[["treat"]] <- factor(args[["treat"]], levels = ordinal.treat, ordered = TRUE)
-  }
-
-  if (is.null(ordinal.treat)) {
-    args[["treat"]] <- factor(args[["treat"]], ordered = FALSE)
+  } else {
+    args[['treat']] <- factor(args[['treat']], levels = unique(args[['treat']], ordered = FALSE))
   }
 
   # data
@@ -105,31 +104,46 @@ estimate_gps <- function(formula,
     attr(method, "name") <- method.name
   }
 
+  # link
+  available_links <- .gps_methods[[method]]$link_fun
+
+  if(!is.null(args[['link']]) || !missing(args[['link']])) {
+    chk::chk_string(args[['link']])
+
+    if(args[['link']] %nin% available_links) {
+      chk::abort_chk(sprintf('The argument `link` for the method %s only accepts values: %s',
+                             method, word_list(add_quotes(available_links))))
+    }
+  } else {
+    args[['link']] <- available_links[1]
+  }
+
   # reference
   levels_treat <- as.character(unique(args[["treat"]]))
 
-  if (is.null(reference)) {
-    reference <- levels_treat[1]
-  } else if (!(is.character(reference) && length(reference) == 1L && !anyNA(reference))) {
-    chk::abort_chk("The argument `reference` must be a single string of length 1")
-  }
-
-  if (!(reference %in% levels_treat)) {
-    chk::abort_chk("The argument `reference` is not in the unique levels of the
+  if(!is.null(ordinal.treat) && !is.null(reference)) {
+    chk::wrn('There is no need to specify `reference` if `ordinal.treat` was provided. Ignoring the `reference` argument')
+  } else {
+    if (is.null(reference)) {
+      reference <- levels_treat[1]
+      args[['treat']] <- stats::relevel(args[['treat']], ref = reference)
+    } else if (!(is.character(reference) && length(reference) == 1L && !anyNA(reference))) {
+      chk::abort_chk("The argument `reference` must be a single string of length 1")
+    } else if (!(reference %in% levels_treat)) {
+      chk::abort_chk("The argument `reference` is not in the unique levels of the
                    treatment variable")
+    } else {
+      args[['treat']] <- stats::relevel(args[['treat']], ref = reference)
+    }
   }
 
   # missing
-  if (is.null(missing)) {
-    missing <- "complete.cases"
-  } else if (!(is.character(missing) && length(missing) == 1L && !anyNA(missing))) {
-    chk::abort_chk("The argument `missing` must be a single string of length 1")
-  }
+  missing <- .process_missing(missing, method)
 
   # by --> assembling the arguments
 
   # fit.object + verbose.output
-  chk::chk_all(list(fit.object, verbose.output), chk::chk_logical)
+  chk::chk_all(list(fit.object, verbose.output), chk::chk_flag)
 
   # assembling the arguments list
   args["covs"] <- list(data.list[["reported_covs"]])
@@ -137,7 +151,7 @@ estimate_gps <- function(formula,
   args[".data"] <- list(data)
   args["method"] <- list(method)
   args["reference"] <- reference
-  args[["missing"]] <- .process_missing(missing, method)
+  args[["missing"]] <-
   args[["by"]] <- .process_by(by, data, args[["treat"]])
   args["fit.object"] <- list(fit.object)
   args["verbose.output"] <- list(verbose.output)

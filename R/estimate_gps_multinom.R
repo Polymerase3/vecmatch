@@ -26,7 +26,7 @@
   data <- as.data.frame(lapply(data, scale_0_to_1))
 
   ## Defining the list of arguments and processing
-  Args[["formula"]] <- update.formula(.formula, treat ~ .)
+  Args[["formula"]] <- stats::update.formula(.formula, treat ~ .)
   Args[["treat"]] <- treat
   Args[["covs"]] <- covs
   Args[["data"]] <- data
@@ -102,6 +102,8 @@
       Args[["family"]] <- VGAM::multinomial
       Args[["trace"]] <- verbose.output
       Args[["control"]] <- VGAM::vglm.control(...)
+      fun_used <- ifelse(link_fun == 'multinomial_logit', '`VGAM::vglm(family = multinomial())`',
+                         '`VGAM::rrvglm(family = multinomial())`')
 
       ## Fit model
       if (link_fun %in% infos$link_fun) {
@@ -120,9 +122,9 @@
           ),
           error = function(e) {
             chk::abort_chk(sprintf(
-              "There was a problem fitting the %s regressions with `VGAM::vglm(family = multinom)`.\n
-                               Error message: (from `VGAM::vglm(family = multinom)`) %s",
-              link_fun, conditionMessage(e)
+              "There was a problem fitting the %s regressions with %s.\n
+                               Error message: (from %s) %s",
+              link_fun, fun_used, fun_used, conditionMessage(e)
             ), tidy = FALSE)
           }
         )
@@ -134,6 +136,7 @@
     }
 
     ## --brglm2::brmultinom()------------------------------------------------------------
+#######################################TO WORK ON########################################
     if (method == "brglm2") {
       infos <- .gps_methods[["brglm2"]]
       rlang::check_installed(infos$packages_needed)
@@ -160,6 +163,61 @@
             "There was a problem fitting the %s regressions with `brglm2::brmultinom()`.\n
                                Error message: (from `brglm2::brmultinom()`) %s",
             link_fun, conditionMessage(e)
+          ), tidy = FALSE)
+        }
+      )
+
+      fitted_obj <- fit
+    }
+
+    if (method == "mclogit") {
+      infos <- .gps_methods[["mclogit"]]
+      rlang::check_installed(infos$packages_needed)
+      sapply(infos$packages_needed, requireNamespace, quitely = TRUE)
+
+      ## Check link
+      if (is.null(Args[["link_fun"]])) {
+        link_fun <- infos$link_fun[1]
+        chk::message_chk(sprintf("You can specify the type of %s model using the `link_fun` argument. \n
+                                 The default value %s was set.", method, Args[["link_fun"]]))
+      } else {
+        if (Args[["link_fun"]] %nin% infos$link_fun) {
+          chk::abort_chk(sprintf(
+            "The argument `link_fun` only accepts following values: %s",
+            paste(infos$link_fun, collapse = ", ")
+          ))
+        } else {
+          link_fun <- Args[["link_fun"]]
+        }
+      }
+
+      ## Overwriting Args
+      if(is.null(Args[['estimator']])) {
+        Args[['estimator']] <- 'ML'
+      }
+      fun_used <- ifelse(link_fun == 'conditional_logit', '`mclogit::mblogit()`',
+                         '`mclogit::mclogit()`')
+
+      ## Processing Args
+      Args <- match_add_args(
+        arglist = Args,
+        infos$fun.arg.check
+      )
+
+      #Fit model
+      tryCatch(
+        verbosely(
+          {
+            fit <- do.call(mclogit::mblogit,
+                           args = Args)
+          },
+          verbose = verbose.output
+        ),
+        error = function(e) {
+          chk::abort_chk(sprintf(
+            "There was a problem fitting the %s regressions with %s.\n
+                               Error message: (from %s) %s",
+            link_fun, fun_used, fun_used, conditionMessage(e)
           ), tidy = FALSE)
         }
       )

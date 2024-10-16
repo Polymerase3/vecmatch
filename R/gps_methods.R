@@ -60,7 +60,7 @@
     missing = c("complete.cases", "mean.imputation"),
     func_used = ".estimate_gps_multinom",
     alias = "multinomial_logit_model",
-    func.arg.check = list(
+    fun.arg.check = list(
       mclogit::mclogit,
       mclogit::mblogit
     ),

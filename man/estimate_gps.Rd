@@ -7,10 +7,13 @@
 estimate_gps(
   formula,
   data = NULL,
-  method = "glm",
+  method = "multinom",
+  link = NULL,
   reference = NULL,
   by = NULL,
   missing = NULL,
+  subset = NULL,
+  ordinal.treat = NULL,
   fit.object = FALSE,
   verbose.output = FALSE,
   ...

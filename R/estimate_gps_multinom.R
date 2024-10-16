@@ -102,8 +102,9 @@
       Args[["family"]] <- VGAM::multinomial
       Args[["trace"]] <- verbose.output
       Args[["control"]] <- VGAM::vglm.control(...)
-      fun_used <- ifelse(link_fun == 'multinomial_logit', '`VGAM::vglm(family = multinomial())`',
-                         '`VGAM::rrvglm(family = multinomial())`')
+      fun_used <- ifelse(link_fun == "multinomial_logit", "`VGAM::vglm(family = multinomial())`",
+        "`VGAM::rrvglm(family = multinomial())`"
+      )
 
       ## Fit model
       if (link_fun %in% infos$link_fun) {
@@ -136,7 +137,7 @@
     }
 
     ## --brglm2::brmultinom()------------------------------------------------------------
-#######################################TO WORK ON########################################
+    ####################################### TO WORK ON########################################
     if (method == "brglm2") {
       infos <- .gps_methods[["brglm2"]]
       rlang::check_installed(infos$packages_needed)
@@ -192,11 +193,12 @@
       }
 
       ## Overwriting Args
-      if(is.null(Args[['estimator']])) {
-        Args[['estimator']] <- 'ML'
+      if (is.null(Args[["estimator"]])) {
+        Args[["estimator"]] <- "ML"
       }
-      fun_used <- ifelse(link_fun == 'conditional_logit', '`mclogit::mblogit()`',
-                         '`mclogit::mclogit()`')
+      fun_used <- ifelse(link_fun == "conditional_logit", "`mclogit::mblogit()`",
+        "`mclogit::mclogit()`"
+      )
 
       ## Processing Args
       Args <- match_add_args(
@@ -204,12 +206,13 @@
         infos$fun.arg.check
       )
 
-      #Fit model
+      # Fit model
       tryCatch(
         verbosely(
           {
             fit <- do.call(mclogit::mblogit,
-                           args = Args)
+              args = Args
+            )
           },
           verbose = verbose.output
         ),

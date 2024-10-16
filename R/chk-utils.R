@@ -91,8 +91,10 @@
   ext <- substr(name, nchar(name) - 3, nchar(name))
   cond <- ext %in% ext_vec
   if (!cond) {
-    chk::abort_chk(sprintf('The argument `%s` is allowed to have the following extensions: %s',
-                           x_name, word_list(add_quotes(ext_vec))))
+    chk::abort_chk(sprintf(
+      "The argument `%s` is allowed to have the following extensions: %s",
+      x_name, word_list(add_quotes(ext_vec))
+    ))
   }
 }
 

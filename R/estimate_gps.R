@@ -88,7 +88,7 @@ estimate_gps <- function(formula,
     }
     args[["treat"]] <- factor(args[["treat"]], levels = ordinal.treat, ordered = TRUE)
   } else {
-    args[['treat']] <- factor(args[['treat']], levels = unique(args[['treat']], ordered = FALSE))
+    args[["treat"]] <- factor(args[["treat"]], levels = unique(args[["treat"]], ordered = FALSE))
   }
 
   # data
@@ -107,33 +107,35 @@ estimate_gps <- function(formula,
   # link
   available_links <- .gps_methods[[method]]$link_fun
 
-  if(!is.null(args[['link']]) || !missing(args[['link']])) {
-    chk::chk_string(args[['link']])
+  if (!is.null(args[["link"]]) || !missing(args[["link"]])) {
+    chk::chk_string(args[["link"]])
 
-    if(args[['link']] %nin% available_links) {
-      chk::abort_chk(sprintf('The argument `link` for the method %s only accepts values: %s',
-                             method, word_list(add_quotes(available_links))))
+    if (args[["link"]] %nin% available_links) {
+      chk::abort_chk(sprintf(
+        "The argument `link` for the method %s only accepts values: %s",
+        method, word_list(add_quotes(available_links))
+      ))
     }
   } else {
-    args[['link']] <- available_links[1]
+    args[["link"]] <- available_links[1]
   }
 
   # reference
   levels_treat <- as.character(unique(args[["treat"]]))
 
-  if(!is.null(ordinal.treat) && !is.null(reference)) {
-    chk::wrn('There is no need to specify `reference` if `ordinal.treat` was provided. Ignoring the `reference` argument')
+  if (!is.null(ordinal.treat) && !is.null(reference)) {
+    chk::wrn("There is no need to specify `reference` if `ordinal.treat` was provided. Ignoring the `reference` argument")
   } else {
     if (is.null(reference)) {
       reference <- levels_treat[1]
-      args[['treat']] <- stats::relevel(args[['treat']], ref = reference)
+      args[["treat"]] <- stats::relevel(args[["treat"]], ref = reference)
     } else if (!(is.character(reference) && length(reference) == 1L && !anyNA(reference))) {
       chk::abort_chk("The argument `reference` must be a single string of length 1")
     } else if (!(reference %in% levels_treat)) {
       chk::abort_chk("The argument `reference` is not in the unique levels of the
                    treatment variable")
     } else {
-      args[['treat']] <- stats::relevel(args[['treat']], ref = reference)
+      args[["treat"]] <- stats::relevel(args[["treat"]], ref = reference)
     }
   }
 
@@ -152,7 +154,7 @@ estimate_gps <- function(formula,
   args["method"] <- list(method)
   args["reference"] <- reference
   args[["missing"]] <-
-  args[["by"]] <- .process_by(by, data, args[["treat"]])
+    args[["by"]] <- .process_by(by, data, args[["treat"]])
   args["fit.object"] <- list(fit.object)
   args["verbose.output"] <- list(verbose.output)
   args["subset"] <- list(subset)

@@ -51,7 +51,7 @@ test_that('Formals checking:  method, ref, logicals', {
   expect_no_error(estimate_gps(y ~ pred, data, fit.object = FALSE, method = 'vglm'))
 })
 
-## --testing formals: missing---------------------------------------------------
+## --testing formals: missing, by-----------------------------------------------
 test_that('Formals checking: missing and by', {
   data <- data.frame(treat = rep(c('A', 'B', 'C'), 7),
                        y = runif(21),
@@ -65,6 +65,7 @@ test_that('Formals checking: missing and by', {
                regexp = 'string')
   expect_no_error(estimate_gps(data$treat ~ data$y,
                                missing = 'complete.cases'))
+  expect_no_error(estimate_gps(treat ~ y, data, method = 'multinom', by = 'sex'))
 })
 
 ## --testing formals: link------------------------------------------------------
@@ -93,6 +94,8 @@ test_that('Formals checking: ordinal.treat', {
   expect_no_error(estimate_gps(treat ~ pred, data, method = 'multinom',
                                ordinal.treat = c(1, 3, 2, 5, 4)))
 })
+
+##
 
 ##--testing formals: subset-----------------------------------------------------
 test_that('Formals checking: subset', {

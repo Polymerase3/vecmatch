@@ -171,7 +171,6 @@ estimate_gps <- function(formula,
   chk::chk_all(list(fit.object, verbose.output), chk::chk_flag)
 
   # assembling the arguments list
-
   if(use.subset) {
     args[['treat']] <- args[['treat']][subset_logvec]
     args["covs"] <- list(data.list[["reported_covs"]][subset_logvec, ])
@@ -194,11 +193,52 @@ estimate_gps <- function(formula,
 
   ####################### FITTING ##############################################
   fit.func <- .gps_methods[[method]]$func_used
+  if(!is.null(args[['by']])) {
+    fitted_object <- list()
+    by.levels <- levels(attr(args[['by']], 'by.factor'))
 
-  fitted_object <- do.call(
-    fit.func,
-    args
-  )
+    for (i in by.levels) {
+      # subset rule
+      by.sub <- attr(args[['by']], 'by.factor') == i
+
+      # create env and subset vars
+      by.env <- list2env(args, envir = new.env(), parent = emptyenv())
+      with(by.env, {
+        selected <- mget(c('.data', 'covs', 'treat'), envir = by.env)
+        subsetted <- lapply(selected, function(x) {
+          if(is.data.frame(x)) {
+            x[by.sub, ]
+          } else if (is.atomic(x)) {
+            x[by.sub]
+          }
+        })
+      })
+
+      # overwrite
+      list2env(by.env$subsetted, envir = by.env)
+      print(ls(by.env))
+      # copy args
+      # subset args
+      # model the data
+      # return gps or model and assign
+      # delete env
+
+
+
+
+      # subset data
+
+      # model
+
+      # assign
+
+    }
+  } else {
+    fitted_object <- do.call(
+      fit.func,
+      args
+    )
+  }
 
   ####################### OUTPUT OBJECT ########################################
   # defining the class of the output

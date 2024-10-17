@@ -350,23 +350,23 @@ expand_grid_string <- function(..., collapse = "") {
   if (missing(by)) {
     error.by <- TRUE
   } else if (is.null(by)) {
-    by <- NULL
+    by.data <- NULL
     by.name <- NULL
   } else if (chk::vld_string(by) && by %in% colnames(data)) {
-    by <- data[[by]]
+    by.data <- data[[by]]
     by.name <- by
   } else if (length(dim(by)) == 2L && nrow(by) == n) {
-    by <- drop(by[, 1])
-    by.name <- colnames(by)[1]
+    by.data <- drop(by[, 1])
+    by.name <- colnames(by)[1] ##?
   } else if (rlang::is_formula(by, lhs = FALSE)) {
     covs <- .get_formula_vars(by, data)
-    by <- covs[["reported.covs"]]
+    by.data <- covs[["reported.covs"]]
 
-    if (ncol(by) != 1L) {
+    if (ncol(by.data) != 1L) {
       chk::abort_chk("The formula used in the `by` argument is only allowed to
       have variable on the right side ")
     }
-    by.name <- colnames(by)
+    by.name <- colnames(by.data)
   } else {
     error.by <- TRUE
   }
@@ -377,22 +377,22 @@ expand_grid_string <- function(..., collapse = "") {
                    stratifying variable on the right-hand side")
   }
 
-  if (anyNA(by)) {
+  if (anyNA(by.data)) {
     chk::abort_chk("The argument `by` cannot contain any NA's")
   }
 
-  by.comps <- data.frame(by)
+  by.comps <- data.frame(by.data)
 
   names(by.comps) <- {
-    if (!is.null(colnames(by))) {
-      colnames(by)
+    if (!is.null(colnames(by.data))) {
+      colnames(by.data)
     } else {
       by.name
     }
   }
 
   by.factor <- {
-    if (is.null(by)) {
+    if (is.null(by.data)) {
       factor(rep.int(1L, n), levels = 1L)
     } else {
       factor(by.comps[[1]],

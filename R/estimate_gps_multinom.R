@@ -8,10 +8,10 @@
   Args <- list(...)
   probably_a_bug <- FALSE
 
-  if (!is.null(subset)) {
-    covs <- covs[subset, , drop = FALSE]
-    treat <- treat[subset]
-  }
+  #if (!is.null(subset)) {
+    #covs <- covs[subset, , drop = FALSE]
+    #treat <- treat[subset]
+  #}
 
   ## Assign and check treatment type
   treat <- .assign_treatment_type(treat)
@@ -26,7 +26,11 @@
   data <- as.data.frame(lapply(data, scale_0_to_1))
 
   ## Defining the list of arguments and processing
-  Args[["formula"]] <- stats::update.formula(.formula, treat ~ .)
+  if(is.atomic(covs)) {
+    Args[["formula"]] <- stats::update.formula(.formula, treat ~ covs)
+  } else {
+    Args[["formula"]] <- stats::update.formula(.formula, treat ~ .)
+  }
   Args[["treat"]] <- treat
   Args[["covs"]] <- covs
   Args[["data"]] <- data
@@ -34,7 +38,7 @@
   Args[["verbose"]] <- verbose.output
 
   ## Fit the model
-  if (treat.type == "multinom" || treat.type == "binary") {
+  if (treat.type == "multinom" || treat.type == "binary" || treat.type == 'ordinal') {  ## ordinal needs to be fixed?
     ## --NNET::multinom()--------------------------------------------------------
     if (method == "multinom") {
       infos <- .gps_methods[["multinom"]]

@@ -107,15 +107,17 @@ estimate_gps <- function(formula,
   # link
   available_links <- .gps_methods[[method]]$link_fun
 
-  if (!is.null(args[["link"]]) || !missing(args[["link"]])) {
-    chk::chk_string(args[["link"]])
+  if (!is.null(link)) {
+    chk::chk_string(link)
 
-    if (args[["link"]] %nin% available_links) {
+    if (link %nin% available_links) {
       chk::abort_chk(sprintf(
         "The argument `link` for the method %s only accepts values: %s",
         method, word_list(add_quotes(available_links))
       ))
     }
+
+    args[['link']] <- link
   } else {
     args[["link"]] <- available_links[1]
   }
@@ -128,13 +130,17 @@ estimate_gps <- function(formula,
   } else {
     if (is.null(reference)) {
       reference <- levels_treat[1]
-      args[["treat"]] <- stats::relevel(args[["treat"]], ref = reference)
+
+      if(!is.ordered(args[['treat']])) {
+        args[["treat"]] <- stats::relevel(args[["treat"]], ref = reference)
+      }
     } else if (!(is.character(reference) && length(reference) == 1L && !anyNA(reference))) {
       chk::abort_chk("The argument `reference` must be a single string of length 1")
     } else if (!(reference %in% levels_treat)) {
       chk::abort_chk("The argument `reference` is not in the unique levels of the
                    treatment variable")
     } else {
+      args[['treat']] <- factor(args[['treat']], ordered = FALSE)
       args[["treat"]] <- stats::relevel(args[["treat"]], ref = reference)
     }
   }
@@ -142,19 +148,46 @@ estimate_gps <- function(formula,
   # missing
   missing <- .process_missing(missing, method)
 
-  # by --> assembling the arguments
+  # subset
+  if(!is.null(subset)) {
+    chk::chk_string(subset)
+
+    if(subset %nin% colnames(data)) {
+      chk::abort_chk(sprintf('The column %s defined in the `subset` argument was not found in the provided dataset.',
+                             subset))
+    }
+
+    subset_logvec <- as.vector(data[[subset]])
+    if(!is.logical(subset_logvec) || length(dim(subset_logvec)) == 2L) {
+      chk::abort_chk('The `subset` argument has to be a name of single column with logical values.')
+    }
+
+    use.subset <- TRUE
+  } else {
+    use.subset <- FALSE
+  }
 
   # fit.object + verbose.output
   chk::chk_all(list(fit.object, verbose.output), chk::chk_flag)
 
   # assembling the arguments list
-  args["covs"] <- list(data.list[["reported_covs"]])
+
+  if(use.subset) {
+    args[['treat']] <- args[['treat']][subset_logvec]
+    args["covs"] <- list(data.list[["reported_covs"]][subset_logvec, ])
+
+    args[".data"] <- list(data[subset_logvec, ])
+    args[["by"]] <- .process_by(by, data, args[["treat"]])[subset_logvec, ]
+  } else {
+    args["covs"] <- list(data.list[["reported_covs"]])
+    args[".data"] <- list(data)
+    args[["by"]] <- .process_by(by, data, args[["treat"]])
+  }
+
   args[".formula"] <- list(formula)
-  args[".data"] <- list(data)
   args["method"] <- list(method)
   args["reference"] <- reference
-  args[["missing"]] <-
-    args[["by"]] <- .process_by(by, data, args[["treat"]])
+  args[["missing"]] <- missing
   args["fit.object"] <- list(fit.object)
   args["verbose.output"] <- list(verbose.output)
   args["subset"] <- list(subset)

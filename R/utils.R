@@ -314,11 +314,11 @@ expand_grid_string <- function(..., collapse = "") {
 
 ## --processing `missing` argument-----------------------------------------------
 .process_missing <- function(missing, method) {
-  if (is.null(method)) {
-    return("")
-  }
-
   allowable.missings <- .gps_methods[[method]]$missing
+
+  if (is.null(method)) {
+   chk::abort_chk('Argument `method` can not be NULL')
+  }
 
   if (!is.null(missing)) {
     chk::chk_string(missing)
@@ -326,6 +326,8 @@ expand_grid_string <- function(..., collapse = "") {
 
   if (is.null(missing)) {
     return(allowable.missings[1])
+  } else if ((!(is.character(missing) && length(missing) == 1L && !anyNA(missing)))) {
+    chk::abort_chk("The argument `missing` must be a single string of length 1")
   } else if (!(missing %in% allowable.missings)) {
     chk::abort_chk(sprintf(
       "Only %s allowed for the argument `missing` with
@@ -334,6 +336,8 @@ expand_grid_string <- function(..., collapse = "") {
       ),
       method
     ))
+  } else {
+    return(missing)
   }
 }
 

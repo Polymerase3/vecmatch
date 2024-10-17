@@ -1,4 +1,4 @@
-#' Estimate Generalized Propensity Scores with various methods
+#' Estimate generalized propensity scores
 #'
 #' @description
 #'
@@ -11,6 +11,9 @@
 #' @param fit.object description
 #' @param verbose.output description
 #' @param ... description
+#' @param link
+#' @param subset
+#' @param ordinal.treat
 #'
 #' @returns
 #'
@@ -35,8 +38,13 @@ estimate_gps <- function(formula,
   ########################### AND ##############################################
   ####################### DATA PROCESSING ######################################
   call <- match.call()
-  args <- list(...)
 
+  ## If function call then substitute, else normal
+  additional_args <- which(names(call)[-1] %nin% names(formals(estimate_gps)))
+  print(additional_args)
+
+  args <- list(substitute(...))
+  print(args)
   # formula
   if (missing(formula)) {
     chk::abort_chk("The argument `formula` is missing with no default")
@@ -117,7 +125,7 @@ estimate_gps <- function(formula,
       ))
     }
 
-    args[['link']] <- link
+    args[["link"]] <- link
   } else {
     args[["link"]] <- available_links[1]
   }
@@ -131,7 +139,7 @@ estimate_gps <- function(formula,
     if (is.null(reference)) {
       reference <- levels_treat[1]
 
-      if(!is.ordered(args[['treat']])) {
+      if (!is.ordered(args[["treat"]])) {
         args[["treat"]] <- stats::relevel(args[["treat"]], ref = reference)
       }
     } else if (!(is.character(reference) && length(reference) == 1L && !anyNA(reference))) {
@@ -140,7 +148,7 @@ estimate_gps <- function(formula,
       chk::abort_chk("The argument `reference` is not in the unique levels of the
                    treatment variable")
     } else {
-      args[['treat']] <- factor(args[['treat']], ordered = FALSE)
+      args[["treat"]] <- factor(args[["treat"]], ordered = FALSE)
       args[["treat"]] <- stats::relevel(args[["treat"]], ref = reference)
     }
   }
@@ -149,17 +157,19 @@ estimate_gps <- function(formula,
   missing <- .process_missing(missing, method)
 
   # subset
-  if(!is.null(subset)) {
+  if (!is.null(subset)) {
     chk::chk_string(subset)
 
-    if(subset %nin% colnames(data)) {
-      chk::abort_chk(sprintf('The column %s defined in the `subset` argument was not found in the provided dataset.',
-                             subset))
+    if (subset %nin% colnames(data)) {
+      chk::abort_chk(sprintf(
+        "The column %s defined in the `subset` argument was not found in the provided dataset.",
+        subset
+      ))
     }
 
     subset_logvec <- as.vector(data[[subset]])
-    if(!is.logical(subset_logvec) || length(dim(subset_logvec)) == 2L) {
-      chk::abort_chk('The `subset` argument has to be a name of single column with logical values.')
+    if (!is.logical(subset_logvec) || length(dim(subset_logvec)) == 2L) {
+      chk::abort_chk("The `subset` argument has to be a name of single column with logical values.")
     }
 
     use.subset <- TRUE
@@ -171,8 +181,8 @@ estimate_gps <- function(formula,
   chk::chk_all(list(fit.object, verbose.output), chk::chk_flag)
 
   # assembling the arguments list
-  if(use.subset) {
-    args[['treat']] <- args[['treat']][subset_logvec]
+  if (use.subset) {
+    args[["treat"]] <- args[["treat"]][subset_logvec]
     args["covs"] <- list(data.list[["reported_covs"]][subset_logvec, ])
 
     args[".data"] <- list(data[subset_logvec, ])
@@ -183,30 +193,32 @@ estimate_gps <- function(formula,
     args[["by"]] <- .process_by(by, data, args[["treat"]])
   }
 
-  args[".formula"] <- list(formula)
+  args["formula"] <- list(formula)
   args["method"] <- list(method)
   args["reference"] <- reference
   args[["missing"]] <- missing
   args["fit.object"] <- list(fit.object)
   args["verbose.output"] <- list(verbose.output)
-  args["subset"] <- list(subset)
+  # args["subset"] <- list(subset)
 
   ####################### FITTING ##############################################
   fit.func <- .gps_methods[[method]]$func_used
-  if(!is.null(args[['by']])) {
+  use.by <- FALSE
+  if (!is.null(args[["by"]])) {
     fitted_object <- list()
-    by.levels <- levels(attr(args[['by']], 'by.factor'))
+    by.levels <- levels(attr(args[["by"]], "by.factor"))
+    use.by <- TRUE
 
-    for (i in by.levels) {
+    for (i in seq_along(by.levels)) {
       # subset rule
-      by.sub <- attr(args[['by']], 'by.factor') == i
+      by.sub <- attr(args[["by"]], "by.factor") == by.levels[i]
 
       # create env and subset vars
       by.env <- list2env(args, envir = new.env(), parent = emptyenv())
       with(by.env, {
-        selected <- mget(c('.data', 'covs', 'treat'), envir = by.env)
+        selected <- mget(c(".data", "covs", "treat"), envir = by.env)
         subsetted <- lapply(selected, function(x) {
-          if(is.data.frame(x)) {
+          if (is.data.frame(x)) {
             x[by.sub, ]
           } else if (is.atomic(x)) {
             x[by.sub]
@@ -216,23 +228,20 @@ estimate_gps <- function(formula,
 
       # overwrite
       list2env(by.env$subsetted, envir = by.env)
-      print(ls(by.env))
-      # copy args
-      # subset args
+
       # model the data
-      # return gps or model and assign
+      fit <- do.call(
+        fit.func,
+        as.list(by.env)
+      )
+
+      # append to existing list
+      fitted_object <- append(fitted_object, list(fit))
+
       # delete env
-
-
-
-
-      # subset data
-
-      # model
-
-      # assign
-
+      rm(by.env)
     }
+
   } else {
     fitted_object <- do.call(
       fit.func,
@@ -244,15 +253,24 @@ estimate_gps <- function(formula,
   # defining the class of the output
   if (fit.object) {
     return(fitted_object)
+  } else if (use.by) {
+    if(all(vapply(fitted_object, isS4, logical(1L)))) {
+      if(method == 'vglm') {
+        results <- lapply(fitted_object, VGAM::fitted.values)
+        gps <- do.call(rbind, results)
+      }
+    } else {
+      results <- lapply(fitted_object, '[[', 'fitted.values')
+      gps <- do.call(rbind, results)
+    }
   } else if (isS4(fitted_object)) {
     if (method == "vglm") {
       gps <- VGAM::fitted.values(fitted_object)
-      class(gps) <- "gps"
-      return(gps)
     }
   } else {
     gps <- as.matrix(fitted_object$fitted.values)
-    class(gps) <- "gps"
-    return(gps)
   }
+
+  class(gps) <- "gps"
+  return(gps)
 }

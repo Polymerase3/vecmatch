@@ -30,6 +30,8 @@ test_that('Formals checking:  method, ref, logicals', {
   expect_error(estimate_gps(y ~ pred, data, method = 'error'), regexp = 'method')
   expect_no_error(estimate_gps(y ~ pred, data, method = NULL))
   expect_no_error(estimate_gps(y ~ pred, data, method = 'multinom'))
+  expect_no_error(estimate_gps(y ~ pred, data, method = 'vglm'))
+  expect_no_error(estimate_gps(y ~ pred, data))
 
   #ref
   expect_error(estimate_gps(y ~ pred, data, method = NULL, reference = TRUE),
@@ -66,6 +68,8 @@ test_that('Formals checking: missing and by', {
   expect_no_error(estimate_gps(data$treat ~ data$y,
                                missing = 'complete.cases'))
   expect_no_error(estimate_gps(treat ~ y, data, method = 'multinom', by = 'sex'))
+  expect_no_error(estimate_gps(treat ~ y, data, method = 'vglm', by = 'sex'))
+  expect_no_error(estimate_gps(treat ~ y, data, method = 'multinom', by = NULL))
 })
 
 ## --testing formals: link------------------------------------------------------

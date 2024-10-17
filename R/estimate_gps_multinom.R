@@ -1,4 +1,4 @@
-.estimate_gps_multinom <- function(.formula, treat, covs, method,
+.estimate_gps_multinom <- function(formula, treat, covs, method,
                                    fit.object, verbose.output,
                                    subset, ...) {
   ####################### INPUT CHECKING #######################################
@@ -8,28 +8,19 @@
   Args <- list(...)
   probably_a_bug <- FALSE
 
-  #if (!is.null(subset)) {
-    #covs <- covs[subset, , drop = FALSE]
-    #treat <- treat[subset]
-  #}
-
   ## Assign and check treatment type
   treat <- .assign_treatment_type(treat)
   treat.type <- .get_treat_type(treat)
-
-  ## Process method (if method and treat type)
-  # if ()
-
 
   ## Process data
   data <- data.frame(treat, covs)
   data <- as.data.frame(lapply(data, scale_0_to_1))
 
   ## Defining the list of arguments and processing
-  if(is.atomic(covs)) {
-    Args[["formula"]] <- stats::update.formula(.formula, treat ~ covs)
+  if (is.atomic(covs)) {
+    Args[["formula"]] <- stats::update.formula(formula, treat ~ covs)
   } else {
-    Args[["formula"]] <- stats::update.formula(.formula, treat ~ .)
+    Args[["formula"]] <- stats::update.formula(formula, treat ~ .)
   }
   Args[["treat"]] <- treat
   Args[["covs"]] <- covs
@@ -38,7 +29,7 @@
   Args[["verbose"]] <- verbose.output
 
   ## Fit the model
-  if (treat.type == "multinom" || treat.type == "binary" || treat.type == 'ordinal') {  ## ordinal needs to be fixed?
+  if (treat.type == "multinom" || treat.type == "binary" || treat.type == "ordinal") { ## ordinal needs to be fixed?
     ## --NNET::multinom()--------------------------------------------------------
     if (method == "multinom") {
       infos <- .gps_methods[["multinom"]]
@@ -86,15 +77,28 @@
         chk::message_chk(sprintf("You can specify the type of %s model using the `link_fun` argument. \n
                                  The default value %s was set.", method, Args[["link_fun"]]))
       } else {
-        if (Args[["link_fun"]] %nin% infos$link_fun) {
+        if (is.null(Args[["link_fun"]])) {
+          link_fun <- Args[["link_fun"]]
+        } else if (Args[["link_fun"]] %nin% infos$link_fun) {
           chk::abort_chk(sprintf(
             "The argument `link_fun` only accepts following values: %s",
             paste(infos$link_fun, collapse = ", ")
           ))
-        } else {
-          link_fun <- Args[["link_fun"]]
         }
       }
+
+      ## Procesing additional args
+
+      if(is.null(Args[['control']])) {
+        Args[["control"]] <- VGAM::vglm.control(...)
+      } else {
+        control_call <- substitute(Args[['control']])
+
+        if(is.call(control_call) && as.character(control_call[[1]]) == "VGAM::vglm.control") {
+          print(123)
+        }
+      }
+
 
       ## Processing Args
       Args <- match_add_args(
@@ -105,7 +109,7 @@
       ## Overwriting Args
       Args[["family"]] <- VGAM::multinomial
       Args[["trace"]] <- verbose.output
-      Args[["control"]] <- VGAM::vglm.control(...)
+
       fun_used <- ifelse(link_fun == "multinomial_logit", "`VGAM::vglm(family = multinomial())`",
         "`VGAM::rrvglm(family = multinomial())`"
       )

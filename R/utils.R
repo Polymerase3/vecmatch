@@ -317,7 +317,7 @@ expand_grid_string <- function(..., collapse = "") {
   allowable.missings <- .gps_methods[[method]]$missing
 
   if (is.null(method)) {
-   chk::abort_chk('Argument `method` can not be NULL')
+    chk::abort_chk("Argument `method` can not be NULL")
   }
 
   if (!is.null(missing)) {
@@ -350,14 +350,13 @@ expand_grid_string <- function(..., collapse = "") {
   if (missing(by)) {
     error.by <- TRUE
   } else if (is.null(by)) {
-    by.data <- NULL
-    by.name <- NULL
+    return(NULL)
   } else if (chk::vld_string(by) && by %in% colnames(data)) {
     by.data <- data[[by]]
     by.name <- by
   } else if (length(dim(by)) == 2L && nrow(by) == n) {
     by.data <- drop(by[, 1])
-    by.name <- colnames(by)[1] ##?
+    by.name <- colnames(by)[1] ## ?
   } else if (rlang::is_formula(by, lhs = FALSE)) {
     covs <- .get_formula_vars(by, data)
     by.data <- covs[["reported.covs"]]

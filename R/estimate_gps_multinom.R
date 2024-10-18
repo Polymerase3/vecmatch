@@ -88,17 +88,16 @@
       }
 
       ## Procesing additional args
-
-      if(is.null(Args[['control']])) {
-        Args[["control"]] <- VGAM::vglm.control(...)
-      } else {
-        control_call <- substitute(Args[['control']])
-
-        if(is.call(control_call) && as.character(control_call[[1]]) == "VGAM::vglm.control") {
-          print(123)
-        }
-      }
-
+       if(is.null(Args[['control']])) {
+         Args[["control"]] <- VGAM::vglm.control(...)
+       } else {
+         if(!Args[['control_call']] ||
+            (Args[['control_call_char']] != "VGAM::vglm.control" &&
+             Args[['control_call_char']] != 'vglm.control')) {
+           chk::abort_chk('The argument control has to be a valid function call to the function:
+                          VGAM::vglm.control() or vglm.control()')
+         }
+       }
 
       ## Processing Args
       Args <- match_add_args(
@@ -107,7 +106,8 @@
       )
 
       ## Overwriting Args
-      Args[["family"]] <- VGAM::multinomial
+      #Args[["control"]] <- VGAM::vglm.control()
+      Args[["family"]] <- VGAM::multinomial()
       Args[["trace"]] <- verbose.output
 
       fun_used <- ifelse(link_fun == "multinomial_logit", "`VGAM::vglm(family = multinomial())`",

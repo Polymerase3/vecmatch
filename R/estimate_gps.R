@@ -38,13 +38,27 @@ estimate_gps <- function(formula,
   ########################### AND ##############################################
   ####################### DATA PROCESSING ######################################
   call <- match.call()
+  args <- list(...)
+
+  dots <- substitute(list(...))[-1]
 
   ## If function call then substitute, else normal
   additional_args <- which(names(call)[-1] %nin% names(formals(estimate_gps)))
-  print(additional_args)
 
-  args <- list(substitute(...))
-  print(args)
+  if(!is.null(dots)) {
+    for(i in seq_along(additional_args)) {
+      argname <- names(args)[i]
+      callname <- paste0(argname, '_call')
+      callname_char <- paste0(callname, '_char')
+      args[callname] <- FALSE
+
+      if(is.call(dots[[i]])) {
+        args[callname] <- TRUE
+        args[callname_char] <- as.character(dots[[i]])[1]
+      }
+    }
+  }
+
   # formula
   if (missing(formula)) {
     chk::abort_chk("The argument `formula` is missing with no default")

@@ -48,7 +48,7 @@ test_that('Formals checking:  method, ref, logicals', {
                regexp = 'flag')
   expect_error(estimate_gps(y ~ pred, data, verbose.output = 'fail'),
                regexp = 'flag')
-  expect_no_error(estimate_gps(y ~ pred, data, verbose.output = TRUE))
+  invisible(expect_no_error(estimate_gps(y ~ pred, data, verbose.output = TRUE)))
   expect_no_error(estimate_gps(y ~ pred, data, fit.object = TRUE))
   expect_no_error(estimate_gps(y ~ pred, data, fit.object = FALSE, method = 'vglm'))
 })

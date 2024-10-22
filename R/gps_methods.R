@@ -23,15 +23,6 @@
     description = "estimating gps for ordered treatments using proportional
                 odds logistic regression from MASS package"
   ),
-  "nnet" = list(
-    missing = c("complete.cases", "mean.imputation"),
-    func_used = ".estimate_gps_multinom",
-    alias = "neuralnet",
-    packages_needed = "nnet",
-    link_fun = c("softmax"),
-    description = "estimating gps for ordered treatments using proportional
-                odds logistic regression from MASS package"
-  ),
   "vglm" = list(
     missing = c("complete.cases", "mean.imputation"),
     func_used = ".estimate_gps_multinom",
@@ -56,20 +47,16 @@
     description = "bias reduction for multinomial respones models
                   using the poisson trick"
   ),
-  "mclogit" = list(
+  "mblogit" = list(
     missing = c("complete.cases", "mean.imputation"),
     func_used = ".estimate_gps_multinom",
     alias = "multinomial_logit_model",
     fun.arg.check = list(
-      mclogit::mclogit,
       mclogit::mblogit
     ),
     packages_needed = "mclogit",
-    link_fun = c(
-      "baseline_category_logit",
-      "conditional_logit"
-    ),
+    link_fun = c("baseline_category_logit"),
     allowed.treat = c("binary", "multinom"),
-    description = "conditional and baseline-category logit models"
+    description = "baseline-category logit models"
   )
 )

@@ -16,12 +16,14 @@ Imports:
     chk,
     ggplot2,
     ggpp,
-    Hmisc,
     mclogit,
     nnet,
     rlang,
     VGAM
 Suggests: 
+    ggpubr,
     MASS,
+    multcomp,
+    rstatix,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

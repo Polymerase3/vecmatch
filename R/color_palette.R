@@ -24,6 +24,7 @@ vec_colors <- c(
 
 #--function to generate a list with colors from the vector----------------------
 .generate_colors <- function(col_vector) {
+
   outlist <- list()
   i <- 1
   while (i <= length(col_vector)) {

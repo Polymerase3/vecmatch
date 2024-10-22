@@ -2,7 +2,7 @@
 % Please edit documentation in R/raincloud.R
 \name{raincloud}
 \alias{raincloud}
-\title{Examine the Distribution of Continuous Data with Raincloud Plots}
+\title{Examine the imbalance of continuous covariates}
 \usage{
 raincloud(
   data = NULL,
@@ -10,26 +10,109 @@ raincloud(
   group = NULL,
   facet = NULL,
   ncol = 1,
-  significance = FALSE,
+  significance = NULL,
+  smd = FALSE,
   limits = NULL,
   jitter = 0.1,
   alpha = 0.4,
-  save = FALSE,
   plot.name = NULL,
-  overwrite = FALSE
+  overwrite = FALSE,
+  ...
 )
 }
 \arguments{
-\item{data}{A non-empty object of the class \code{data.frame} with at least one
-numeric column}
+\item{data}{A non-empty \code{data.frame} containing at least one numeric column,
+as specified by the \code{y} argument. This argument must be provided and does
+not have a default value.}
+
+\item{y}{A single string or unquoted symbol representing the name of a
+numeric column in the \code{data}. In the vector matching workflow, it is
+typically a numeric covariate that requires balancing.}
+
+\item{group}{A single string or unquoted symbol representing the name of a
+factor or character column in \code{data}. In \code{raincloud()} plots, the groups
+specified by \code{group} argument will be distinguished by separate \code{fill} and
+\code{color} aesthetics. For clarity, it is recommended to plot fewer than 10
+groups, though there is no formal limit.}
+
+\item{facet}{A single string or unquoted symbol representing the name of a
+variable in \code{data} to facet by. This argument is used in a call to
+\code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}, creating separate distribution plots for each
+unique group in the \code{facet} variable.}
+
+\item{ncol}{A single integer. The value should be less than or equal to the
+number of unique categories in the \code{facet} variable. This argument is used
+only when \code{facet} is not NULL, specifying the number of columns in the
+\code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}} call. The distribution plots will be arranged into
+the number of columns defined by \code{ncol}.}
+
+\item{significance}{A single string specifying the method for calculating
+p-values in multiple comparisons between groups defined by the \code{group}
+argument. Significant comparisons are represented by bars connecting the
+compared groups on the left side of the boxplots. Note that if there are
+many significant tests, the plot size may adjust accordingly. For available
+methods refer to the Details section.}
+
+\item{smd}{A logical flag, defaulting to \code{FALSE}. Specifies whether to
+display the pairwise standardized mean differences (SMD) between the groups
+defined by the \code{group} argument. SMD values are shown on the left side of
+the boxplots, similarly to the significance levels from the \code{significance}
+argument. Note that only one of these two arguments, \code{smd} or
+\code{significance}, can be set to \code{TRUE} in a single function call.}
+
+\item{limits}{A numeric atomic vector of length two, specifying the \code{y} axis
+limits in the distribution plots. The first element sets the minimum value,
+and the second sets the maximum. This vector is passed to the
+\code{\link[ggplot2:lims]{ggplot2::xlim()}} function to adjust the axis scale.}
+
+\item{jitter}{A single numeric value between 0 and 1 that controls the amount
+of jitter applied to points in the \code{\link[ggplot2:geom_jitter]{ggplot2::geom_jitter()}} plots. Higher
+values of the \code{jitter} argument produce more jittered plot. It's
+recommended to keep this value low, as higher jitter can make the plot
+difficult to interpret.}
+
+\item{alpha}{A single numeric value between 0 and 1 that controls the
+transparency of the density plots, boxplots, and jittered point plots.
+Lower values result in higher transparency. It is recommended to keep this
+value relatively high to maintain the interpretability of the plots when
+using the \code{group} argument, as excessive transparency may cause overlap
+between groups, making it difficult to distinguish them visually.}
+
+\item{overwrite}{A logical flag (default \code{FALSE}) that is evaluated only if
+the \code{save.name} argument is provided. If \code{TRUE}, the function checks
+whether a plot with the same name already exists. If it does, the existing
+plot will be overwritten. If \code{FALSE} and a plot with the same name exists,
+an error is thrown. If no such plot exists, the plot is saved normally.}
+
+\item{save.name}{A string specifying a valid file name or path for the plot.
+If set to \code{NULL}, the plot is displayed to the current graphical device but
+not saved locally. If a valid name with \code{.png} or \code{.pdf} extension is
+provided, the plot is saved locally. Users can also include a subdirectory
+in \code{save.name}, but the directory must be created manually. Ensure the file
+path follows the correct syntax for your operating system.}
 }
 \description{
-The \code{raincloud()} function allows to generate raincloud plots for continuous
-data in an easy and uncomplicated way. Raincloud plots consist of three main
-elements:
-Distribution plots For example density plots, histograms or violin plots wit the mean values of respective groups
-Jittered point plots Depicting the underlying distribution of the data in the rawest form
-Boxplots
-The function is based on the \code{ggplot2} package, which must already be
-preinstalled
+The \code{raincloud()} function allows to generate distribution plots
+for continuous data in an easy and uncomplicated way.
+
+Raincloud plots consist of three main elements: Distribution plots For
+example density plots, histograms or violin plots wit the mean values of
+respective groups Jittered point plots Depicting the underlying
+distribution of the data in the rawest form Boxplots The function is based
+on the \code{ggplot2} package, which must already be preinstalled
+}
+\details{
+Available methods for the argument \code{significance} are:
+\itemize{
+\item \code{"t_test"} - Performs a pairwise comparison using the two-sample t-test, with the default Holm adjustment for multiple comparisons. This test assumes normally distributed data and equal variances. The adjustment can be modified via the \code{p.adjust.method} argument. The test is implemented via \code{\link[rstatix:t_test]{rstatix::pairwise_t_test()}}
+\item \code{"dunn_test"} - Executes Dunn's test for pairwise comparisons following a Kruskal-Wallis test. It is a non-parametric alternative to the t-test when assumptions of normality are violated. Implemented via \code{\link[rstatix:dunn_test]{rstatix::dunn_test()}}.
+\item \code{"tukeyHSD_test"} - Uses Tukey's Honest Significant Difference (HSD) test for pairwise comparisons between group means. Suitable for comparing all pairs when the overall ANOVA is significant. The method assumes equal variance between groups and is implemented via \code{\link[rstatix:tukey_hsd]{rstatix::tukey_hsd()}}.
+\item \code{"games_howell_test"} - A post-hoc test used after ANOVA, which does not assume equal variances or equal sample sizes. It’s particularly robust for data that violate homogeneity of variance assumptions. Implemented via \code{\link[rstatix:games_howell_test]{rstatix::games_howell_test()}}.
+\item \code{"wilcoxon_test"} - Performs the Wilcoxon rank-sum test (also known as the Mann-Whitney U test) for non-parametric pairwise comparisons. Useful when data are not normally distributed. Implemented via \code{\link[rstatix:wilcox_test]{rstatix::pairwise_wilcox_test()}}.
+\item \code{"sign_test"} - Conducts the sign test for matched pairs, a non-parametric alternative to the paired t-test when the data don’t meet parametric assumptions. Implemented via \code{\link[rstatix:sign_test]{rstatix::pairwise_sign_test()}}.
+\item \code{"scheffe_test"} - This test performs Scheffé’s method, a post-hoc analysis used after ANOVA. Scheffé’s method is conservative and useful for making complex comparisons. Implemented via \code{\link[multcomp:glht]{multcomp::glht()}}.
+\item \code{"LSD_test"} - The Least Significant Difference (LSD) test compares group means with no adjustment for multiple comparisons, making it more powerful but more prone to Type I errors. Implemented via \code{\link[multcomp:glht]{multcomp::glht()}}.
+\item \code{"sidak_test"} - Adjusts p-values for multiple comparisons using the Šidák correction, which is more powerful than the Bonferroni correction but still conservative. Implemented via \code{\link[multcomp:glht]{multcomp::glht()}}.
+\item \code{"hochberg_test"} - Uses Hochberg's method for controlling the family-wise error rate in multiple comparisons. It is a step-up procedure and more powerful than Bonferroni. Implemented via \code{\link[multcomp:glht]{multcomp::glht()}}.
+}
 }

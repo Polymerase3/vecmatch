@@ -144,3 +144,5 @@ test_that('datax converting: factors', {
   expect_error(raincloud(datax, y, fail1), regexp = 'converted')
   expect_warning(raincloud(datax, y, facet = 'warning'), regexp = '10')
 })
+
+## --testing significance methods-----------------------------------------------

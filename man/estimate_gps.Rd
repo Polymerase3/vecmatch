@@ -2,7 +2,7 @@
 % Please edit documentation in R/estimate_gps.R
 \name{estimate_gps}
 \alias{estimate_gps}
-\title{Estimate Generalized Propensity Scores with various methods}
+\title{Calculate treatment allocation probabilities}
 \usage{
 estimate_gps(
   formula,
@@ -20,27 +20,82 @@ estimate_gps(
 )
 }
 \arguments{
-\item{formula}{description}
+\item{formula}{a valid R formula, which describes the model used to
+calculating the probabilities of receiving a treatment. The variable to be
+balanced is on the left side, while the covariates used to predict the
+treatment variable are on the right side. To define the interactions
+between covariates, use \code{*}. For more details, refer to \code{\link[stats:formula]{stats::formula()}}.}
 
-\item{data}{description}
+\item{data}{a data frame with columns specified in the \code{formula} argument.
+Doesn't need to be provided, as the columns can also be specified directly
+and explicitly in the formula, using \code{$} operator and the name of the
+dataset.}
 
-\item{method}{description}
+\item{method}{a single string describing the model used for the calculation
+of generalized propensity scores. The default value is set to \code{multinom}.
+For available methods refer to the Details section below}
 
-\item{reference}{description}
+\item{link}{a single string; determines an alternative model for a method
+used for estimation. For available links, see XXX --> Actually do wywalenia
+i zastąpić to method}
 
-\item{by}{description}
+\item{reference}{a single string describing one class from the treatment
+variable, referred to as the baseline category in the calculation of
+generalized propensity scores.}
 
-\item{missing}{description}
+\item{by}{a single string with the name of a column, contained in the \code{data}
+argument. Tha dataset will be divided by the groups created by the grouping
+\code{by} variable and the calculation of the propensity scores will be carried
+out separately for each group. The results will then be merged and
+presented to the uesr as a single GPS matrix.}
 
-\item{fit.object}{description}
+\item{missing}{a single string describing the mtehod to be used in the
+handling of the missing data. For possible values refer to XXX. The default
+value is \code{complete.cases}. FIXXXXXX}
 
-\item{verbose.output}{description}
+\item{subset}{a logical atomic vector of length equal to the number of rows
+in the \code{data} arguments. Allows to filter out observations from the further
+analysis, for which the value of the vector is qual to \code{FALSE}.}
 
-\item{...}{description}
+\item{ordinal.treat}{an atomic vector of the length equal to the length of
+unique levels of the treatment variable. Confirms, that the treatment
+variable is an ordinal variable and adjusts its levels, to the order of
+levels specified in the argument. Is a call to the function \verb{factor(treat, levels = ordinal.treat, ordered = TRUE}.}
+
+\item{fit.object}{a logical flag. If \code{TRUE}, the the fitted object is
+returned instead of the GPS matrix.}
+
+\item{verbose.output}{a logical flag. If \code{TRUE} a more verbose version of the
+function is run and the output is printed out to the console.}
+
+\item{...}{additional arguments, that can be passed to the fitting function
+and are not controlled by the above arguments. For more details and
+examples refer to XXX}
+}
+\value{
+A numeric matrix with the number of columns equal to the number of
+unique treatment variable levels and the number of row equal to the number
+of subjects in the initial dataset.
 }
 \description{
-Estimate Generalized Propensity Scores with various methods
+\code{estimate_gps()} computes generalized propensity scores for
+treatment groups by applying a user-defined formula and method. It returns
+a matrix of GPS probabilities for each subject and treatment group
 }
 \details{
-Additional details...
+The main goal of the \code{estimate_gps()} function is to calculate the
+generalized propensity scores aka. treatment allocation probabilities. It
+is the first step in the workflow vector matching algorithm and is
+essential for the further analysis. The returned matrix of class \code{gps} can
+then be passed to the \code{csr()} function to calculate the rectangular common
+support region boundaries and drop samples uneligible for the further
+analysis. The list of available methods operated by the \code{estimate_gps()} is
+provided below with a short description and function used for the
+calculations:
+\itemize{
+\item \code{multinom} - multinomial logistic regression model \code{\link[nnet:multinom]{nnet::multinom()}}
+\item \code{vglm} - vector generalized linear model for multinomial data \code{\link[VGAM:vglm]{VGAM::vglm()}},
+\item \code{brglm2} - bias reduction model for multinomial respones using the poisson trick \code{\link[brglm2:brmultinom]{brglm2::brmultinom()}},
+\item \code{mblogit} - baseline-category logit models \code{\link[mclogit:mblogit]{mclogit::mblogit()}}.
+}
 }

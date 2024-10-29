@@ -34,13 +34,7 @@
 #'   argument. Significant comparisons are represented by bars connecting the
 #'   compared groups on the left side of the boxplots. Note that if there are
 #'   many significant tests, the plot size may adjust accordingly. For available
-#'   methods refer to the Details section.
-#' @param smd A logical flag, defaulting to `FALSE`. Specifies whether to
-#'   display the pairwise standardized mean differences (SMD) between the groups
-#'   defined by the `group` argument. SMD values are shown on the left side of
-#'   the boxplots, similarly to the significance levels from the `significance`
-#'   argument. Note that only one of these two arguments, `smd` or
-#'   `significance`, can be set to `TRUE` in a single function call.
+#'   methods refer to the *Details* section.
 #' @param limits A numeric atomic vector of length two, specifying the `y` axis
 #'   limits in the distribution plots. The first element sets the minimum value,
 #'   and the second sets the maximum. This vector is passed to the
@@ -56,17 +50,22 @@
 #'   value relatively high to maintain the interpretability of the plots when
 #'   using the `group` argument, as excessive transparency may cause overlap
 #'   between groups, making it difficult to distinguish them visually.
-#' @param save.name A string specifying a valid file name or path for the plot.
+#' @param plot.name A string specifying a valid file name or path for the plot.
 #'   If set to `NULL`, the plot is displayed to the current graphical device but
 #'   not saved locally. If a valid name with `.png` or `.pdf` extension is
 #'   provided, the plot is saved locally. Users can also include a subdirectory
-#'   in `save.name`, but the directory must be created manually. Ensure the file
-#'   path follows the correct syntax for your operating system.
+#'   in `plot.name`. Ensure the file path follows the correct syntax for your
+#'   operating system.
 #' @param overwrite A logical flag (default `FALSE`) that is evaluated only if
 #'   the `save.name` argument is provided. If `TRUE`, the function checks
 #'   whether a plot with the same name already exists. If it does, the existing
 #'   plot will be overwritten. If `FALSE` and a plot with the same name exists,
 #'   an error is thrown. If no such plot exists, the plot is saved normally.
+#' @param ... Additional arguments passed to the function for calculating
+#'   p-values when the `significance` argument is specified. For available
+#'   functions associated with different `significance` methods, please refer to
+#'   the *Details* section and consult the documentation for the relevant
+#'   functions in the `rstatix` or `multcomp` packages.
 #'
 #' @details  Available methods for the argument `significance` are:
 #'  * `"t_test"` - Performs a pairwise comparison using the two-sample t-test, with the default Holm adjustment for multiple comparisons. This test assumes normally distributed data and equal variances. The adjustment can be modified via the `p.adjust.method` argument. The test is implemented via [rstatix::pairwise_t_test()]
@@ -80,23 +79,46 @@
 #'  * `"sidak_test"` - Adjusts p-values for multiple comparisons using the Šidák correction, which is more powerful than the Bonferroni correction but still conservative. Implemented via [multcomp::glht()].
 #'  * `"hochberg_test"` - Uses Hochberg's method for controlling the family-wise error rate in multiple comparisons. It is a step-up procedure and more powerful than Bonferroni. Implemented via [multcomp::glht()].
 #'
-#' @returns
-#' @export
+#' @return A `ggplot` object representing the distribution of the `y` variable
+#'   across the levels of the `group` and `facet` variables in `data`.
 #'
 #' @examples
+#' ## Example: Creating a raincloud plot for the ToothGrowth dataset.
+#' ## This plot visualizes the distribution of the `len` variable by
+#' ## `dose` (using different colors) and facets by `supp`. Group
+#' ## differences by `dose` are calculated using a `t_test`, and standardized
+#' ## mean differences (SMDs) are displayed through jittered points.
+#'
+#' p <- raincloud(ToothGrowth, len, dose, supp,
+#'                significance = 't_test',
+#'                jitter = 0.15, alpha = 0.4)
+#'
+#' ## As `p` is a valid `ggplot` object, we can manipulate its
+#' ## characteristics usingthe `ggplot2` or `ggpubr` packages
+#' ## to create publication grade plot:
+#' p <- p +
+#'   theme_classic2() %+replace%
+#'   theme(axis.line.y = element_blank(),
+#'         axis.ticks.y = element_blank()) +
+#'   guides(fill = guide_legend('Dose [mg]')) +
+#'   ylab('Length [cm]')
+#'
+#' p
+#'
+#' @export
+
 raincloud <- function(data = NULL,
                       y = NULL,
                       group = NULL,
                       facet = NULL,
                       ncol = 1,
                       significance = NULL, ## not functional
-                      smd = FALSE, # actually wywalić + merge z significance
-                      limits = NULL, # not functional
+                      limits = NULL,
                       jitter = 0.1,
                       alpha = 0.4,
                       plot.name = NULL,
                       overwrite = FALSE,
-                      ...) { ## not functional
+                      ...) {
   ############################ INPUT CHECKING###################################
 
   args_signif <- list(...)
@@ -149,7 +171,7 @@ raincloud <- function(data = NULL,
   chk::chk_range(alpha, range = c(0, 1))
 
   ## Check logicals
-  chk::chk_all(c(smd, overwrite), chk::chk_flag)
+  chk::chk_all(overwrite, chk::chk_flag)
 
   ## Check character and valid name for plot.name
   if (!is.null(plot.name)) {
@@ -266,10 +288,7 @@ raincloud <- function(data = NULL,
     }
 
     # build formula
-    args_signif[["formula"]] <- as.formula(paste0(symlist[["y"]], " ~ ", symlist[["group"]]))
-
-    # args data
-
+    args_signif[["formula"]] <- stats::as.formula(paste0(symlist[["y"]], " ~ ", symlist[["group"]]))
 
     # perform the tests
     if (methods[[significance]]$package_used == "rstatix") {
@@ -385,12 +404,12 @@ raincloud <- function(data = NULL,
   ## Unique values in grouping variables (necessary to define the palette)
   pal_len <- length(unique(data[, symlist[["group"]]]))
 
-  if (use.signif) {
-    # define the main
-    main <- ggplot2::ggplot(data, ggplot2::aes(
-      x = data[, symlist[["group"]]],
-      y = data[, symlist[["y"]]]
-    ))
+    #--defining necessary variables-----------------------------------------------
+    rain_height <- 0.1
+
+    ## --defining the main ggplot formula------------------------------------------
+    colnames(data)[which(colnames(data) == symlist['facet'])] <- 'facet'
+    main <- ggplot2::ggplot(data, ggplot2::aes(x = "", y = data[, symlist[["y"]]]))
 
     # defining theme for the subplots
     custom_theme <- ggplot2::theme_classic() %+replace%
@@ -402,180 +421,26 @@ raincloud <- function(data = NULL,
         legend.title = ggplot2::element_text(face = "bold")
       )
 
-    # test run to define the limits of the plot
-    violin_test <- ggplot2::ggplot(data, ggplot2::aes(
-      x = "",
-      y = data[, symlist[["y"]]],
-      fill = data[, symlist[["group"]]]
-    )) +
-      geom_flat_violin(
-        trim = FALSE, alpha = alpha, show.legend = TRUE,
-        position = ggplot2::position_nudge(x = -0.5)
-      )
-
-    # getting the xlim
-    x_limits <- ggplot2::ggplot_build(violin_test)
-    x_limits <- as.vector(x_limits$layout$panel_scales_y[[1]]$range$range)
-    range <- abs(x_limits[1] - x_limits[2])
-    x_max <- x_limits[2] + range * 0.03
-    x_limits[2] <- x_limits[2] + range * 0.1
-
-    # recalculating the y.positions
-    # calculating approximate range, maximum y and y.positions for stat_pvalue
-    if(facet_levels == 1) {
-      number_comp <- dim(test_results)[1]
-      print(number_comp)
-      y.pos.seq <- list(seq(
-        from = x_max,
-        to = x_limits[2],
-        length.out = number_comp
-      ))
-    } else {
-      y.pos.seq <- list()
-      # looping along the levels of fcaet to calulacte yposition
-      for(i in 1:facet_levels) {
-        test_results_sub <- test_results[test_results$facet == unique(levels(data[, symlist[['facet']]]))[i], ]
-        number_comp <- dim(test_results_sub)[1]
-        y.pos.seq[[i]] <- seq(
-          from = x_max,
-          to = x_limits[2],
-          length.out = number_comp
-        )
-      }
-    }
-
-    # overwriting y.position
-    test_results$y.position <- unlist(y.pos.seq)
-
-    # generating violins
-    violin_plot <- ggplot2::ggplot(data, ggplot2::aes(
-      x = "",
-      y = data[, symlist[["y"]]],
-      fill = data[, symlist[["group"]]]
-    )) +
-      geom_flat_violin(
-        trim = FALSE, alpha = alpha, show.legend = FALSE,
-        position = ggplot2::position_nudge(x = -0.5)
-      ) +
-      scale_fill_vecmatch(n = pal_len, type = "discrete") +
-      scale_color_vecmatch(n = pal_len, type = "discrete") +
-      ## defining scales
-
-      ggplot2::scale_x_discrete(
-        name = "",
-        expand = c(0, 0)
-      ) +
-      ## flipping coordinates
-      ggplot2::coord_flip() +
-      # defining theme
-      custom_theme %+replace%
-      ggplot2::theme(
-        axis.title.x = ggplot2::element_blank(),
-        axis.line.x = ggplot2::element_blank(),
-        axis.ticks.x = ggplot2::element_blank(),
-        axis.text.x = ggplot2::element_blank()
-      ) +
-      ## --defining the stat_summary
-      ggplot2::stat_summary(ggplot2::aes(color = data[, symlist[["group"]]]),
-        fun.data = ggplot2::mean_cl_normal, show.legend = FALSE,
-        position = ggpp::position_dodgenudge(x = -0.3, width = 0.1)
-      ) +
-      ggplot2::ylim(x_limits)
-
-    # generating boxplot
-    box_plot <- main +
-      ggplot2::geom_boxplot(ggplot2::aes(fill = data[, symlist[["group"]]]),
-        width = 0.5, alpha = alpha, show.legend = FALSE,
-        position = ggplot2::position_dodge()
-      ) +
-      scale_fill_vecmatch(n = pal_len, type = "discrete") +
-      ## flipping coordinates
-      ggplot2::coord_flip() +
-      custom_theme +
-      ggplot2::ylim(x_limits) +
-      ggplot2::ylab(symlist[["y"]])
-
-    ## generating jitters
-    jitter_plot <- main +
-      ggplot2::geom_jitter(ggplot2::aes(color = data[, symlist[["group"]]]),
-        size = 2, alpha = alpha, show.legend = TRUE,
-        position = ggplot2::position_jitter(width = jitter)
-      ) +
-      scale_color_vecmatch(n = pal_len, type = "discrete") +
-      ## flipping coordinates
-      ggplot2::coord_flip() +
-      custom_theme %+replace%
-      ggplot2::theme(
-        axis.title.x = ggplot2::element_blank(),
-        axis.line.x = ggplot2::element_blank(),
-        axis.ticks.x = ggplot2::element_blank(),
-        axis.text.x = ggplot2::element_blank(),
-        legend.title = ggplot2::element_text(face = "bold")
-      ) +
-      ggplot2::ylim(x_limits) +
-      ggplot2::labs(color = symlist[["group"]])
-
-    if(facet_levels == 1) {
-      box_plot <- box_plot +
-        ## adding custom pvalues
-        ggpubr::stat_pvalue_manual(test_results,
-                                   label = "p.adj.signif", # Use p.signif to display p-values as asterisks (optional)
-                                   coord.flip = TRUE,
-                                   tip.length = 0.01
-        )
-
-      jitter_plot <- jitter_plot +
-        ggpubr::stat_pvalue_manual(test_results,
-                                   label = "smd", # Use p.signif to display p-values as asterisks (optional)
-                                   coord.flip = TRUE,
-                                   tip.length = 0.01
-        )
-    }
-
-    p <- ggpubr::ggarrange(violin_plot, jitter_plot, box_plot,
-      ncol = 1,
-      heights = c(2, 1, 1),
-      common.legend = TRUE,
-      legend = "right"
-    )
-  } else {
-    #--defining necessary variables-----------------------------------------------
-    rain_height <- 0.1
-
-    ## --defining the main ggplot formula------------------------------------------
-    main <- ggplot2::ggplot(data, ggplot2::aes(x = "", y = data[, symlist[["y"]]]))
-
-    if (!is.null(symlist[["group"]])) {
-      main <- main +
-        ggplot2::aes(
-          fill = data[, symlist[["group"]]],
-          color = data[, symlist[["group"]]]
-        )
-    }
-
     if (is.null(symlist[["group"]]) || pal_len == 0) pal_len <- 1
 
     ## --defining the geom_jitter
     main_geom_layers <- if (pal_len == 1 || is.null(symlist[["group"]])) {
       main +
-        ## --defining the datapoints
-        ggplot2::geom_jitter(
-          size = 2, alpha = alpha, show.legend = FALSE,
-          position = ggplot2::position_jitter(width = jitter)
-        ) +
-
         ## --defining the geom_boxplot
         ggplot2::geom_boxplot(
           width = 0.1, alpha = alpha, show.legend = FALSE,
           position = ggplot2::position_nudge(x = -0.22)
         ) +
-
+        ## --defining the datapoints
+        ggplot2::geom_jitter(
+          size = 2, alpha = alpha, show.legend = FALSE,
+          position = ggplot2::position_jitter(width = jitter)
+        ) +
         ## --defining the stat_summary
         ggplot2::stat_summary(
           fun.data = ggplot2::mean_cl_normal, show.legend = FALSE,
           position = ggplot2::position_nudge(x = rain_height * 3)
         ) +
-
         ## halfs of the violin plots
         geom_flat_violin(
           trim = FALSE, alpha = alpha,
@@ -584,30 +449,30 @@ raincloud <- function(data = NULL,
     } else {
       main +
         ## --defining the geom_boxplot
-        ggplot2::geom_boxplot(
+        ggplot2::geom_boxplot(ggplot2::aes(fill = data[, symlist[["group"]]]),
           width = 0.1, alpha = alpha, show.legend = FALSE,
           position = ggpp::position_dodgenudge(width = 0.2, x = -0.22)
         ) +
         ## --defining the datapoints
-        ggplot2::geom_jitter(
+        ggplot2::geom_jitter(ggplot2::aes(color = data[, symlist[["group"]]]),
           size = 2, alpha = alpha, show.legend = FALSE,
           position = ggplot2::position_jitterdodge(
             jitter.width = jitter,
             dodge.width = 0.25
           )
         ) +
-
         ## --defining the stat_summary
-        ggplot2::stat_summary(
+        ggplot2::stat_summary(ggplot2::aes(color = data[, symlist[["group"]]]),
           fun.data = ggplot2::mean_cl_normal, show.legend = FALSE,
           position = ggpp::position_dodgenudge(x = rain_height * 3, width = 0.1)
         ) +
-
         ## halfs of the violin plots
-        geom_flat_violin(
+        geom_flat_violin(ggplot2::aes(fill = data[, symlist[["group"]]]),
           trim = FALSE, alpha = alpha,
           position = ggplot2::position_nudge(x = rain_height + 0.05)
-        )
+        ) +
+        ## define the fill lab
+        ggplot2::guides(fill = ggplot2::guide_legend(symlist[['group']]))
     }
 
     #--defining the ggplot object-------------------------------------------------
@@ -627,23 +492,112 @@ raincloud <- function(data = NULL,
         axis.ticks.y = ggplot2::element_blank(),
         axis.line.y = ggplot2::element_blank(),
         legend.title = ggplot2::element_text(face = "bold")
+      ) +
+      ## define ylabs
+      ggplot2::ylab(symlist[['y']])
+
+    if (use.signif) {
+    ## defining the lims and calculating the significance bars if necessary
+    # test run to define the limits of the plot
+    violin_test <- ggplot2::ggplot(data, ggplot2::aes(
+      x = "",
+      y = data[, symlist[["y"]]]
+    )) +
+      geom_flat_violin(
+        trim = FALSE, position = ggplot2::position_nudge(x = -0.5)
       )
-  }
+
+    # getting the xlim
+    x_limits <- ggplot2::ggplot_build(violin_test)
+    x_limits <- as.vector(x_limits$layout$panel_scales_y[[1]]$range$range)
+    range <- abs(x_limits[1] - x_limits[2])
+    x_max <- max(data[, symlist[['y']]]) + range * 0.03
+    x_limits[2] <- x_limits[2] + range * 0.06
+
+    # overwrite x_limits if limits defined
+    if(!is.null(limits)) x_limits <- limits
+
+    # getting the nudged xlim
+    p_build <- ggplot2::ggplot_build(p)
+    x_boxplot <- p_build$data[[1]][, c('group', 'x')]
+    x_jitter <- p_build$data[[2]][, c('group', 'x')]
+
+    # recalculating the y.positions
+    # calculating approximate range, maximum y and y.positions for stat_pvalue
+    y.pos.seq <- list()
+
+    # looping along the levels of fcaet to calulacte yposition
+    for(i in 1:facet_levels) {
+      if(facet_levels > 1) {
+        test_results_sub <- test_results[test_results$facet == unique(levels(data[, 'facet']))[i], ]
+      } else {
+        test_results_sub <- test_results
+      }
+
+      number_comp <- dim(test_results_sub)[1]
+      y.pos.seq[[i]] <- seq(
+        from = x_max,
+        to = x_limits[2],
+        length.out = number_comp
+        )
+      }
+
+    # overwriting y.position
+    test_results$y.position <- unlist(y.pos.seq)
+
+    # overwriting xmin and xmax
+    test_results$xmin_box <- x_boxplot$x[match(test_results$xmin, x_boxplot$group)]
+    test_results$xmax_box <- x_boxplot$x[match(test_results$xmax, x_boxplot$group)]
+    test_results$xmin_jit <- x_jitter$x[match(test_results$xmin, x_jitter$group)]
+    test_results$xmax_jit <- x_jitter$x[match(test_results$xmax, x_jitter$group)]
+
+    # adding stat_pvalue
+    p <- p +
+        ## adding custom pvalues
+        ggpubr::stat_pvalue_manual(test_results,
+                                   y.position = 'y.position',
+                                   xmin = 'xmin_box',
+                                   xmax = 'xmax_box',
+                                   label = "p.adj.signif", # Use p.signif to display p-values as asterisks (optional)
+                                   coord.flip = TRUE,
+                                   tip.length = 0.01) +
+      ## adding smds
+      ggpubr::stat_pvalue_manual(test_results,
+                                 y.position = 'y.position',
+                                 xmin = 'xmin_jit',
+                                 xmax = 'xmax_jit',
+                                    label = "smd", # Use p.signif to display p-values as asterisks (optional)
+                                    coord.flip = TRUE,
+                                    tip.length = 0.01)
+    }
+
+    # define limits
+    if(!is.null(limits)) {
+      p <- p +
+        ggplot2::ylim(limits)
+    }
 
   #--add facet if not NULL------------------------------------------------------
   if (!is.null(symlist[["facet"]])) {
-    print(data[, symlist[["facet"]]])
     p <- p +
-      ggplot2::facet_wrap(~ data[, symlist[["facet"]]], ncol = ncol)
+      ggplot2::facet_wrap(. ~ facet,
+                          ncol = ncol)
   }
 
   #--save if specified
   ## Saving the plot
-  # if (save == TRUE) {
-  #   suppressMessages(ggplot2::ggsave(plot.name,
-  #     plot = p, dpi = 300, create.dir = TRUE
-  #   ))
-  # }
+   if (!is.null(plot.name)) {
+     fexist <- file.exists(plot.name)
+
+     if(overwrite || (!fexist && !overwrite)) {
+       suppressMessages(ggplot2::ggsave(plot.name,
+                                        plot = p, dpi = 300, create.dir = TRUE
+       ))
+     } else if (fexist && !overwrite) {
+       chk::wrn('The file name specified in the `plot.name` argument already exists.
+                Set `overwrite = TRUE` if you want to overwrite the file.')
+     }
+  }
 
   ## Returning a ggplot object
   return(p)

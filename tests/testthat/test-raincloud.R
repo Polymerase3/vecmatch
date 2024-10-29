@@ -47,7 +47,7 @@ test_that('Formals checking: names provided in the colnames', {
 test_that('Formals checking: significance', {
   datax <- data.frame(random = double())
   expect_error(raincloud(datax, random, significance = 'asd'),
-                regexp = 'logical')
+                regexp = 'one group')
 })
 
 ## --testing limits-------------------------------------------------------------
@@ -76,36 +76,24 @@ test_that('Formals checking: alpha', {
   expect_no_error(raincloud(datax, random, alpha = 0.7))
 })
 
-## --testing save---------------------------------------------------------------
-test_that('Formals checking: save', {
-  datax <- data.frame(random = double())
-  expect_error(raincloud(datax, random, save = 'asd'),
-               regexp = 'logical')
-})
-
 ## --testing plot.name----------------------------------------------------------
 test_that('Formals checking: plot.name', {
   datax <- data.frame(y = runif(20),
                       group = rep(c(TRUE, FALSE), 10))
-  expect_error(raincloud(datax, y, save = TRUE, plot.name = c(1, 2)),
+  expect_error(raincloud(datax, y, plot.name = c(1, 2)),
                regexp = 'character')
-  expect_error(raincloud(datax, y, save = TRUE),
-               regexp = 'specified')
-  expect_error(raincloud(datax, y, save = TRUE,
-                         plot.name = 'invalid'),
+  expect_error(raincloud(datax, y, plot.name = 'invalid'),
                regexp = '.pdf')
-  expect_error(raincloud(datax, y, save = TRUE,
-                         plot.name = 'invalid.sav'),
+  expect_error(raincloud(datax, y, plot.name = 'invalid.sav'),
                regexp = '.pdf')
-  expect_no_error(raincloud(datax, y, save = TRUE,
-                            plot.name = 'valid.png'))
+  expect_no_error(raincloud(datax, y, plot.name = 'valid.png'))
   if(file.exists('valid.png')) file.remove('valid.png')
 })
 ## --testing overwrite----------------------------------------------------------
 test_that('Formals checking: overwrite', {
   datax <- data.frame(random = double())
   expect_error(raincloud(datax, random, overwrite = 'asd'),
-               regexp = 'logical')
+               regexp = 'flag')
 })
 
 ## --testing non-numeric y------------------------------------------------------

@@ -11,7 +11,6 @@ raincloud(
   facet = NULL,
   ncol = 1,
   significance = NULL,
-  smd = FALSE,
   limits = NULL,
   jitter = 0.1,
   alpha = 0.4,
@@ -51,14 +50,7 @@ p-values in multiple comparisons between groups defined by the \code{group}
 argument. Significant comparisons are represented by bars connecting the
 compared groups on the left side of the boxplots. Note that if there are
 many significant tests, the plot size may adjust accordingly. For available
-methods refer to the Details section.}
-
-\item{smd}{A logical flag, defaulting to \code{FALSE}. Specifies whether to
-display the pairwise standardized mean differences (SMD) between the groups
-defined by the \code{group} argument. SMD values are shown on the left side of
-the boxplots, similarly to the significance levels from the \code{significance}
-argument. Note that only one of these two arguments, \code{smd} or
-\code{significance}, can be set to \code{TRUE} in a single function call.}
+methods refer to the \emph{Details} section.}
 
 \item{limits}{A numeric atomic vector of length two, specifying the \code{y} axis
 limits in the distribution plots. The first element sets the minimum value,
@@ -78,18 +70,28 @@ value relatively high to maintain the interpretability of the plots when
 using the \code{group} argument, as excessive transparency may cause overlap
 between groups, making it difficult to distinguish them visually.}
 
+\item{plot.name}{A string specifying a valid file name or path for the plot.
+If set to \code{NULL}, the plot is displayed to the current graphical device but
+not saved locally. If a valid name with \code{.png} or \code{.pdf} extension is
+provided, the plot is saved locally. Users can also include a subdirectory
+in \code{plot.name}. Ensure the file path follows the correct syntax for your
+operating system.}
+
 \item{overwrite}{A logical flag (default \code{FALSE}) that is evaluated only if
 the \code{save.name} argument is provided. If \code{TRUE}, the function checks
 whether a plot with the same name already exists. If it does, the existing
 plot will be overwritten. If \code{FALSE} and a plot with the same name exists,
 an error is thrown. If no such plot exists, the plot is saved normally.}
 
-\item{save.name}{A string specifying a valid file name or path for the plot.
-If set to \code{NULL}, the plot is displayed to the current graphical device but
-not saved locally. If a valid name with \code{.png} or \code{.pdf} extension is
-provided, the plot is saved locally. Users can also include a subdirectory
-in \code{save.name}, but the directory must be created manually. Ensure the file
-path follows the correct syntax for your operating system.}
+\item{...}{Additional arguments passed to the function for calculating
+p-values when the \code{significance} argument is specified. For available
+functions associated with different \code{significance} methods, please refer to
+the \emph{Details} section and consult the documentation for the relevant
+functions in the \code{rstatix} or \code{multcomp} packages.}
+}
+\value{
+A \code{ggplot} object representing the distribution of the \code{y} variable
+across the levels of the \code{group} and \code{facet} variables in \code{data}.
 }
 \description{
 The \code{raincloud()} function allows to generate distribution plots
@@ -115,4 +117,27 @@ Available methods for the argument \code{significance} are:
 \item \code{"sidak_test"} - Adjusts p-values for multiple comparisons using the Šidák correction, which is more powerful than the Bonferroni correction but still conservative. Implemented via \code{\link[multcomp:glht]{multcomp::glht()}}.
 \item \code{"hochberg_test"} - Uses Hochberg's method for controlling the family-wise error rate in multiple comparisons. It is a step-up procedure and more powerful than Bonferroni. Implemented via \code{\link[multcomp:glht]{multcomp::glht()}}.
 }
+}
+\examples{
+## Example: Creating a raincloud plot for the ToothGrowth dataset.
+## This plot visualizes the distribution of the `len` variable by
+## `dose` (using different colors) and facets by `supp`. Group
+## differences by `dose` are calculated using a `t_test`, and standardized
+## mean differences (SMDs) are displayed through jittered points.
+
+p <- raincloud(ToothGrowth, len, dose, supp,
+               significance = 't_test',
+               jitter = 0.15, alpha = 0.4)
+
+## As `p` is a valid `ggplot` object, we can manipulate its characteristics using
+## the `ggplot2` or `ggpubr` packages to create publication grade plot:
+p <- p +
+  theme_classic2() \%+replace\%
+  theme(axis.line.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  guides(fill = guide_legend('Dose [mg]')) +
+  ylab('Length [cm]')
+
+p
+
 }

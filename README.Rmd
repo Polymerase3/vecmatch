@@ -66,4 +66,4 @@ p
 
 ```
 
-![Raincloud plot for the `len` variable in the `ToothGrowth` dataset](README-raincloud.png)
+![Raincloud plot for the `len` variable in the `ToothGrowth` dataset](man/figures/README-raincloud.png)

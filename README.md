@@ -60,7 +60,7 @@ p
 ```
 
 <figure>
-<img src="README-raincloud.png"
+<img src="man/figures/README-raincloud.png"
 alt="Raincloud plot for the len variable in the ToothGrowth dataset" />
 <figcaption aria-hidden="true">Raincloud plot for the <code>len</code>
 variable in the <code>ToothGrowth</code> dataset</figcaption>

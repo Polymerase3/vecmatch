@@ -30,4 +30,3 @@ Suggests:
     rstatix,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
- defines the common support region, and performs matching across multiple groups.

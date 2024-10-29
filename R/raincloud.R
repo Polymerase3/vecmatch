@@ -131,6 +131,14 @@ raincloud <- function(data = NULL,
     chk::abort_chk("The provided data is not numeric")
   }
 
+  if(!is.data.frame(data)) {
+    tryCatch({
+      data <- as.data.frame(data)},
+      error = function(e) {
+        chk::abort_chk('The `data` argument can not be converted to valid data.frame')
+      })
+  }
+
   #--check y, group and facet---------------------------------------------------
 
   ## Check if the provided names are valid names + convert to

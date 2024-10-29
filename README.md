@@ -6,7 +6,10 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of somepackage is to …
+An implementation of Vector Matching algorithm. Enables the assesment of
+initial covariate imbalances through ellegant graphics, estimates
+treatment assignment probabilities using various methods, defines the
+common support region, and performs matching across multiple groups.
 
 ## Installation
 
@@ -55,3 +58,10 @@ p <- p +
 
 p
 ```
+
+<figure>
+<img src="README-raincloud.png"
+alt="Raincloud plot for the len variable in the ToothGrowth dataset" />
+<figcaption aria-hidden="true">Raincloud plot for the <code>len</code>
+variable in the <code>ToothGrowth</code> dataset</figcaption>
+</figure>

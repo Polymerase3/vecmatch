@@ -88,6 +88,8 @@
 #' ## `dose` (using different colors) and facets by `supp`. Group
 #' ## differences by `dose` are calculated using a `t_test`, and standardized
 #' ## mean differences (SMDs) are displayed through jittered points.
+#' library(ggplot2)
+#' library(ggpubr)
 #'
 #' p <- raincloud(ToothGrowth, len, dose, supp,
 #'                significance = 't_test',

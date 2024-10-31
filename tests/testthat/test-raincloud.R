@@ -106,6 +106,7 @@ test_that('Formals checking: plot.name', {
   expect_error(raincloud(datax, y, plot.name = 'invalid.sav'),
                regexp = '.pdf')
   expect_no_error(raincloud(datax, y, plot.name = 'valid.png', overwrite = TRUE))
+  expect_error(raincloud(datax, y, plot.name = 'valid.png'), regexp = 'overwrite')
   if(file.exists('valid.png')) file.remove('valid.png')
 })
 ## --testing overwrite----------------------------------------------------------

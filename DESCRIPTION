@@ -23,6 +23,7 @@ Imports:
     nnet,
     rlang,
     rstatix,
+<<<<<<< HEAD
     VGAM,
     ggpubr,
     multcomp
@@ -30,4 +31,13 @@ Suggests:
     MASS,
     tibble,
     testthat (>= 3.0.0)
+=======
+    VGAM
+Suggests: 
+    ggpubr,
+    MASS,
+    multcomp,
+    testthat (>= 3.0.0),
+    tibble
+>>>>>>> 3efa3d7593197e7afc3fd73a11d7a98ae1fc2b95
 Config/testthat/edition: 3

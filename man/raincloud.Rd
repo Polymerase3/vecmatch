@@ -129,8 +129,9 @@ p <- raincloud(ToothGrowth, len, dose, supp,
                significance = 't_test',
                jitter = 0.15, alpha = 0.4)
 
-## As `p` is a valid `ggplot` object, we can manipulate its characteristics using
-## the `ggplot2` or `ggpubr` packages to create publication grade plot:
+## As `p` is a valid `ggplot` object, we can manipulate its
+## characteristics usingthe `ggplot2` or `ggpubr` packages
+## to create publication grade plot:
 p <- p +
   theme_classic2() \%+replace\%
   theme(axis.line.y = element_blank(),

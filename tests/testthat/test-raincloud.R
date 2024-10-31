@@ -10,6 +10,9 @@ test_that('Formals checking: data', {
 
   datax <- data.frame(x = character())
   expect_error(raincloud(datax), regexp = 'numeric', label = 'not numeric column')
+
+  datax <- tibble::tibble(y = runif(100))
+  expect_no_error(raincloud(datax, y))
 })
 
 ## --testing formals: y, group, facet-------------------------------------------
@@ -46,20 +49,36 @@ test_that('Formals checking: names provided in the colnames', {
 ## --testing significance-------------------------------------------------------
 test_that('Formals checking: significance', {
   datax <- data.frame(random = double())
+
+  datax2 <- data.frame(y = runif(10),
+                      charr = rep(c('a', 'b', 'c', 'd'), 25),
+                      logg = sample(c(0, 1), size = 100, replace = TRUE))
+
   expect_error(raincloud(datax, random, significance = 'asd'),
                 regexp = 'one group')
+  expect_no_error(raincloud(datax2, y, logg, significance = 't_test'))
+  expect_no_error(raincloud(datax2, y, logg, significance = 'tukeyHSD_test'))
+  expect_error(raincloud(datax2, y, logg, significance = 'test'),
+               regexp = 'methods')
+  expect_no_error(raincloud(datax2, y, charr, logg, significance = 't_test'))
+  expect_no_error(raincloud(datax2, y, charr, logg, significance = 't_test',
+                            limits = c(-1, 2)))
+  expect_error(raincloud(datax2, y, logg, significance = 'LSD_test'),
+                 regexp = 'multcomp')
 })
 
 ## --testing limits-------------------------------------------------------------
 test_that('Formals checking: limits', {
   datax <- data.frame(random = double())
+  datax2 <- data.frame(y = runif(20))
+
   expect_error(raincloud(datax, random, limits = 'asd'),
                regexp = 'limits')
   expect_error(raincloud(datax, random, limits = c(1, 2, 3)),
                regexp = 'limits')
   expect_error(raincloud(datax, random, limits = c(1, 'asd')),
                regexp = 'limits')
-  expect_no_error(raincloud(datax, random, limits = c(1, 2)))
+  expect_no_error(raincloud(datax2, y, limits = c(1, 2)))
 })
 
 ## --testing jitter-------------------------------------------------------------
@@ -86,7 +105,7 @@ test_that('Formals checking: plot.name', {
                regexp = '.pdf')
   expect_error(raincloud(datax, y, plot.name = 'invalid.sav'),
                regexp = '.pdf')
-  expect_no_error(raincloud(datax, y, plot.name = 'valid.png'))
+  expect_no_error(raincloud(datax, y, plot.name = 'valid.png', overwrite = TRUE))
   if(file.exists('valid.png')) file.remove('valid.png')
 })
 ## --testing overwrite----------------------------------------------------------

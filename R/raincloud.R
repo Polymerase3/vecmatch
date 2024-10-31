@@ -124,20 +124,22 @@ raincloud <- function(data = NULL,
   args_signif <- list(...)
 
   #--check data frame-----------------------------------------------------------
+  ## convert to data.frame (to get rid of other classes passing the is.data.frame())
+  class_data <- class(data)
+  if((length(class_data) > 1 && 'data.frame' %in% class_data) || is.matrix(data)) {
+    tryCatch({
+      data <- as.data.frame(data)},
+      error = function(e) {
+        chk::abort_chk('The `data` argument can not be converted to valid data.frame')
+      })
+  }
+
   ## Must be an object of class data frame with at least one numeric column
   .check_df(data)
 
   if (length(data) == 1 && !is.numeric(data[, 1])) {
     chk::abort_chk("The provided data is not numeric")
   }
-
-  ## convert to data.frame (to get rid of other classes passing the is.data.frame())
-  tryCatch({
-    data <- as.data.frame(data)},
-    error = function(e) {
-      chk::abort_chk('The `data` argument can not be converted to valid data.frame')
-    })
-
 
   #--check y, group and facet---------------------------------------------------
 
@@ -201,6 +203,10 @@ raincloud <- function(data = NULL,
     )
   )
 
+  # defining levels of facet for the test
+  facet_levels <- length(unique(data[, symlist[['facet']]]))
+  if(facet_levels == 0 || is.null(facet_levels)) facet_levels <- 1
+
   # check and process the significance argument
   use.signif <- FALSE
   if (!is.null(significance)) {
@@ -212,99 +218,19 @@ raincloud <- function(data = NULL,
       chk::abort_chk("It is impossible to compute statistical significance tests for only one group")
     }
 
-    # defining possible methods
-    methods <- list(
-      "t_test" = list(
-        method_name = "t_test",
-        package_used = "rstatix",
-        args_check_fun = list(
-          rstatix::pairwise_t_test
-        )
-      ),
-      "dunn_test" = list(
-        method_name = "dunn_test",
-        package_used = "rstatix",
-        args_check_fun = list(
-          rstatix::dunn_test
-        )
-      ),
-      "tukeyHSD_test" = list(
-        method_name = "tukeyHSD",
-        package_used = "rstatix",
-        args_check_fun = list(
-          utils::getS3method("tukey_hsd", "data.frame", envir = asNamespace("rstatix"))
-        )
-      ),
-      "games_howell_test" = list(
-        method_name = "games_howell_test",
-        package_used = "rstatix",
-        args_check_fun = list(
-          rstatix::games_howell_test
-        )
-      ),
-      "wilcoxon_test" = list(
-        method_name = "wilcoxon_test",
-        package_used = "rstatix",
-        args_check_fun = list(
-          rstatix::pairwise_wilcox_test
-        )
-      ),
-      "sign_test" = list(
-        method_name = "sign_test",
-        package_used = "rstatix",
-        args_check_fun = list(
-          rstatix::pairwise_sign_test,
-          rstatix::sign_test
-        )
-      ),
-      "scheffe_test" = list(
-        method_name = "scheffe_test",
-        package_used = "multcomp",
-        args_check_fun = list(
-          multcomp::glht
-        )
-      ),
-      "LSD_test" = list(
-        method_name = "LSD_test",
-        package = "multcomp",
-        args_check_fun = list(
-          multcomp::glht
-        )
-      ),
-      "sidak_test" = list(
-        method_name = "sidak_test",
-        package = "multcomp",
-        args_check_fun = list(
-          multcomp::glht
-        )
-      ),
-      "hochberg_test" = list(
-        method_name = "hochberg_test",
-        package = "multcomp",
-        args_check_fun = list(
-          multcomp::glht
-        )
-      )
-    )
-
     # check significance
-    if (!chk::vld_string(significance) || significance %nin% names(methods)) {
+    if (!chk::vld_string(significance) || significance %nin% names(.sig_methods)) {
       chk::abort_chk(sprintf(
         "The argument `significance` has to be a single R string, describing one of the available methods: %s",
-        word_list(add_quotes(methods))
+        word_list(add_quotes(.sig_methods))
       ))
     }
 
     # build formula
     args_signif[["formula"]] <- stats::as.formula(paste0(symlist[["y"]], " ~ ", symlist[["group"]]))
 
-    # perform the tests
-    if (methods[[significance]]$package_used == "rstatix") {
-      # modify name of data argument for tukeyHSD
-      if (significance == "tukeyHSD_test") {
-        names(args_signif)[which(names(args_signif) == "data")] <- "x"
-      }
-
+    # perform the tests for rstatix
+    if (.sig_methods[[significance]]$package_used == "rstatix") {
       # define rstatix funciton used
       func_used <- switch(significance,
         "t_test" = rstatix::pairwise_t_test,
@@ -318,17 +244,13 @@ raincloud <- function(data = NULL,
       # matching args from ...
       args_signif <- match_add_args(
         arglist = args_signif,
-        methods[[significance]]$args_check_fun
+        .sig_methods[[significance]]$args_check_fun
       )
 
       # correcting pool.sd to logical if default value for t_test
       if (!is.logical(args_signif[["pool.sd"]]) && significance == "t_test") {
         args_signif[["pool.sd"]] <- !args_signif[["paired"]]
       }
-
-      # defining levels of facet for the test
-      facet_levels <- length(unique(data[, symlist[['facet']]]))
-      if(facet_levels == 0 || is.null(facet_levels)) facet_levels <- 1
 
       #predefining output list
       test_results <- list()
@@ -342,6 +264,11 @@ raincloud <- function(data = NULL,
         } else {
           subset_cond <- data[, symlist[['facet']]] == levels(data[, symlist[['facet']]])[i]
           args_signif[["data"]] <- data[subset_cond, ]
+        }
+
+        # modify name of data argument for tukeyHSD
+        if (significance == "tukeyHSD_test") {
+          names(args_signif)[which(names(args_signif) == "data")] <- "x"
         }
 
         ## call the rstatix func
@@ -399,10 +326,9 @@ raincloud <- function(data = NULL,
       }
 
     # deal with the multcomp package and method defined in it
-    } else if (attr(significance, "package") == "multcomp") {
-
+    } else if (.sig_methods[[significance]]$package_used == "multcomp") {
+      chk::abort_chk('The methods from package `multcomp` are not yet supported for the calculation of significance levels')
     }
-    ## calculate table
   }
 
   ####################### PLOTTING #############################################

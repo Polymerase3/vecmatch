@@ -1,4 +1,4 @@
-## --list with allowable gps methods and their arguments-------------------------
+## --list with allowable gps methods and their arguments------------------------
 .gps_methods <- list(
   "multinom" = list(
     missing = c("complete.cases", "mean.imputation"),
@@ -58,5 +58,80 @@
     link_fun = c("baseline_category_logit"),
     allowed.treat = c("binary", "multinom"),
     description = "baseline-category logit models"
+  )
+)
+
+## --list with allowable significance methods and their arguments------------------------
+.sig_methods <- list(
+  "t_test" = list(
+    method_name = "t_test",
+    package_used = "rstatix",
+    args_check_fun = list(
+      rstatix::pairwise_t_test
+    )
+  ),
+  "dunn_test" = list(
+    method_name = "dunn_test",
+    package_used = "rstatix",
+    args_check_fun = list(
+      rstatix::dunn_test
+    )
+  ),
+  "tukeyHSD_test" = list(
+    method_name = "tukeyHSD",
+    package_used = "rstatix",
+    args_check_fun = list(
+      utils::getS3method("tukey_hsd", "data.frame", envir = asNamespace("rstatix"))
+    )
+  ),
+  "games_howell_test" = list(
+    method_name = "games_howell_test",
+    package_used = "rstatix",
+    args_check_fun = list(
+      rstatix::games_howell_test
+    )
+  ),
+  "wilcoxon_test" = list(
+    method_name = "wilcoxon_test",
+    package_used = "rstatix",
+    args_check_fun = list(
+      rstatix::pairwise_wilcox_test
+    )
+  ),
+  "sign_test" = list(
+    method_name = "sign_test",
+    package_used = "rstatix",
+    args_check_fun = list(
+      rstatix::pairwise_sign_test,
+      rstatix::sign_test
+    )
+  ),
+  "scheffe_test" = list(
+    method_name = "scheffe_test",
+    package_used = "multcomp",
+    args_check_fun = list(
+      multcomp::glht
+    )
+  ),
+  "LSD_test" = list(
+    method_name = "LSD_test",
+    package_used = "multcomp",
+    args_check_fun = list(
+      multcomp::glht
+    )
+  ),
+  "sidak_test" = list(
+    method_name = "sidak_test",
+    package_used = "multcomp",
+    args_check_fun = list(
+      multcomp::glht
+    )
+  ),
+  "hochberg_test" = list(
+    method_name = "hochberg_test",
+    package_used = "multcomp",
+    args_check_fun = list(
+      multcomp::glht
+    )
   )
 )

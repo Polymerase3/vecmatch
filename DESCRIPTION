@@ -28,5 +28,6 @@ Suggests:
     MASS,
     multcomp,
     rstatix,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    tibble
 Config/testthat/edition: 3

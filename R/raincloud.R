@@ -340,6 +340,8 @@ raincloud <- function(data = NULL,
   ## Unique values in grouping variables (necessary to define the palette)
   pal_len <- length(unique(data[, symlist[["group"]]]))
 
+  if (is.null(symlist[["group"]]) || pal_len == 0) pal_len <- 1
+
     #--defining necessary variables-----------------------------------------------
     rain_height <- 0.1
 
@@ -357,7 +359,7 @@ raincloud <- function(data = NULL,
         legend.title = ggplot2::element_text(face = "bold")
       )
 
-    if (is.null(symlist[["group"]]) || pal_len == 0) pal_len <- 1
+
 
     ## --defining the geom_jitter
     main_geom_layers <- if (pal_len == 1 || is.null(symlist[["group"]])) {

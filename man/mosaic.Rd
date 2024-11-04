@@ -17,8 +17,96 @@ mosaic(
 )
 }
 \arguments{
-\item{...}{}
+\item{data}{A non-empty \code{data.frame} containing at least one numeric column,
+as specified by the \code{y} argument. This argument must be provided and does
+not have a default value.}
+
+\item{y}{A single string or unquoted symbol representing the name of a
+numeric column in the \code{data}. In the vector matching workflow, it is
+typically a numeric covariate that requires balancing.}
+
+\item{group}{A single string or unquoted symbol representing the name of a
+factor or character column in \code{data}. In \code{raincloud()} plots, the groups
+specified by \code{group} argument will be distinguished by separate \code{fill} and
+\code{color} aesthetics. For clarity, it is recommended to plot fewer than 10
+groups, though there is no formal limit.}
+
+\item{facet}{A single string or unquoted symbol representing the name of a
+variable in \code{data} to facet by. This argument is used in a call to
+\code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}, creating separate distribution plots for each
+unique group in the \code{facet} variable.}
+
+\item{ncol}{A single integer. The value should be less than or equal to the
+number of unique categories in the \code{facet} variable. This argument is used
+only when \code{facet} is not NULL, specifying the number of columns in the
+\code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}} call. The distribution plots will be arranged into
+the number of columns defined by \code{ncol}.}
+
+\item{significance}{A logical flag; defaults to \code{FALSE}. When \code{TRUE}, a
+Chi-squared (χ²) test of independence is performed on the
+contingency table of \code{y} and \code{group}. Note that \code{group} must be specified
+for the test to be calculated. If \code{facet} is provided, the significance is
+assessed separately for each \code{facet} subgroup. Additionally, the function
+calculates standardized Pearson residuals (differences between observed and
+expected counts) and fills mosaic plot cells based on the level of partial
+significance for each cell.}
+
+\item{plot.name}{A string specifying a valid file name or path for the plot.
+If set to \code{NULL}, the plot is displayed to the current graphical device but
+not saved locally. If a valid name with \code{.png} or \code{.pdf} extension is
+provided, the plot is saved locally. Users can also include a subdirectory
+in \code{plot.name}. Ensure the file path follows the correct syntax for your
+operating system.}
+
+\item{overwrite}{A logical flag (default \code{FALSE}) that is evaluated only if
+the \code{save.name} argument is provided. If \code{TRUE}, the function checks
+whether a plot with the same name already exists. If it does, the existing
+plot will be overwritten. If \code{FALSE} and a plot with the same name exists,
+an error is thrown. If no such plot exists, the plot is saved normally.}
+
+\item{...}{Additional arguments to pass to \code{rstatix::chisq_test} when
+\code{significance = TRUE}.}
+}
+\value{
+A \code{ggplot} object representing the contingency table of \code{y} and
+\code{group} as a mosaic plot, optionally grouped by \code{facet} if specified.
 }
 \description{
-Plot the distribution of categorical covariates
+The \code{mosaic()} function generates imbalance plots for
+contingency tables with up to three variables. Frequencies in the
+contingency table are represented as tiles (rectangles), with each tile's
+size proportional to the frequency of the corresponding group within the
+entire dataset. The x-axis scale remains fixed across mosaic plots,
+enabling straightforward comparisons of imbalance across treatment groups.
+}
+\examples{
+## Example: Creating a Mosaic Plot of the Titanic Dataset
+## This plot visualizes survival rates by gender across different passenger classes.
+## By setting `significance = TRUE`, you can highlight statistically significant
+## differences within each rectangle of the mosaic plot.
+library(ggplot2)
+
+# Load Titanic dataset and convert to data frame
+titanic_df <- as.data.frame(Titanic)
+
+# Expand the dataset by repeating rows according to 'Freq'
+titanic_long <- titanic_df[rep(1:nrow(titanic_df), titanic_df$Freq), ]
+
+# Remove the 'Freq' column as it is no longer needed
+titanic_long$Freq <- NULL
+
+# Plot the data using mosaic() and modify the result using additional ggplot2
+# functions
+p <- vecmatch::mosaic(data = titanic_long,
+                      y = Survived,
+                      group = Sex,
+                      facet = Class,
+                      ncol = 2,
+                      significance = TRUE)
+
+p <- p +
+     theme_minimal()
+
+p
+
 }

@@ -111,11 +111,6 @@ Available methods for the argument \code{significance} are:
 \item \code{"tukeyHSD_test"} - Uses Tukey's Honest Significant Difference (HSD) test for pairwise comparisons between group means. Suitable for comparing all pairs when the overall ANOVA is significant. The method assumes equal variance between groups and is implemented via \code{\link[rstatix:tukey_hsd]{rstatix::tukey_hsd()}}.
 \item \code{"games_howell_test"} - A post-hoc test used after ANOVA, which does not assume equal variances or equal sample sizes. It’s particularly robust for data that violate homogeneity of variance assumptions. Implemented via \code{\link[rstatix:games_howell_test]{rstatix::games_howell_test()}}.
 \item \code{"wilcoxon_test"} - Performs the Wilcoxon rank-sum test (also known as the Mann-Whitney U test) for non-parametric pairwise comparisons. Useful when data are not normally distributed. Implemented via \code{\link[rstatix:wilcox_test]{rstatix::pairwise_wilcox_test()}}.
-\item \code{"sign_test"} - Conducts the sign test for matched pairs, a non-parametric alternative to the paired t-test when the data don’t meet parametric assumptions. Implemented via \code{\link[rstatix:sign_test]{rstatix::pairwise_sign_test()}}.
-\item \code{"scheffe_test"} - This test performs Scheffé’s method, a post-hoc analysis used after ANOVA. Scheffé’s method is conservative and useful for making complex comparisons. Implemented via \code{\link[multcomp:glht]{multcomp::glht()}}.
-\item \code{"LSD_test"} - The Least Significant Difference (LSD) test compares group means with no adjustment for multiple comparisons, making it more powerful but more prone to Type I errors. Implemented via \code{\link[multcomp:glht]{multcomp::glht()}}.
-\item \code{"sidak_test"} - Adjusts p-values for multiple comparisons using the Šidák correction, which is more powerful than the Bonferroni correction but still conservative. Implemented via \code{\link[multcomp:glht]{multcomp::glht()}}.
-\item \code{"hochberg_test"} - Uses Hochberg's method for controlling the family-wise error rate in multiple comparisons. It is a step-up procedure and more powerful than Bonferroni. Implemented via \code{\link[multcomp:glht]{multcomp::glht()}}.
 }
 }
 \examples{

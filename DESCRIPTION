@@ -25,9 +25,8 @@ Imports:
     rstatix,
     VGAM,
     ggpubr,
-    multcomp,
-    ggmosaic,
-    productplots
+    productplots,
+    cli
 Suggests: 
     MASS,
     testthat (>= 3.0.0),

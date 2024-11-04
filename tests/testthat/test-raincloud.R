@@ -63,8 +63,6 @@ test_that('Formals checking: significance', {
   expect_no_error(raincloud(datax2, y, charr, logg, significance = 't_test'))
   expect_no_error(raincloud(datax2, y, charr, logg, significance = 't_test',
                             limits = c(-1, 2)))
-  expect_error(raincloud(datax2, y, logg, significance = 'LSD_test'),
-                 regexp = 'multcomp')
 })
 
 ## --testing limits-------------------------------------------------------------

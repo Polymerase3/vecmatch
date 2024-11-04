@@ -579,3 +579,8 @@ verbosely <- function(expr, verbose = TRUE) {
 
   out
 }
+
+##--get rid of cli package note-------------------------------------------------
+ignore_unused_imports <- function() {
+  cli::cli_warn
+}

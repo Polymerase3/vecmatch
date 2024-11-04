@@ -1,19 +1,58 @@
-#' Plot the distribution of categorical covariates
+#' @title Plot the distribution of categorical covariates
 #'
-#' @param data
-#' @param y
-#' @param group
-#' @param facet
-#' @param ncol
-#' @param significance
-#' @param plot.name
-#' @param overwrite
-#' @param ...
+#' @description The `mosaic()` function generates imbalance plots for
+#'   contingency tables with up to three variables. Frequencies in the
+#'   contingency table are represented as tiles (rectangles), with each tile's
+#'   size proportional to the frequency of the corresponding group within the
+#'   entire dataset. The x-axis scale remains fixed across mosaic plots,
+#'   enabling straightforward comparisons of imbalance across treatment groups.
 #'
-#' @return
-#' @export
+#' @inheritParams raincloud
+#' @param significance A logical flag; defaults to `FALSE`. When `TRUE`, a
+#'   Chi-squared (χ²) test of independence is performed on the
+#'   contingency table of `y` and `group`. Note that `group` must be specified
+#'   for the test to be calculated. If `facet` is provided, the significance is
+#'   assessed separately for each `facet` subgroup. Additionally, the function
+#'   calculates standardized Pearson residuals (differences between observed and
+#'   expected counts) and fills mosaic plot cells based on the level of partial
+#'   significance for each cell.
+#' @param ... Additional arguments to pass to `rstatix::chisq_test` when
+#'   `significance = TRUE`.
+#'
+#' @return A `ggplot` object representing the contingency table of `y` and
+#'   `group` as a mosaic plot, optionally grouped by `facet` if specified.
+
 #'
 #' @examples
+#' ## Example: Creating a Mosaic Plot of the Titanic Dataset
+#' ## This plot visualizes survival rates by gender across different passenger classes.
+#' ## By setting `significance = TRUE`, you can highlight statistically significant
+#' ## differences within each rectangle of the mosaic plot.
+#' library(ggplot2)
+#'
+#' # Load Titanic dataset and convert to data frame
+#' titanic_df <- as.data.frame(Titanic)
+#'
+#' # Expand the dataset by repeating rows according to 'Freq'
+#' titanic_long <- titanic_df[rep(1:nrow(titanic_df), titanic_df$Freq), ]
+#'
+#' # Remove the 'Freq' column as it is no longer needed
+#' titanic_long$Freq <- NULL
+#'
+#' # Plot the data using mosaic() and modify the result using additional ggplot2
+#' # functions
+#' p <- vecmatch::mosaic(data = titanic_long,
+#'                       y = Survived,
+#'                       group = Sex,
+#'                       facet = Class,
+#'                       ncol = 2,
+#'                       significance = TRUE)
+#'
+#' p <- p +
+#'      theme_minimal()
+#'
+#' p
+#'
 #' @export
 mosaic <- function(data = NULL,
                    y = NULL,
@@ -26,7 +65,7 @@ mosaic <- function(data = NULL,
                    ...) {
   ############################ INPUT CHECKING###################################
 
-  args_signif <- list(...)
+  args_signif_org <- list(...)
 
   #--check data frame-----------------------------------------------------------
   ## convert to data.frame (to get rid of other classes passing the is.data.frame())
@@ -97,6 +136,11 @@ mosaic <- function(data = NULL,
     )
   )
 
+  ## use only complete.cases
+  which_use <- unlist(symlist[!vapply(symlist, is.null, logical(1L))])
+  complete_sub <- stats::complete.cases(data[, colnames(data) %in% which_use])
+  data <- as.data.frame(subset(data, complete_sub))
+
   # defining important conditions
   use_facet <- ifelse(is.null(symlist[['facet']]), FALSE, TRUE)
   use_group <- ifelse(is.null(symlist[['group']]), FALSE, TRUE)
@@ -119,18 +163,18 @@ mosaic <- function(data = NULL,
     }
 
     # add args to the list
-    args_signif[["x"]] <- data[, symlist[["group"]]]
-    args_signif[["y"]] <- data[, symlist[["y"]]]
+    args_signif_org[["x"]] <- data[, symlist[["group"]]]
+    args_signif_org[["y"]] <- data[, symlist[["y"]]]
 
     # check groups
-    if (nunique(args_signif[["x"]]) <= 1) {
+    if (nunique(args_signif_org[["x"]]) <= 1) {
       chk::abort_chk("It is impossible to compute statistical significance tests for only one group")
     }
 
     # perform the test for rstatix
     # matching args from ...
-    args_signif <- match_add_args(
-      arglist = args_signif,
+    args_signif_org <- match_add_args(
+      arglist = args_signif_org,
       rstatix::chisq_test
     )
 
@@ -140,6 +184,9 @@ mosaic <- function(data = NULL,
 
     # Iterate through facet levels
     for (i in seq_len(facet_levels)) {
+      # Copy argument list
+      args_signif <- args_signif_org
+
       # Subset data for facets if there are multiple levels
       if (use_facet) {
         subset_cond <- data[, symlist[["facet"]]] == levels(data[, symlist[["facet"]]])[i]
@@ -147,12 +194,23 @@ mosaic <- function(data = NULL,
                                            function(x) x[subset_cond])
       }
 
+      # Check if there are still at least two levels in each var
+      levels_args <- lapply(args_signif[c('x', 'y')], function(x) length(unique(x)))
+
+      if(!all(levels_args > 1)) {
+        which_fail <- which(levels_args <= 1)
+        fail_name <- c(symlist[['group']], symlist[['y']])[which_fail]
+
+        chk::abort_chk(sprintf('Can not compute significance - the argument `%s` has to have at least two levels.', fail_name))
+      }
+
       # Run the chi-squared test and store results
       tryCatch({
         suppressWarnings({
           test_results[[i]] <- do.call(
             rstatix::chisq_test,
-            args_signif
+            args_signif,
+            quote = TRUE
           )
 
           res[[i]] <- as.data.frame(rstatix::std_residuals(test_results[[i]]))
@@ -186,7 +244,7 @@ mosaic <- function(data = NULL,
   #####################CALCULATING COORDS ######################################
 
   ## Define the formula (conditionally on group)
-  form <- as.formula(paste("~",
+  form <- stats::as.formula(paste("~",
                            if (use_group) paste(symlist[["group"]], '+') else NULL,
                            symlist[["y"]]))
 
@@ -216,7 +274,7 @@ mosaic <- function(data = NULL,
   prodcoords <- as.data.frame(do.call(rbind, prodcoords))
 
   ## filter out base levels if group defined
-  prodcoords <- prodcoords[complete.cases(prodcoords), ]
+  prodcoords <- prodcoords[stats::complete.cases(prodcoords), ]
 
 
   ####################### PLOTTING #############################################
@@ -229,7 +287,8 @@ mosaic <- function(data = NULL,
   if(!use_group) {
     main_layers <- main +
       # defining rectangle aesthetics
-      ggplot2::geom_rect(ggplot2::aes(xmin = l, xmax = r, ymin = b, ymax = t,
+      ggplot2::geom_rect(ggplot2::aes(xmin = prodcoords[, 'l'], xmax = prodcoords[, 'r'],
+                                      ymin = prodcoords[, 'b'], ymax = prodcoords[, 't'],
                                       fill = prodcoords[, symlist[["y"]]]),
                          color = 'black') +
       # customizing fill scale
@@ -259,9 +318,8 @@ mosaic <- function(data = NULL,
                               test_results$df, test_results$n,
                               format(round(test_results$statistic, digits=2), nsmall=2),
                               format(round(test_results$p, digits=3), nsmall=3))
-      caption_df <- data.frame(caption = paste0('Test of independence: ',
-                                               caption_text),
-                               x = rep(0.6, length(caption_text)),
+      caption_df <- data.frame(caption = caption_text,
+                               x = rep(0.4, length(caption_text)),
                                y = if(!use_facet) rep(-0.13, length(caption_text)) else rep(-0.38, length(caption_text)))
 
       if(use_facet) caption_df$facet <- test_results$facet
@@ -290,19 +348,22 @@ mosaic <- function(data = NULL,
       names(fill_vals) <- sig_labels
 
       # customizing the fill scale
-      main_layers <- main +
-        # defining rectangle aesthetics
-        ggplot2::geom_rect(ggplot2::aes(xmin = l, xmax = r, ymin = b, ymax = t,
-                                        fill = prodcoords[, 'Freq']),
-                           color = 'black') +
-        ## adding custom scale to signalize significance
-        ggplot2::scale_fill_manual(name = 'Partial significance',
-                                   values = fill_vals) +
-        ## add caption with test results
-        ggplot2::coord_cartesian(clip = 'off',
-                                 ylim = c(0, 1)) +
-        ggplot2::geom_text(data = caption_df,
-                           ggplot2::aes(x = x, y = y, label = caption))
+        main_layers <- main +
+          # defining rectangle aesthetics
+          ggplot2::geom_rect(ggplot2::aes(xmin = prodcoords[, 'l'], xmax = prodcoords[, 'r'],
+                                          ymin = prodcoords[, 'b'], ymax = prodcoords[, 't'],
+                                          fill = prodcoords[, 'Freq']),
+                             color = 'black') +
+          ## adding custom scale to signalize significance
+          ggplot2::scale_fill_manual(name = 'Partial significance',
+                                     values = fill_vals) +
+          ## add caption with test results
+          ggplot2::coord_cartesian(clip = 'off',
+                                   ylim = c(0, 1))
+          #ggplot2::geom_text(data = caption_df,
+          #                   ggplot2::aes(x = caption_df[, 'x'], y = caption_df[, 'y'],
+          #                                label = caption_df[, 'caption']),
+          #                   size = 3)
 
       if(use_facet) {
         main_layers <- main_layers +
@@ -312,13 +373,15 @@ mosaic <- function(data = NULL,
       } else {
         main_layers <- main_layers +
           ggplot2::theme_classic() %+replace%
-          ggplot2::theme(plot.margin = ggplot2::unit(c(0, 0, 1, 0), 'cm'))
+          ggplot2::theme(plot.margin = ggplot2::unit(c(1, 0, 1, 0.5), 'cm')) +
+          ggplot2::labs(caption = paste0('Test of independence: ', caption_df[, 'caption']))
       }
 
     } else {
       main_layers <- main +
         # defining rectangle aesthetics
-        ggplot2::geom_rect(ggplot2::aes(xmin = l, xmax = r, ymin = b, ymax = t,
+        ggplot2::geom_rect(ggplot2::aes(xmin = prodcoords[, 'l'], xmax = prodcoords[, 'r'],
+                                        ymin = prodcoords[, 'b'], ymax = prodcoords[, 't'],
                                         fill = prodcoords[, symlist[["group"]]]),
                            color = 'black') +
         # customizing fill scale
@@ -351,14 +414,29 @@ mosaic <- function(data = NULL,
     # Combine scales
     scales_custom <- c(scales_custom_x, scales_custom_y)
 
-    # facetting using custom facet_wrap
-    main_layers <- main_layers +
-      facet_wrap_scales(
-        ~facet,
-        ncol = ncol,
-        scales = "free",
-        scales_custom = scales_custom
-      )
+    if(use_signif) {
+      facet_labels <- paste0(caption_df$facet, ':', '\n', caption_df$caption)
+      names(facet_labels) <- caption_df$facet
+
+      # facetting using custom facet_wrap
+      main_layers <- main_layers +
+        facet_wrap_scales(
+          'facet',
+          ncol = ncol,
+          scales = "free",
+          scales_custom = scales_custom,
+          labeller = ggplot2::labeller(facet = facet_labels)
+        )
+    } else {
+      # facetting using custom facet_wrap
+      main_layers <- main_layers +
+        facet_wrap_scales(
+          'facet',
+          ncol = ncol,
+          scales = "free",
+          scales_custom = scales_custom
+        )
+    }
   } else {
     # Update main_layers based on use_group
     main_layers <- main_layers + scale_y_product(prodcoords)
@@ -367,5 +445,24 @@ mosaic <- function(data = NULL,
       main_layers <- main_layers + scale_x_product(prodcoords)
     }
   }
+
+  #--save if specified
+  ## Saving the plot
+  if (!is.null(plot.name)) {
+    fexist <- file.exists(plot.name)
+
+    if(overwrite || (!fexist && !overwrite)) {
+      suppressMessages(ggplot2::ggsave(plot.name,
+                                       plot = main_layers, dpi = 300,
+                                       create.dir = TRUE
+      ))
+    } else if (fexist && !overwrite) {
+      chk::wrn('The file name specified in the `plot.name` argument already exists.
+                Set `overwrite = TRUE` if you want to overwrite the file.')
+    }
+  }
+
+  ## Returning a ggplot object
   return(main_layers)
+
 }

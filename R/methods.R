@@ -105,33 +105,5 @@
       rstatix::pairwise_sign_test,
       rstatix::sign_test
     )
-  ),
-  "scheffe_test" = list(
-    method_name = "scheffe_test",
-    package_used = "multcomp",
-    args_check_fun = list(
-      multcomp::glht
-    )
-  ),
-  "LSD_test" = list(
-    method_name = "LSD_test",
-    package_used = "multcomp",
-    args_check_fun = list(
-      multcomp::glht
-    )
-  ),
-  "sidak_test" = list(
-    method_name = "sidak_test",
-    package_used = "multcomp",
-    args_check_fun = list(
-      multcomp::glht
-    )
-  ),
-  "hochberg_test" = list(
-    method_name = "hochberg_test",
-    package_used = "multcomp",
-    args_check_fun = list(
-      multcomp::glht
-    )
   )
 )

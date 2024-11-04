@@ -73,11 +73,6 @@
 #'  * `"tukeyHSD_test"` - Uses Tukey's Honest Significant Difference (HSD) test for pairwise comparisons between group means. Suitable for comparing all pairs when the overall ANOVA is significant. The method assumes equal variance between groups and is implemented via [rstatix::tukey_hsd()].
 #'  * `"games_howell_test"` - A post-hoc test used after ANOVA, which does not assume equal variances or equal sample sizes. It’s particularly robust for data that violate homogeneity of variance assumptions. Implemented via [rstatix::games_howell_test()].
 #'  * `"wilcoxon_test"` - Performs the Wilcoxon rank-sum test (also known as the Mann-Whitney U test) for non-parametric pairwise comparisons. Useful when data are not normally distributed. Implemented via [rstatix::pairwise_wilcox_test()].
-#'  * `"sign_test"` - Conducts the sign test for matched pairs, a non-parametric alternative to the paired t-test when the data don’t meet parametric assumptions. Implemented via [rstatix::pairwise_sign_test()].
-#'  * `"scheffe_test"` - This test performs Scheffé’s method, a post-hoc analysis used after ANOVA. Scheffé’s method is conservative and useful for making complex comparisons. Implemented via [multcomp::glht()].
-#'  * `"LSD_test"` - The Least Significant Difference (LSD) test compares group means with no adjustment for multiple comparisons, making it more powerful but more prone to Type I errors. Implemented via [multcomp::glht()].
-#'  * `"sidak_test"` - Adjusts p-values for multiple comparisons using the Šidák correction, which is more powerful than the Bonferroni correction but still conservative. Implemented via [multcomp::glht()].
-#'  * `"hochberg_test"` - Uses Hochberg's method for controlling the family-wise error rate in multiple comparisons. It is a step-up procedure and more powerful than Bonferroni. Implemented via [multcomp::glht()].
 #'
 #' @return A `ggplot` object representing the distribution of the `y` variable
 #'   across the levels of the `group` and `facet` variables in `data`.
@@ -205,6 +200,11 @@ raincloud <- function(data = NULL,
     )
   )
 
+  ## use only complete.cases
+  which_use <- unlist(symlist[!vapply(symlist, is.null, logical(1L))])
+  complete_sub <- stats::complete.cases(data[, colnames(data) %in% which_use])
+  data <- as.data.frame(subset(data, complete_sub))
+
   # defining levels of facet for the test
   facet_levels <- length(unique(data[, symlist[['facet']]]))
   if(facet_levels == 0 || is.null(facet_levels)) facet_levels <- 1
@@ -212,7 +212,7 @@ raincloud <- function(data = NULL,
   # check and process the significance argument
   use.signif <- FALSE
   if (!is.null(significance)) {
-    rlang::check_installed(c("rstatix", "multcomp", "ggpubr"))
+    rlang::check_installed(c("rstatix", "ggpubr"))
     use.signif <- TRUE
 
     # check groups
@@ -376,7 +376,7 @@ raincloud <- function(data = NULL,
         ) +
         ## --defining the stat_summary
         ggplot2::stat_summary(
-          fun.data = ggplot2::mean_cl_normal, show.legend = FALSE,
+          fun.data = 'mean_ci', show.legend = FALSE,
           position = ggplot2::position_nudge(x = rain_height * 3)
         ) +
         ## halfs of the violin plots
@@ -401,7 +401,7 @@ raincloud <- function(data = NULL,
         ) +
         ## --defining the stat_summary
         ggplot2::stat_summary(ggplot2::aes(color = data[, symlist[["group"]]]),
-          fun.data = ggplot2::mean_cl_normal, show.legend = FALSE,
+          fun.data = 'mean_ci', show.legend = FALSE,
           position = ggpp::position_dodgenudge(x = rain_height * 3, width = 0.1)
         ) +
         ## halfs of the violin plots

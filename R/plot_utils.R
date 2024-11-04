@@ -92,19 +92,13 @@ scale_x_product <- function(coords) {
   # subset data (only bottoms)
   coords_sub <- as.data.frame(subset(coords, coords$b == 0))
 
-  # split data based on x axis var (always first in the productplot output)
-  coords <- split(coords, coords[, 1])
-
   # predefining vars
   label_position <- list()
-  i = 1
 
   # calculating label positions and defining names
-  for(subs in coords) {
-    coords_sub <- as.data.frame(subset(subs, subs $b == 0))
-    label_position$pos[i] <- (coords_sub$l + coords_sub$r)/2
-    label_position$name[i] <- names(coords)[i]
-    i = i + 1
+  for(i in 1:nrow(coords_sub)) {
+    label_position$pos[i] <- (coords_sub$l[i] + coords_sub$r[i])/2
+    label_position$name[i] <- as.character(coords_sub[i, 1])
   }
 
   # adding scale to plot
@@ -117,7 +111,7 @@ scale_y_product <- function(coords) {
   coords_sub <- as.data.frame(subset(coords, coords$l == 0))
 
   if(!is.null(coords_sub$facet)) {
-    coords_sub <- subset(coords_sub, facet == unique(facet)[1])
+    coords_sub <- subset(coords_sub, coords_sub$facet == unique(coords_sub$facet)[1])
     coords_sub <- coords_sub[, -which(colnames(coords_sub) == 'facet')]
   }
 
@@ -194,3 +188,26 @@ facet_wrap_scales <- function(..., scales_custom = NULL) {
 
 # define the replace function
 "%+replace%" <- ggplot2::"%+replace%"
+
+# calculate mean+-CI for stat_summary
+mean_ci <- function(x) {
+  mean <- mean(x)
+  ci_lower <- mean - 1.96 * stats::sd(x)/sqrt(length(x))
+  ci_upper <- mean + 1.96 * stats::sd(x)/sqrt(length(x))
+
+  data.frame(y = mean, ymin = ci_lower, ymax = ci_upper)
+}
+
+#' Fixing bug in productplots::prodcalc
+#' @keywords internal
+#' @export
+vspine <- function(...) {
+           productplots::vspine(...)
+}
+
+#' Fixing bug in productplots::prodcalc
+#' @keywords internal
+#' @export
+hspine <- function(...) {
+  productplots::hspine(...)
+}

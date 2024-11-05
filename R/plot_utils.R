@@ -189,7 +189,9 @@ facet_wrap_scales <- function(..., scales_custom = NULL) {
 # define the replace function
 "%+replace%" <- ggplot2::"%+replace%"
 
-# calculate mean+-CI for stat_summary
+#' Fixing hmisc dependency
+#' @keywords internal
+#' @export
 mean_ci <- function(x) {
   mean <- mean(x)
   ci_lower <- mean - 1.96 * stats::sd(x)/sqrt(length(x))

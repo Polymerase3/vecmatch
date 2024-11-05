@@ -453,7 +453,7 @@ mosaic <- function(data = NULL,
 
     if(overwrite || (!fexist && !overwrite)) {
       suppressMessages(ggplot2::ggsave(plot.name,
-                                       plot = main_layers, dpi = 300,
+                                       plot = main_layers,
                                        create.dir = TRUE
       ))
     } else if (fexist && !overwrite) {

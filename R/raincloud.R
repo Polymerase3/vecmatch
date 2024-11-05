@@ -109,7 +109,8 @@ raincloud <- function(data = NULL,
                       group = NULL,
                       facet = NULL,
                       ncol = 1,
-                      significance = NULL, ## not functional
+                      significance = NULL,
+                      sig.label.size = NULL,
                       limits = NULL,
                       jitter = 0.1,
                       alpha = 0.4,
@@ -188,6 +189,9 @@ raincloud <- function(data = NULL,
       ext_vec = c(".png", ".PNG", ".pdf", ".PDF")
     )
   }
+
+  # check if sig.label.size is integer
+  if(!is.null(sig.label.size)) chk::chk_integer(sig.label.size)
 
   ####################### DATA PROCESSING ######################################
   # assure y is numeric and convert facet, group to factors
@@ -369,8 +373,6 @@ raincloud <- function(data = NULL,
         legend.title = ggplot2::element_text(face = "bold")
       )
 
-
-
     ## --defining the geom_jitter
     main_geom_layers <- if (pal_len == 1 || is.null(symlist[["group"]])) {
       main +
@@ -508,15 +510,17 @@ raincloud <- function(data = NULL,
                                    xmax = 'xmax_box',
                                    label = "p.adj.signif", # Use p.signif to display p-values as asterisks (optional)
                                    coord.flip = TRUE,
-                                   tip.length = 0.01) +
+                                   tip.length = 0.01,
+                                   size = sig.label.size) +
       ## adding smds
       ggpubr::stat_pvalue_manual(test_results,
                                  y.position = 'y.position',
                                  xmin = 'xmin_jit',
                                  xmax = 'xmax_jit',
-                                    label = "smd", # Use p.signif to display p-values as asterisks (optional)
-                                    coord.flip = TRUE,
-                                    tip.length = 0.01)
+                                 label = "smd", # Use p.signif to display p-values as asterisks (optional)
+                                 coord.flip = TRUE,
+                                 tip.length = 0.01,
+                                 size = sig.label.size)
     }
 
     # define limits

@@ -209,6 +209,16 @@ raincloud <- function(data = NULL,
   facet_levels <- length(unique(data[, symlist[['facet']]]))
   if(facet_levels == 0 || is.null(facet_levels)) facet_levels <- 1
 
+  # Fixing hmisc dependency
+  mean_ci <- function(x) {
+    mean <- mean(x)
+    ci_lower <- mean - 1.96 * stats::sd(x)/sqrt(length(x))
+    ci_upper <- mean + 1.96 * stats::sd(x)/sqrt(length(x))
+
+    data.frame(y = mean, ymin = ci_lower, ymax = ci_upper)
+  }
+
+
   # check and process the significance argument
   use.signif <- FALSE
   if (!is.null(significance)) {
@@ -376,7 +386,7 @@ raincloud <- function(data = NULL,
         ) +
         ## --defining the stat_summary
         ggplot2::stat_summary(
-          fun.data = 'mean_ci', show.legend = FALSE,
+          fun.data = mean_ci, show.legend = FALSE,
           position = ggplot2::position_nudge(x = rain_height * 3)
         ) +
         ## halfs of the violin plots
@@ -401,7 +411,7 @@ raincloud <- function(data = NULL,
         ) +
         ## --defining the stat_summary
         ggplot2::stat_summary(ggplot2::aes(color = data[, symlist[["group"]]]),
-          fun.data = 'mean_ci', show.legend = FALSE,
+          fun.data = mean_ci, show.legend = FALSE,
           position = ggpp::position_dodgenudge(x = rain_height * 3, width = 0.1)
         ) +
         ## halfs of the violin plots

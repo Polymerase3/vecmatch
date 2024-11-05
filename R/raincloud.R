@@ -384,15 +384,15 @@ raincloud <- function(data = NULL,
           size = 2, alpha = alpha, show.legend = FALSE,
           position = ggplot2::position_jitter(width = jitter)
         ) +
-        ## --defining the stat_summary
-        ggplot2::stat_summary(
-          fun.data = mean_ci, show.legend = FALSE,
-          position = ggplot2::position_nudge(x = rain_height * 3)
-        ) +
         ## halfs of the violin plots
         geom_flat_violin(
           trim = FALSE, alpha = alpha,
           position = ggplot2::position_nudge(x = rain_height + 0.05)
+        ) +
+        ## --defining the stat_summary
+        ggplot2::stat_summary(
+          fun.data = mean_ci, show.legend = FALSE,
+          position = ggplot2::position_nudge(x = rain_height * 3)
         )
     } else {
       main +
@@ -409,15 +409,15 @@ raincloud <- function(data = NULL,
             dodge.width = 0.25
           )
         ) +
-        ## --defining the stat_summary
-        ggplot2::stat_summary(ggplot2::aes(color = data[, symlist[["group"]]]),
-          fun.data = mean_ci, show.legend = FALSE,
-          position = ggpp::position_dodgenudge(x = rain_height * 3, width = 0.1)
-        ) +
         ## halfs of the violin plots
         geom_flat_violin(ggplot2::aes(fill = data[, symlist[["group"]]]),
           trim = FALSE, alpha = alpha,
           position = ggplot2::position_nudge(x = rain_height + 0.05)
+        ) +
+        ## --defining the stat_summary
+        ggplot2::stat_summary(ggplot2::aes(color = data[, symlist[["group"]]]),
+                              fun.data = mean_ci, show.legend = FALSE,
+                              position = ggpp::position_dodgenudge(x = rain_height * 3, width = 0.1)
         ) +
         ## define the fill lab
         ggplot2::guides(fill = ggplot2::guide_legend(symlist[['group']]))

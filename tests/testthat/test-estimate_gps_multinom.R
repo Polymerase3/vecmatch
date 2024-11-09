@@ -56,7 +56,7 @@ test_that('Checking `brglm2` method', {
 
 })
 
-##-- checking brglm2 package---------------------------------------------------
+##-- checking mclogit package---------------------------------------------------
 test_that('Checking `mclogit` method', {
   data <- data.frame(treat = rep(c(1, 2, 3, 4, 5), 20),
                      pred = runif(100),
@@ -77,4 +77,27 @@ test_that('Checking `mclogit` method', {
                                control = mclogit::mclogit.control(maxit = 30)))
   expect_error(estimate_gps(treat ~ pred, data, method = 'mblogit',
                             control = 'fail'))
+})
+##-- checking polr with ordinal treatment---------------------------------------
+test_that('Checking `polr` method', {
+  data <- data.frame(treat_ord = factor(rep(c(1, 2, 3, 4, 5), 20),
+                                        levels = c(1, 2, 3, 4, 5),
+                                        ordered = TRUE),
+                     treat_fail = factor(rep(c(1, 2, 3, 4, 5), 20),
+                                         levels = c(1, 2, 3, 4, 5),
+                                         ordered = FALSE),
+                     pred = runif(100),
+                     pred2 = runif(100),
+                     sex = rep(c(1, 2), 50))
+
+  ## test fail
+  expect_error(estimate_gps(treat_fail ~ pred * sex, data, method = 'polr'),
+               regexp = 'ordered')
+  expect_error(estimate_gps(treat_ord ~ pred * sex, data, method = 'polr',
+                            link = 'fail'), regexp = 'link')
+
+  ## test pass + additional args
+  expect_no_error(estimate_gps(treat_ord ~ pred * sex, data, method = 'polr'))
+  expect_no_error(estimate_gps(treat_ord ~ pred * sex, data, method = 'polr',
+                               link = 'loglog', Hess = TRUE))
 })

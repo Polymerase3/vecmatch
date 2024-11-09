@@ -74,8 +74,9 @@ examples refer to XXX}
 }
 \value{
 A numeric matrix with the number of columns equal to the number of
-unique treatment variable levels and the number of row equal to the number
-of subjects in the initial dataset.
+unique treatment variable levels plus one (for the treatment variable
+itself) and the number of row equal to the number of subjects in the
+initial dataset.
 }
 \description{
 \code{estimate_gps()} computes generalized propensity scores for
@@ -87,15 +88,53 @@ The main goal of the \code{estimate_gps()} function is to calculate the
 generalized propensity scores aka. treatment allocation probabilities. It
 is the first step in the workflow vector matching algorithm and is
 essential for the further analysis. The returned matrix of class \code{gps} can
-then be passed to the \code{csr()} function to calculate the rectangular common
-support region boundaries and drop samples uneligible for the further
-analysis. The list of available methods operated by the \code{estimate_gps()} is
-provided below with a short description and function used for the
-calculations:
+then be passed to the \code{csregion()} function to calculate the rectangular
+common support region boundaries and drop samples uneligible for the
+further analysis. The list of available methods operated by the
+\code{estimate_gps()} is provided below with a short description and function
+used for the calculations:
 \itemize{
 \item \code{multinom} - multinomial logistic regression model \code{\link[nnet:multinom]{nnet::multinom()}}
 \item \code{vglm} - vector generalized linear model for multinomial data \code{\link[VGAM:vglm]{VGAM::vglm()}},
 \item \code{brglm2} - bias reduction model for multinomial respones using the poisson trick \code{\link[brglm2:brmultinom]{brglm2::brmultinom()}},
 \item \code{mblogit} - baseline-category logit models \code{\link[mclogit:mblogit]{mclogit::mblogit()}}.
+\item \code{polr} - ordered logistic or probit regression onyl for ordered factor variables from \code{\link[MASS:polr]{MASS::polr()}}. The \code{method} argument of the underlying \code{MASS::polr()} package function can be controlled with the \code{link} argument. Available options: \code{link = c("logistic", "probit", "loglog", "cloglog", "cauchit")}
 }
+}
+\examples{
+
+library('brglm2')
+
+# Conducting covariate balancing on the `airquality` dataset. Our goal was to
+# compare ozone levels by month, but we discovered that ozone levels are strongly
+# correlated with wind intensity (measured in mph), and the average wind intensity
+# varies across months. Therefore, we need to balance the months by wind values
+# to ensure a valid comparison of ozone levels.
+
+# Initial imbalance of means
+tapply(airquality$Wind, airquality$Month, mean)
+
+# Formula definition
+formula_air <- formula(Month ~ Wind)
+
+# Estimating the generalized propensity scores using brglm2 method using
+# maximum penalized likelihood estimators with powers of the Jeffreys
+gp_scores <- estimate_gps(formula_air, data = airquality, method = 'brglm2',
+                         reference = '5', verbose.output = TRUE,
+                         control = brglmControl(type = 'MPL_Jeffreys'))
+
+# Filtering the observations outside the csr region
+gps_csr <- csregion(gp_scores)
+
+# Calculating imbalance after csr
+filter_which <- attr(gps_csr, 'filter_vector')
+filtered_air <- airquality[filter_which, ]
+
+tapply(filtered_air$Wind, filtered_air$Month, mean)
+
+# We can also investigate the imbalance using the raincloud function
+raincloud(filtered_air,
+          y = Wind,
+          group = Month,
+          significance = 't_test')
 }

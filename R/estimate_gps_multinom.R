@@ -12,6 +12,11 @@
   treat <- .assign_treatment_type(treat)
   treat.type <- .get_treat_type(treat)
 
+  ## Check polr with treatment type
+  if(method == 'polr' && treat.type != 'ordinal') {
+    chk::abort_chk('If `method = "polr"`, the treatment variable must be an ordered factor.')
+  }
+
   ## Process data
   data <- data.frame(treat, covs)
   data <- as.data.frame(lapply(data, scale_0_to_1))
@@ -30,7 +35,7 @@
   Args[['link']] <- link
 
   ################### FITTING THE MODELS #######################################
-  if (treat.type == "multinom" || treat.type == "binary" || treat.type == "ordinal") { ## ordinal needs to be fixed?
+  if (treat.type == "multinom" || treat.type == "binary" || (treat.type == "ordinal" && method != 'polr')) {
     ## --NNET::multinom()--------------------------------------------------------
     if (method == "multinom") {
       infos <- .gps_methods[["multinom"]]
@@ -285,7 +290,44 @@
       }
     }
 
-    ## --
+    ## --thats where ordinals should start
+  } else if (treat.type == "ordinal") {
+    if(method == 'polr') {
+      infos <- .gps_methods[['polr']]
+      rlang::check_installed(infos$packages_needed)
+
+      # map link to method arg of MASS::polr
+      which_change <- which(names(Args) == 'link')
+      names(Args)[which_change] <- 'method'
+
+
+      ## Processing Args
+      Args <- match_add_args(
+        arglist = Args,
+        infos$fun.arg.check
+      )
+
+      if(link %in% infos$link_fun) {
+        tryCatch(
+          verbosely(
+            {
+              fit <- do.call(MASS::polr,
+                             args = Args
+              )
+            },
+            verbose = verbose.output
+          ),
+          error = function(e) {
+            chk::abort_chk(sprintf(
+              "There was a problem fitting the %s regressions with `MASS::polr()`.\n
+                               Error message: (from `MASS::polr()`) %s",
+              link, conditionMessage(e)
+            ), tidy = FALSE)
+          }
+        )
+      }
+        fitted_obj <- fit
+    }
   } else {
     probably_a_bug <- TRUE
   }

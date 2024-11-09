@@ -314,7 +314,7 @@ mosaic <- function(data = NULL,
 
     if(use_signif) {
       # process test_results
-      caption_text <- sprintf('\U03C7\U00B2(%i, \U1D45B = %i) = %s, \U1D45D = %s',
+      caption_text <- sprintf('Chi^2(%i, n = %i) = %s, p = %s',
                               test_results$df, test_results$n,
                               format(round(test_results$statistic, digits=2), nsmall=2),
                               format(round(test_results$p, digits=3), nsmall=3))

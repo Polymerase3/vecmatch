@@ -47,25 +47,60 @@
 #'   examples refer to XXX
 #'
 #' @returns A numeric matrix with the number of columns equal to the number of
-#'   unique treatment variable levels and the number of row equal to the number
-#'   of subjects in the initial dataset.
+#'   unique treatment variable levels plus one (for the treatment variable
+#'   itself) and the number of row equal to the number of subjects in the
+#'   initial dataset.
 #'
 #' @details The main goal of the `estimate_gps()` function is to calculate the
 #'   generalized propensity scores aka. treatment allocation probabilities. It
 #'   is the first step in the workflow vector matching algorithm and is
 #'   essential for the further analysis. The returned matrix of class `gps` can
-#'   then be passed to the `csr()` function to calculate the rectangular common
-#'   support region boundaries and drop samples uneligible for the further
-#'   analysis. The list of available methods operated by the `estimate_gps()` is
-#'   provided below with a short description and function used for the
-#'   calculations:
+#'   then be passed to the `csregion()` function to calculate the rectangular
+#'   common support region boundaries and drop samples uneligible for the
+#'   further analysis. The list of available methods operated by the
+#'   `estimate_gps()` is provided below with a short description and function
+#'   used for the calculations:
 #'   * `multinom` - multinomial logistic regression model [nnet::multinom()]
 #'   * `vglm` - vector generalized linear model for multinomial data [VGAM::vglm()],
 #'   * `brglm2` - bias reduction model for multinomial respones using the poisson trick [brglm2::brmultinom()],
 #'   * `mblogit` - baseline-category logit models [mclogit::mblogit()].
-#'
+#'   * `polr` - ordered logistic or probit regression onyl for ordered factor variables from [MASS::polr()]. The `method` argument of the underlying `MASS::polr()` package function can be controlled with the `link` argument. Available options: `link = c("logistic", "probit", "loglog", "cloglog", "cauchit")`
 #' @examples
 #'
+#'library('brglm2')
+#'
+#'# Conducting covariate balancing on the `airquality` dataset. Our goal was to
+#'# compare ozone levels by month, but we discovered that ozone levels are strongly
+#'# correlated with wind intensity (measured in mph), and the average wind intensity
+#'# varies across months. Therefore, we need to balance the months by wind values
+#'# to ensure a valid comparison of ozone levels.
+#'
+#'# Initial imbalance of means
+#'tapply(airquality$Wind, airquality$Month, mean)
+#'
+#'# Formula definition
+#'formula_air <- formula(Month ~ Wind)
+#'
+#'# Estimating the generalized propensity scores using brglm2 method using
+#'# maximum penalized likelihood estimators with powers of the Jeffreys
+#'gp_scores <- estimate_gps(formula_air, data = airquality, method = 'brglm2',
+#'                          reference = '5', verbose.output = TRUE,
+#'                          control = brglmControl(type = 'MPL_Jeffreys'))
+#'
+#' # Filtering the observations outside the csr region
+#' gps_csr <- csregion(gp_scores)
+#'
+#' # Calculating imbalance after csr
+#' filter_which <- attr(gps_csr, 'filter_vector')
+#' filtered_air <- airquality[filter_which, ]
+#'
+#' tapply(filtered_air$Wind, filtered_air$Month, mean)
+#'
+#' # We can also investigate the imbalance using the raincloud function
+#' raincloud(filtered_air,
+#'           y = Wind,
+#'           group = Month,
+#'           significance = 't_test')
 #' @export
 
 estimate_gps <- function(formula,
@@ -74,8 +109,8 @@ estimate_gps <- function(formula,
                          link = NULL,
                          reference = NULL,
                          by = NULL,
-                         missing = NULL,
-                         subset = NULL, # unprocessed
+                         missing = NULL, # unprocessed
+                         subset = NULL,
                          ordinal.treat = NULL, # unprocessed
                          fit.object = FALSE,
                          verbose.output = FALSE,
@@ -106,43 +141,12 @@ estimate_gps <- function(formula,
   }
 
   # formula
-  if (missing(formula)) {
-    chk::abort_chk("The argument `formula` is missing with no default")
-  }
+  data.list <- .process_formula(formula, data)
 
-  if (!rlang::is_formula(formula, lhs = TRUE)) {
-    chk::abort_chk("The argument `formula` has to be a valid R formula with
-                   treatment and predictor variables")
-  }
-
-  data.list <- .get_formula_vars(formula, data)
-
+  # args assignment to list used in calculations
   args["treat"] <- list(data.list[["treat"]])
   args["covs"] <- list(data.list[["model_covs"]])
 
-  if (is.null(args["treat"])) {
-    chk::abort_chk("No treatment variable was specified")
-  }
-
-  if (is.null(args["covs"])) {
-    chk::abort_chk("No predictors were specified")
-  }
-
-  if (length(args[["treat"]]) != nrow(args[["covs"]])) {
-    chk::abort_chk("The treatment variable and predictors ought to have the
-                   same number of samples")
-  }
-
-  if (anyNA(args[["treat"]])) {
-    chk::abort_chk("The `treatment` variable can not have any NA's")
-  }
-
-  n_levels <- nunique(args[["treat"]])
-  if (n_levels > 10) {
-    chk::wrn("The `treatment` variable has more than 10 unique levels. Consider
-             dropping the number of groups, as the vector matching algorithm may
-             not perform well")
-  }
 
   # process and check ordinal.treat
   if (!is.null(ordinal.treat)) {
@@ -191,27 +195,12 @@ estimate_gps <- function(formula,
   }
 
   # reference
-  levels_treat <- as.character(unique(args[["treat"]]))
+  ref.list <- .process_ref(args[['treat']],
+                           ordinal.treat = ordinal.treat,
+                           reference = reference)
 
-  if (!is.null(ordinal.treat) && !is.null(reference)) {
-    chk::wrn("There is no need to specify `reference` if `ordinal.treat` was provided. Ignoring the `reference` argument")
-  } else {
-    if (is.null(reference)) {
-      reference <- levels_treat[1]
-
-      if (!is.ordered(args[["treat"]])) {
-        args[["treat"]] <- stats::relevel(args[["treat"]], ref = reference)
-      }
-    } else if (!(is.character(reference) && length(reference) == 1L && !anyNA(reference))) {
-      chk::abort_chk("The argument `reference` must be a single string of length 1")
-    } else if (!(reference %in% levels_treat)) {
-      chk::abort_chk("The argument `reference` is not in the unique levels of the
-                   treatment variable")
-    } else {
-      args[["treat"]] <- factor(args[["treat"]], ordered = FALSE)
-      args[["treat"]] <- stats::relevel(args[["treat"]], ref = reference)
-    }
-  }
+  args[['treat']] <- ref.list[['data.relevel']]
+  reference <- ref.list[['reference']]
 
   # missing
   missing <- .process_missing(missing, method)
@@ -328,9 +317,13 @@ estimate_gps <- function(formula,
       gps <- VGAM::fitted.values(fitted_object)
     }
   } else {
-    gps <- as.matrix(fitted_object$fitted.values)
+    gps <- fitted_object$fitted.values
+    gps <- as.data.frame(cbind(treatment = args[['treat']], gps))
   }
 
-  class(gps) <- "gps"
+  ## cbind treatment to all outputs!
+  ## add argnames as attributes!
+
+  class(gps) <- c('data.frame', 'gps')
   return(gps)
 }

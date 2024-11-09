@@ -35,6 +35,9 @@
 #'   compared groups on the left side of the boxplots. Note that if there are
 #'   many significant tests, the plot size may adjust accordingly. For available
 #'   methods refer to the *Details* section.
+#' @param sig.label.size An integer specifying the size of the significance and
+#'   SMD (standardized mean difference) labels displayed on the bars on the
+#'   right side of the plot.
 #' @param limits A numeric atomic vector of length two, specifying the `y` axis
 #'   limits in the distribution plots. The first element sets the minimum value,
 #'   and the second sets the maximum. This vector is passed to the
@@ -110,7 +113,7 @@ raincloud <- function(data = NULL,
                       facet = NULL,
                       ncol = 1,
                       significance = NULL,
-                      sig.label.size = NULL,
+                      sig.label.size = 2L,
                       limits = NULL,
                       jitter = 0.1,
                       alpha = 0.4,
@@ -191,7 +194,11 @@ raincloud <- function(data = NULL,
   }
 
   # check if sig.label.size is integer
-  if(!is.null(sig.label.size)) chk::chk_integer(sig.label.size)
+
+  if(!is.null(sig.label.size)) {
+    try(sig.label.size <- as.integer(sig.label.size))
+    chk::chk_integer(sig.label.size)
+  }
 
   ####################### DATA PROCESSING ######################################
   # assure y is numeric and convert facet, group to factors

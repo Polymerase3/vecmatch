@@ -11,6 +11,7 @@ raincloud(
   facet = NULL,
   ncol = 1,
   significance = NULL,
+  sig.label.size = 2L,
   limits = NULL,
   jitter = 0.1,
   alpha = 0.4,
@@ -51,6 +52,10 @@ argument. Significant comparisons are represented by bars connecting the
 compared groups on the left side of the boxplots. Note that if there are
 many significant tests, the plot size may adjust accordingly. For available
 methods refer to the \emph{Details} section.}
+
+\item{sig.label.size}{An integer specifying the size of the significance and
+SMD (standardized mean difference) labels displayed on the bars on the
+right side of the plot.}
 
 \item{limits}{A numeric atomic vector of length two, specifying the \code{y} axis
 limits in the distribution plots. The first element sets the minimum value,

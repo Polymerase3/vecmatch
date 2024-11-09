@@ -194,6 +194,54 @@
   return(ret)
 }
 
+#--process formula--------------------------------------------------------------
+.process_formula <- function(formula, data) {
+  # defining empty list for arg storage
+  args <- list()
+
+  # formula
+  if (missing(formula)) {
+    chk::abort_chk("The argument `formula` is missing with no default")
+  }
+
+  if (!rlang::is_formula(formula, lhs = TRUE)) {
+    chk::abort_chk("The argument `formula` has to be a valid R formula with
+                   treatment and predictor variables")
+  }
+
+  data.list <- .get_formula_vars(formula, data)
+
+  args["treat"] <- list(data.list[["treat"]])
+  args["covs"] <- list(data.list[["model_covs"]])
+
+  if (is.null(args["treat"])) {
+    chk::abort_chk("No treatment variable was specified")
+  }
+
+  if (is.null(args["covs"])) {
+    chk::abort_chk("No predictors were specified")
+  }
+
+  if (length(args[["treat"]]) != nrow(args[["covs"]])) {
+    chk::abort_chk("The treatment variable and predictors ought to have the
+                   same number of samples")
+  }
+
+  if (anyNA(args[["treat"]])) {
+    chk::abort_chk("The `treatment` variable can not have any NA's")
+  }
+
+  n_levels <- nunique(args[["treat"]])
+  if (n_levels > 10) {
+    chk::wrn("The `treatment` variable has more than 10 unique levels. Consider
+             dropping the number of groups, as the vector matching algorithm may
+             not perform well")
+  }
+
+  # return list with output vars
+  return(data.list)
+
+}
 
 # R Processing-------------------------------------------------------------------
 .make_list <- function(n) {
@@ -583,4 +631,38 @@ verbosely <- function(expr, verbose = TRUE) {
 ##--get rid of cli package note-------------------------------------------------
 ignore_unused_imports <- function() {
   cli::cli_warn
+}
+
+##--process reference-----------------------------------------------------------
+.process_ref <- function(data.vec,
+                         reference = NULL,
+                         ordinal.treat = NULL) {
+  # reference
+  levels_treat <- as.character(unique(data.vec))
+
+  if (!is.null(ordinal.treat) && !is.null(reference)) {
+    chk::wrn("There is no need to specify `reference` if `ordinal.treat` was provided. Ignoring the `reference` argument")
+  } else {
+    if (is.null(reference)) {
+      reference <- levels_treat[1]
+
+      if (!is.ordered(data.vec)) {
+        data.vec <- stats::relevel(data.vec, ref = reference)
+      }
+    } else if (!(is.character(reference) && length(reference) == 1L && !anyNA(reference))) {
+      chk::abort_chk("The argument `reference` must be a single string of length 1")
+    } else if (!(reference %in% levels_treat)) {
+      chk::abort_chk("The argument `reference` is not in the unique levels of the
+                   treatment variable")
+    } else {
+      data.vec <- factor(data.vec, ordered = FALSE)
+      data.vec <- stats::relevel(data.vec, ref = reference)
+    }
+  }
+
+  ## assembling output
+  ref.out <- list(data.relevel = data.vec,
+                  reference = reference)
+
+  return(ref.out)
 }

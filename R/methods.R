@@ -19,6 +19,9 @@
     func_used = ".estimate_gps_multinom",
     alias = "propodds",
     packages_needed = "MASS",
+    fun.arg.check = list(
+      MASS::polr
+    ),
     link_fun = c("logistic", "probit", "loglog", "cloglog", "cauchit"),
     description = "estimating gps for ordered treatments using proportional
                 odds logistic regression from MASS package"

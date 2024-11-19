@@ -5,10 +5,11 @@
 \title{Title}
 \usage{
 match_gps(
-  formula,
+  treatment = NULL,
   data = NULL,
   caliper = NULL,
   reference = NULL,
+  by = NULL,
   combos = NULL,
   kmeans.args = NULL,
   ratio = 1,

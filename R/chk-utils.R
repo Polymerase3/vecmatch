@@ -15,11 +15,12 @@
 }
 
 #--check if the object is a numeric vector of given length----------------------
-.check_vecl <- function(x, leng) {
+.check_vecl <- function(x, leng, check_numeric = TRUE) {
   ret <- all(
     is.atomic(x) && !is.matrix(x) && !is.array(x), # checks vector
     length(x) == leng, # checks length
-    is.numeric(x) # checks numeric
+    if(check_numeric) is.numeric(x) # checks numeric
+
   )
   return(ret)
 }
@@ -99,9 +100,10 @@
 }
 
 #--check data.frame-------------------------------------------------------------
-.check_df <- function(data) {
+.check_df <- function(data, data_name = 'data') {
   if (is.null(data) || !inherits(data, "data.frame")) {
-    chk::abort_chk("Argument `data` must be an object of class `data.frame`")
+    chk::abort_chk(sprintf("Argument `%s` must be an object of class `data.frame`",
+                           data_name))
   }
 
   if (length(data) == 0) {
@@ -122,5 +124,55 @@
       "The argument `method` has to be one from: %s",
       word_list(add_quotes(names(.gps_methods)))
     ))
+  }
+}
+
+##--check gps matrix------------------------------------------------------------
+.check_gps_matrix <- function(gps_matrix) {
+  # check if treatment variable present and if its first column of all
+  if(colnames(gps_matrix)[1] != 'treatment') {
+    chk::abort_chk('The first column in an object of class `gps` must be named `treatment`.')
+  }
+
+  # check if all levels of treatment are in colnames
+  if(nunique(gps_matrix[, 1]) != ncol(gps_matrix) - 1) {
+    chk::abort_chk('The `gps` object must have a number of columns equal to the unique levels of the treatment variable plus one (to include the treatment variable itself).')
+  }
+
+  if (any(unique(gps_matrix$treatment) %nin% colnames(gps_matrix))) {
+    chk::abort_chk('The columns of the `gps` object must be named to match the unique levels of the treatment variable.')
+  }
+
+  if(any(is.na(gps_matrix))) {
+    chk::abort_chk("The object of class `gps` can not contain any NA's")
+  }
+
+  if(any(round(rowSums(gps_matrix[, -1]), 5) != 1)) {
+    which.row <- which(round(rowSums(gps_matrix[, -1]), 5) != 1)
+
+    chk::abort_chk(sprintf(
+     "The row-wise sum of probabilities across all columns must equal 1. IDs of rows where this condition is not met: %s",
+     word_list(which.row)
+    )
+  )
+  }
+}
+
+##--check integer---------------------------------------------------------------
+.check_integer <- function(x, x_name = NULL) {
+  coerce_integer <- suppressWarnings(as.integer(x))
+
+  if(!any(is.na(coerce_integer))) {
+    is_integer <- all.equal(x, coerce_integer, giveErr = TRUE)
+
+    if(!is.null(attr(is_integer, 'err', exact = TRUE))) is_integer <- FALSE
+
+  } else {
+    is_integer <- FALSE
+  }
+
+  if(!is_integer) {
+    chk::abort_chk(sprintf('The argument `%s` has to be an integer.',
+                           x_name))
   }
 }

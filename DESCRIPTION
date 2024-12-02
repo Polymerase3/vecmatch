@@ -26,7 +26,9 @@ Imports:
     VGAM,
     ggpubr,
     productplots,
-    cli
+    cli,
+    withr,
+    Matching
 Suggests: 
     MASS,
     testthat (>= 3.0.0),

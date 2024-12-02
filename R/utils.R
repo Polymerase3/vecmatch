@@ -666,3 +666,17 @@ ignore_unused_imports <- function() {
 
   return(ref.out)
 }
+
+##--logit transformation--------------------------------------------------------
+logit <- function(x) {
+  log(x/(1 - x))
+}
+
+##--vectorize output------------------------------------------------------------
+.vectorize <- function (arg, times) {
+  if(length(arg) == 1){
+    rep(arg, times)
+  } else {
+    arg
+  }
+}

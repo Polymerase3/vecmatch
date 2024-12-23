@@ -21,39 +21,57 @@
 #'   not fit within the common support region (CSR) boundaries. The returned
 #'   object also possesses additional attributes that summarize the calculation
 #'   process of the CSR boundaries:
-#'  * `filter_matrix` - A logical matrix with the same dimensions as the gps-part of `gps_matrix`, indicating which treatment assignment probabilities fall within the CSR boundaries,
-#'  * `filter_vector` - A vector indicating whether each observation was kept (`TRUE`) or removed (`FALSE`), essentially a row-wise sum of `filter_matrix`,
-#'  * `csr_summary` - A summary of the CSR calculation process, including details of the boundaries and the number of observations filtered.
+#'  * `filter_matrix` - A logical matrix with the same dimensions as the
+#'  gps-part of `gps_matrix`, indicating which treatment assignment
+#'  probabilities fall within the CSR boundaries,
+#'  * `filter_vector` - A vector indicating whether each observation was kept
+#'  (`TRUE`) or removed (`FALSE`), essentially a row-wise
+#'  sum of `filter_matrix`,
+#'  * `csr_summary` - A summary of the CSR calculation process, including
+#'  details of the boundaries and the number of observations filtered.
+#'  * `csr_data` - The original dataset used for the estimation of generalized
+#'  propensity scores (`original_data` attribute of the `gps` object) filtered
+#'  by the `filter_vector`
 #'
 #' @examples
-#' # We could estimate simples generalized propensity scores for the `iris` dataset
+#' # We could estimate simples generalized propensity scores for the `iris`
+#' # dataset
 #' gps <- estimate_gps(Species ~ Sepal.Length, data = iris)
 #'
 #' # And then define the common support region boundaries using `csregion()`
 #' gps_csr <- csregion(gps)
 #'
-#' # The additional information of the CSR-calculation process are accessible through
-#' # the attributes described in the `*Value*` section
-#' attr(gps_csr, 'filter_matrix)
-#' attr(gps_csr, 'csr_summary')
+#' # The additional information of the CSR-calculation process are
+#' # accessible through the attributes described in the `*Value*` section
+#' attr(gps_csr, "filter_matrix")
+#' attr(gps_csr, "csr_summary")
+#' attr(gps_csr, "csr_data")
 #'
 #' @export
 csregion <- function(gps_matrix) {
+  csr_data <- attr(gps_matrix, "original_data")
 
-  if('gps' %nin% class(gps_matrix)) {
-    chk::abort_chk("The `gps_matrix` argument must be of class `gps`.")
-  }
+  .chk_cond(
+    "gps" %nin% class(gps_matrix),
+    "The `gps_matrix` argument must be of class `gps`."
+  )
 
   ## Calculating the csr_low
   csr_low <- apply(
-    stats::aggregate(. ~ treatment, data = gps_matrix, FUN = function(x) min(x))[, -1],
+    stats::aggregate(. ~ treatment,
+      data = gps_matrix,
+      FUN = function(x) min(x)
+    )[, -1],
     2,
     max
   )
 
   ## Calculating the csr_high
   csr_high <- apply(
-    stats::aggregate(. ~ treatment, data = gps_matrix, FUN = function(x) max(x))[, -1],
+    stats::aggregate(. ~ treatment,
+      data = gps_matrix,
+      FUN = function(x) max(x)
+    )[, -1],
     2,
     min
   )
@@ -67,20 +85,36 @@ csregion <- function(gps_matrix) {
   filter_vector <- apply(filter_matrix, 1, all)
 
   ## defining the number of negatives
-  n.negative <- sum(!filter_vector)
-  n.negative_matrix <- colSums(!filter_matrix)
+  n_negative <- sum(!filter_vector)
+  n_negative_matrix <- colSums(!filter_matrix)
 
   ## subsetting the gps_matrix
   gps_matrix <- subset(gps_matrix, filter_vector)
 
-  ## assembling the print results list
-  csr_summary <- data.frame(treatment = colnames(gps_matrix)[2:ncol(gps_matrix)],
-                            csr_low = csr_low,
-                            csr_high = csr_high,
-                            n.negative_matrix = n.negative_matrix)
+  ## drop unused levels of treatment variable
+  gps_matrix[, "treatment"] <- droplevels(gps_matrix[, "treatment"])
 
-  res <- list(data_csr = csr_summary,
-              excluded = n.negative)
+  ## detect low number of observations in groups and print a warning
+  if (any(table(gps_matrix[, "treatment"]) < 20)) {
+    chk::wrn(strwrap("Some groups have fewer than 20 observations, which may
+    impact the performance of the matching process. Consider using
+    `replace = TRUE`in `match_gps()` to address this.",
+      prefix = " ", initial = ""
+    ))
+  }
+
+  ## assembling the print results list
+  csr_summary <- data.frame(
+    treatment = colnames(gps_matrix)[2:ncol(gps_matrix)],
+    csr_low = csr_low,
+    csr_high = csr_high,
+    n_negative_matrix = n_negative_matrix
+  )
+
+  res <- list(
+    data_csr = csr_summary,
+    excluded = n_negative
+  )
 
   ## Setting a new class for the results
   csres <- structure(res, class = "csres")
@@ -89,9 +123,13 @@ csregion <- function(gps_matrix) {
   show_csres(csres)
 
   ## adding attributes to csr output
-  attr(gps_matrix, 'filter_matrix') <- filter_matrix
-  attr(gps_matrix, 'filter_vector') <- filter_vector
-  attr(gps_matrix, 'csr_summary') <- csr_summary
+  attr(gps_matrix, "filter_matrix") <- filter_matrix
+  attr(gps_matrix, "filter_vector") <- filter_vector
+  attr(gps_matrix, "csr_summary") <- csr_summary
+  attr(gps_matrix, "csr_data") <- csr_data[filter_vector, ]
+
+  # Assign attributes and class
+  class(gps_matrix) <- c("data.frame", "gps", "csr")
 
   # return the gps_matrix
   return(invisible(gps_matrix))
@@ -112,15 +150,22 @@ show_csres <- function(object) {
   }
 
   # Print header and content
-  cat('\n')
-  cat('Rectangular CSR Borders Evaluation', '\n')
-  cat('==================================\n\n')
+  cat("\n")
+  cat("Rectangular CSR Borders Evaluation", "\n")
+  cat("==================================\n\n")
 
-  print_table(object$data_csr, colnames = c('Treatment', 'Lower CSR limit',
-                                            'Upper CSR limit', 'Number excluded'))
+  print_table(object$data_csr,
+    colnames = c(
+      "Treatment", "Lower CSR limit",
+      "Upper CSR limit", "Number excluded"
+    )
+  )
 
-  cat('\n')
-  cat('===================================================\n')
-  cat('The total number of excluded observations is:\t', object$excluded, '\n')
-  cat("Note: You can view the summary of the CSR calculation using the `attr()` function.")
+  cat("\n")
+  cat("===================================================\n")
+  cat("The total number of excluded observations is:\t", object$excluded, "\n")
+  cat(strwrap("Note: You can view the summary of the
+              CSR calculation using the `attr()` function.",
+    prefix = " ", initial = ""
+  ))
 }

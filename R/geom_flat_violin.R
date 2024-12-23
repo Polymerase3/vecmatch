@@ -7,15 +7,15 @@
 
 geom_flat_violin <- function(mapping = NULL, data = NULL, stat = "ydensity",
                              position = "dodge", trim = TRUE, scale = "area",
-                             show.legend = NA, inherit.aes = TRUE, ...) {
+                             show_legend = NA, inherit_aes = TRUE, ...) {
   ggplot2::layer(
     data = data,
     mapping = mapping,
     stat = stat,
     geom = GeomFlatViolin,
     position = position,
-    show.legend = show.legend,
-    inherit.aes = inherit.aes,
+    show.legend = show_legend,
+    inherit.aes = inherit_aes,
     params = list(
       trim = trim,
       scale = scale,
@@ -58,7 +58,8 @@ GeomFlatViolin <-
       data1 <- transform(data, x = xminv)
       data1 <- data1[order(data1$y), ]
 
-      # Create the second transformed dataset where x = xmaxv and arrange by -y (descending order)
+      # Create the second transformed dataset where x = xmaxv and arrange by -y
+      # (descending order)
       data2 <- transform(data, x = xmaxv)
       data2 <- data2[order(-data2$y), ]
 
@@ -69,7 +70,14 @@ GeomFlatViolin <-
       # Needed for coord_polar and such
       newdata <- rbind(newdata, newdata[1, ])
 
-      ggplot2:::ggname("geom_flat_violin", ggplot2::GeomPolygon$draw_panel(newdata, panel_scales, coord))
+      ggplot2:::ggname(
+        "geom_flat_violin",
+        ggplot2::GeomPolygon$draw_panel(
+          newdata,
+          panel_scales,
+          coord
+        )
+      )
     },
     draw_key = ggplot2::draw_key_polygon,
     default_aes = ggplot2::aes(

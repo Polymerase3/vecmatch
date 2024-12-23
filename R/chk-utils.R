@@ -1,3 +1,13 @@
+#--check custom condition-------------------------------------------------------
+.chk_cond <- function(condition, error_message, ...) {
+  if (condition) {
+    chk::abort_chk(
+      strwrap(error_message, prefix = " ", initial = ""),
+      ...
+    )
+  }
+}
+
 #--check if name in the data----------------------------------------------------
 .check_name <- function(data, namlist) {
   convert <- unlist(lapply(namlist, function(x) !is.character(x)))
@@ -15,12 +25,11 @@
 }
 
 #--check if the object is a numeric vector of given length----------------------
-.check_vecl <- function(x, leng, check_numeric = TRUE) {
+.check_vecl <- function(x, leng = NULL, check_numeric = TRUE) {
   ret <- all(
     is.atomic(x) && !is.matrix(x) && !is.array(x), # checks vector
-    length(x) == leng, # checks length
-    if(check_numeric) is.numeric(x) # checks numeric
-
+    if (!is.null(leng)) length(x) == leng, # checks length
+    if (check_numeric) is.numeric(x) # checks numeric
   )
   return(ret)
 }
@@ -47,11 +56,17 @@
   column <- paste0('data[, "', varname, '"]')
   cond <- paste0("!is.", type, "(", column, ")")
   conv_call <- paste0(column, "<- as.", type, "(", column, ")")
-  abort_call <- quote(chk::abort_chk(paste0(
-    "The variable `", varname,
-    "` cannot be converted to the type ",
-    type, "."
-  )))
+  abort_call <- quote(
+    chk::abort_chk(
+      strwrap(
+        sprintf(
+          "The variable `%s` cannot be converted to the type %s",
+          varname, type
+        ),
+        prefix = " ", initial = ""
+      )
+    )
+  )
 
   if (type == "factor") {
     def_type <- (is.numeric(eval(parse(text = column))) ||
@@ -64,10 +79,9 @@
     length_unique <- length(unique(eval(parse(text = column))))
 
     if (length_unique > 10 && def_type) {
-      chk::wrn(paste0(
-        "The variable ", varname,
-        "has more tha 10 unique values. ",
-        "Are you sure you want to proceed?"
+      chk::wrn(strwrap(sprintf("The variable %s has more tha 10 unique values.
+                               Are you sure you want to proceed?", varname),
+        prefix = " ", initial = ""
       ))
     }
   }
@@ -92,87 +106,114 @@
   ext <- substr(name, nchar(name) - 3, nchar(name))
   cond <- ext %in% ext_vec
   if (!cond) {
-    chk::abort_chk(sprintf(
+    chk::abort_chk(strwrap(sprintf(
       "The argument `%s` is allowed to have the following extensions: %s",
       x_name, word_list(add_quotes(ext_vec))
-    ))
+    ), prefix = " ", initial = ""))
   }
 }
 
 #--check data.frame-------------------------------------------------------------
-.check_df <- function(data, data_name = 'data') {
-  if (is.null(data) || !inherits(data, "data.frame")) {
-    chk::abort_chk(sprintf("Argument `%s` must be an object of class `data.frame`",
-                           data_name))
-  }
+.check_df <- function(data, data_name = "data") {
+  .chk_cond(
+    is.null(data) || !inherits(data, "data.frame") ||
+      length(class(data)) > 1,
+    sprintf("Argument `%s` must be an object of
+                    single class `data.frame`", data_name)
+  )
 
-  if (length(data) == 0) {
-    chk::abort_chk("The provided data frame is empty")
-  }
+  .chk_cond(length(data) == 0, "The provided data frame is empty")
 }
 
 #--check gps methods------------------------------------------------------------
 .check_method <- function(string) {
-  # if (missing(string) || is.null(string)) invisible(return(NULL))
+  .chk_cond(
+    !(is.character(string) && length(string) == 1L && !anyNA(string)),
+    "The argument `method` must be a single string of length 1"
+  )
 
-  if (!(is.character(string) && length(string) == 1L && !anyNA(string))) {
-    chk::abort_chk("The argument `method` must be a single string of length 1")
-  }
-
-  if (!(string %in% names(.gps_methods))) {
-    chk::abort_chk(sprintf(
+  .chk_cond(
+    !(string %in% names(.gps_methods)),
+    sprintf(
       "The argument `method` has to be one from: %s",
       word_list(add_quotes(names(.gps_methods)))
-    ))
-  }
-}
-
-##--check gps matrix------------------------------------------------------------
-.check_gps_matrix <- function(gps_matrix) {
-  # check if treatment variable present and if its first column of all
-  if(colnames(gps_matrix)[1] != 'treatment') {
-    chk::abort_chk('The first column in an object of class `gps` must be named `treatment`.')
-  }
-
-  # check if all levels of treatment are in colnames
-  if(nunique(gps_matrix[, 1]) != ncol(gps_matrix) - 1) {
-    chk::abort_chk('The `gps` object must have a number of columns equal to the unique levels of the treatment variable plus one (to include the treatment variable itself).')
-  }
-
-  if (any(unique(gps_matrix$treatment) %nin% colnames(gps_matrix))) {
-    chk::abort_chk('The columns of the `gps` object must be named to match the unique levels of the treatment variable.')
-  }
-
-  if(any(is.na(gps_matrix))) {
-    chk::abort_chk("The object of class `gps` can not contain any NA's")
-  }
-
-  if(any(round(rowSums(gps_matrix[, -1]), 5) != 1)) {
-    which.row <- which(round(rowSums(gps_matrix[, -1]), 5) != 1)
-
-    chk::abort_chk(sprintf(
-     "The row-wise sum of probabilities across all columns must equal 1. IDs of rows where this condition is not met: %s",
-     word_list(which.row)
     )
   )
+}
+
+## --check gps matrix-----------------------------------------------------------
+.check_gps_matrix <- function(gps_matrix) {
+  # check if treatment variable present and if its first column of all
+  .chk_cond(
+    colnames(gps_matrix)[1] != "treatment",
+    "The first column in an object of class `gps` must be named
+            `treatment`."
+  )
+
+  # check if all levels of treatment are in colnames
+  .chk_cond(
+    nunique(gps_matrix[, 1]) != ncol(gps_matrix) - 1,
+    "The `gps` object must have a number of columns equal to the unique
+            levels of the treatment variable plus one (to include the treatment
+            variable itself)."
+  )
+
+  .chk_cond(
+    any(unique(gps_matrix$treatment) %nin% colnames(gps_matrix)),
+    "The columns of the `gps` object must be named to match the unique
+            levels of the treatment variable."
+  )
+
+  .chk_cond(
+    any(is.na(gps_matrix)),
+    "The object of class `gps` can not contain any NA's"
+  )
+
+  if (any(round(rowSums(gps_matrix[, -1]), 5) != 1)) {
+    which_row <- which(round(rowSums(gps_matrix[, -1]), 5) != 1)
+
+    chk::abort_chk(strwrap(sprintf(
+      "The row-wise sum of probabilities across all columns must equal 1.
+      IDs of rows where this condition is not met: %s",
+      word_list(which_row)
+    ), prefix = " ", initial = ""))
   }
 }
 
-##--check integer---------------------------------------------------------------
+## --check integer--------------------------------------------------------------
 .check_integer <- function(x, x_name = NULL) {
   coerce_integer <- suppressWarnings(as.integer(x))
 
-  if(!any(is.na(coerce_integer))) {
+  if (!any(is.na(coerce_integer))) {
     is_integer <- all.equal(x, coerce_integer, giveErr = TRUE)
 
-    if(!is.null(attr(is_integer, 'err', exact = TRUE))) is_integer <- FALSE
-
+    if (!is.null(attr(is_integer, "err", exact = TRUE))) is_integer <- FALSE
   } else {
     is_integer <- FALSE
   }
 
-  if(!is_integer) {
-    chk::abort_chk(sprintf('The argument `%s` has to be an integer.',
-                           x_name))
-  }
+  .chk_cond(!is_integer, sprintf(
+    "The argument `%s` has to be an integer",
+    x_name
+  ))
+}
+
+## --match discrete args--------------------------------------------------------
+.match_discrete_args <- function(x, choices, x_name) {
+  tryCatch(
+    {
+      unlist(lapply(x, match.arg, choices = choices))
+    },
+    error = function(e) {
+      chk::abort_chk(strwrap(sprintf(
+        "The `%s` argument can only have following
+                                   values: %s", x_name,
+        word_list(
+          add_quotes(
+            choices
+          )
+        )
+      )))
+    }
+  )
 }

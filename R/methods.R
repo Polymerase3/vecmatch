@@ -6,8 +6,8 @@
     alias = c("mlreg", "mnom"),
     packages_needed = c("nnet"),
     fun.arg.check = list(
-      nnet::multinom,
-      nnet::nnet.formula
+      "nnet::multinom",
+      "nnet::nnet.formula"
     ),
     link_fun = c("generalized_logit"),
     allowed.treat = c("binary", "multinom"),
@@ -20,7 +20,7 @@
     alias = "propodds",
     packages_needed = "MASS",
     fun.arg.check = list(
-      MASS::polr
+      "MASS::polr"
     ),
     link_fun = c("logistic", "probit", "loglog", "cloglog", "cauchit"),
     description = "estimating gps for ordered treatments using proportional
@@ -31,8 +31,8 @@
     func_used = ".estimate_gps_multinom",
     alias = c("vecGLM"),
     fun.arg.check = list(
-      VGAM::vglm,
-      VGAM::rrvglm
+      "VGAM::vglm",
+      "VGAM::rrvglm"
     ),
     packages_needed = "VGAM",
     link_fun = c("multinomial_logit", "reduced_rank_ml"),
@@ -43,7 +43,7 @@
     missing = c("complete.cases", "mean.imputation"),
     func_used = ".estimate_gps_multinom",
     alias = "bias_reduced_glm2",
-    fun.arg.check = list(brglm2::brmultinom),
+    fun.arg.check = list("brglm2::brmultinom"),
     packages_needed = "brglm2",
     link_fun = "baseline_category_logit",
     allowed.treat = c("binary", "multinom"),
@@ -55,7 +55,7 @@
     func_used = ".estimate_gps_multinom",
     alias = "multinomial_logit_model",
     fun.arg.check = list(
-      mclogit::mblogit
+      "mclogit::mblogit"
     ),
     packages_needed = "mclogit",
     link_fun = c("baseline_category_logit"),
@@ -64,7 +64,7 @@
   )
 )
 
-## --list with allowable significance methods and their arguments------------------------
+## --list with allowable significance methods and their arguments---------------
 .sig_methods <- list(
   "t_test" = list(
     method_name = "t_test",
@@ -84,7 +84,9 @@
     method_name = "tukeyHSD",
     package_used = "rstatix",
     args_check_fun = list(
-      utils::getS3method("tukey_hsd", "data.frame", envir = asNamespace("rstatix"))
+      utils::getS3method("tukey_hsd", "data.frame",
+        envir = asNamespace("rstatix")
+      )
     )
   ),
   "games_howell_test" = list(

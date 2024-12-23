@@ -11,13 +11,13 @@ raincloud(
   facet = NULL,
   ncol = 1,
   significance = NULL,
-  sig.label.size = 2L,
-  sig.label.color = FALSE,
-  smd.type = "mean",
+  sig_label_size = 2L,
+  sig_label_color = FALSE,
+  smd_type = "mean",
   limits = NULL,
   jitter = 0.1,
   alpha = 0.4,
-  plot.name = NULL,
+  plot_name = NULL,
   overwrite = FALSE,
   ...
 )
@@ -57,17 +57,17 @@ methods refer to the \emph{Details} section. If the \code{significance} argument
 not \code{NULL}, standardized mean differences (SMDs) are also calculated and
 displayed on the right side of the jittered point plots.}
 
-\item{sig.label.size}{An integer specifying the size of the significance and
+\item{sig_label_size}{An integer specifying the size of the significance and
 SMD (standardized mean difference) labels displayed on the bars on the
 right side of the plot.}
 
-\item{sig.label.color}{Logical flag. If \code{FALSE} (default), significance and
+\item{sig_label_color}{Logical flag. If \code{FALSE} (default), significance and
 SMD bars and text are displayed in the default color (black). If \code{TRUE},
 colors are applied dynamically based on value: nonsignificant tests and SMD
 values below 0.10 are displayed in green, while significant tests and SMD
 values of 0.10 or higher are displayed in red.}
 
-\item{smd.type}{A single string indicating the type of effect size to
+\item{smd_type}{A single string indicating the type of effect size to
 calculate and display on the left side of the jittered point plots:
 \itemize{
 \item \code{mean} - Cohen's d is calculated,
@@ -93,11 +93,11 @@ value relatively high to maintain the interpretability of the plots when
 using the \code{group} argument, as excessive transparency may cause overlap
 between groups, making it difficult to distinguish them visually.}
 
-\item{plot.name}{A string specifying a valid file name or path for the plot.
+\item{plot_name}{A string specifying a valid file name or path for the plot.
 If set to \code{NULL}, the plot is displayed to the current graphical device but
 not saved locally. If a valid name with \code{.png} or \code{.pdf} extension is
 provided, the plot is saved locally. Users can also include a subdirectory
-in \code{plot.name}. Ensure the file path follows the correct syntax for your
+in \code{plot_name}. Ensure the file path follows the correct syntax for your
 operating system.}
 
 \item{overwrite}{A logical flag (default \code{FALSE}) that is evaluated only if
@@ -166,18 +166,21 @@ library(ggplot2)
 library(ggpubr)
 
 p <- raincloud(ToothGrowth, len, dose, supp,
-               significance = 't_test',
-               jitter = 0.15, alpha = 0.4)
+  significance = "t_test",
+  jitter = 0.15, alpha = 0.4
+)
 
 ## As `p` is a valid `ggplot` object, we can manipulate its
 ## characteristics usingthe `ggplot2` or `ggpubr` packages
 ## to create publication grade plot:
 p <- p +
   theme_classic2() \%+replace\%
-  theme(axis.line.y = element_blank(),
-        axis.ticks.y = element_blank()) +
-  guides(fill = guide_legend('Dose [mg]')) +
-  ylab('Length [cm]')
+  theme(
+    axis.line.y = element_blank(),
+    axis.ticks.y = element_blank()
+  ) +
+  guides(fill = guide_legend("Dose [mg]")) +
+  ylab("Length [cm]")
 
 p
 

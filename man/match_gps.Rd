@@ -2,24 +2,143 @@
 % Please edit documentation in R/match_gps.R
 \name{match_gps}
 \alias{match_gps}
-\title{Title}
+\title{Match the data based on generalized propensity score}
 \usage{
 match_gps(
-  treatment = NULL,
-  data = NULL,
-  caliper = NULL,
+  csmatrix = NULL,
+  caliper = 0.2,
   reference = NULL,
-  by = NULL,
   combos = NULL,
-  kmeans.args = NULL,
   ratio = 1,
   replace = FALSE,
+  kmeans_args = NULL,
+  kmeans_cluster = 5,
+  verbose_output = FALSE,
   ...
 )
 }
 \arguments{
-\item{...}{}
+\item{csmatrix}{An object of class \code{gps} and/or \code{csr} representing a data
+frame of generalized propensity scores. The first column must be the
+treatment variable, with additional attributes describing the calculation
+of the common support region and the estimation of generalized propensity
+scores. It is crucial that the common support region was calculated using
+the \code{csregion()} function to ensure compatibility.}
+
+\item{caliper}{A numeric value specifying the caliper width, which defines
+the allowable range within which observations can be matched. It is
+expressed as a percentage of the standard deviation of the
+logit-transformed generalized propensity scores. To perform matching
+without a caliper, set this parameter to a very large value. For exact
+matching, set \code{caliper = 0} and enable the \code{exact} option by setting it to
+\code{TRUE}.}
+
+\item{reference}{A single string specifying the exact level of the treatment
+variable to be used as the reference in the matching process. All other
+treatment levels will be matched to this reference level. Ideally, this
+should be the control level. If no natural control is present, avoid
+selecting a level with extremely low or high covariate or propensity score
+values. Instead, choose a level with covariate or propensity score
+distributions that are centrally positioned among all treatment groups to
+maximize the number of matches.}
+
+\item{combos}{An optional \code{data.frame} with two columns. Each row specifies a
+single execution of the matching algorithm, where the treatment level in
+the second column is matched to the treatment level in the first column
+(reference). Matching is performed within clusters calculated by the
+k-means algorithm, utilizing generalized propensity scores from all other
+treatment levels, excluding the two specified in the \code{combos} data frame.
+The data frame must contain valid strings representing treatment levels,
+and its number of rows must be fewer than the total number of unique
+pairwise combinations of treatment levels.}
+
+\item{ratio}{A scalar for the number of matches which should be found. The
+default is one-to-one matching.}
+
+\item{replace}{Logical value indicating whether matching should be done with
+replacement. If \code{FALSE}, the order of matches generally matters. Matches
+are found in the same order as the data is sorted. Specifically, the
+matches for the first observation will be found first, followed by those
+for the second observation, and so on. Matching without replacement is
+generally not recommended as it tends to increase bias. However, in cases
+where the dataset is large and there are many potential matches, setting
+\code{replace = FALSE} often results in a substantial speedup with negligible or
+no bias.}
+
+\item{kmeans_args}{A list of arguments to pass to \link[stats:kmeans]{stats::kmeans}. These
+arguments must be provided inside a \code{list()} in the paired \code{name = value}
+format.}
+
+\item{kmeans_cluster}{An integer specifying the number of clusters to pass to
+\link[stats:kmeans]{stats::kmeans}.}
+
+\item{verbose_output}{a logical flag. If \code{TRUE} a more verbose version of the
+function is run and the output is printed out to the console.}
+
+\item{...}{Additional arguments to be passed to the \code{\link[Matching:Matchby]{Matching::Matchby()}}
+function.}
+}
+\value{
+A \code{data.frame} similar to the one provided as the \code{data} argument in
+the \code{\link[=estimate_gps]{estimate_gps()}} function, containing the same columns but only the
+observations for which a match was found. The returned object includes two
+attributes, accessible with the \code{attr()} function:
+\itemize{
+\item \code{original_data}: A \code{data.frame} with the original data returned by the
+\code{\link[=csregion]{csregion()}} or \code{\link[=estimate_gps]{estimate_gps()}} function, after the estimation of the csr
+and filtering out observations not within the csr.
+\item \code{matching_filter}: A logical vector indicating which rows from
+\code{original_data} were included in the final matched dataset.
+}
 }
 \description{
-Title
+The \code{match_gps()} function performs sample matching based on
+generalized propensity scores (GPS). It utilizes the k-means clustering
+algorithm to partition the data into clusters and subsequently matches all
+treatment groups within these clusters. This approach ensures efficient and
+structured comparisons across treatment levels while accounting for the
+propensity score distribution.
+}
+\examples{
+# Loading the lalonde dataset from the `Matching` package
+library(Matching)
+data(lalonde)
+
+# Defining the formula used for gps estimation
+formula_lalonde <- formula(treat ~ age * black * married + educ)
+
+# Step 1.) Estimation of the generalized propensity scores
+gp_scores <- estimate_gps(formula_lalonde,
+  data = lalonde,
+  method = "brglm2",
+  reference = "0",
+  verbose_output = TRUE
+)
+
+# Step 2.) Defining the common support region
+gps_csr <- csregion(gp_scores)
+
+# Step 3.) Matching the gps
+matched_lalonde <- match_gps(gps_csr,
+  caliper = 100, # very big caliper to let
+  reference = "0", # the gps match freely
+  replace = FALSE,
+  kmeans_cluster = 1,
+  kmeans_args = list(
+    iter.max = 200,
+    algorithm = "Forgy"
+  ),
+  verbose_output = TRUE
+)
+
+}
+\references{
+Michael J. Lopez, Roee Gutman "Estimation of Causal Effects with
+Multiple Treatments: A Review and New Ideas," Statistical Science, Statist.
+Sci. 32(3), 432-454, (August 2017)
+}
+\seealso{
+\code{\link[=estimate_gps]{estimate_gps()}} for the calculation of generalized propensity
+scores; \code{\link[Matching:Matchby]{Matching::Matchby()}} for the documentation of the matching function;
+\code{\link[stats:kmeans]{stats::kmeans()}} for the documentation of the k-Means algorithm.
 }

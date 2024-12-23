@@ -24,9 +24,17 @@ not fit within the common support region (CSR) boundaries. The returned
 object also possesses additional attributes that summarize the calculation
 process of the CSR boundaries:
 \itemize{
-\item \code{filter_matrix} - A logical matrix with the same dimensions as the gps-part of \code{gps_matrix}, indicating which treatment assignment probabilities fall within the CSR boundaries,
-\item \code{filter_vector} - A vector indicating whether each observation was kept (\code{TRUE}) or removed (\code{FALSE}), essentially a row-wise sum of \code{filter_matrix},
-\item \code{csr_summary} - A summary of the CSR calculation process, including details of the boundaries and the number of observations filtered.
+\item \code{filter_matrix} - A logical matrix with the same dimensions as the
+gps-part of \code{gps_matrix}, indicating which treatment assignment
+probabilities fall within the CSR boundaries,
+\item \code{filter_vector} - A vector indicating whether each observation was kept
+(\code{TRUE}) or removed (\code{FALSE}), essentially a row-wise
+sum of \code{filter_matrix},
+\item \code{csr_summary} - A summary of the CSR calculation process, including
+details of the boundaries and the number of observations filtered.
+\item \code{csr_data} - The original dataset used for the estimation of generalized
+propensity scores (\code{original_data} attribute of the \code{gps} object) filtered
+by the \code{filter_vector}
 }
 }
 \description{
@@ -35,4 +43,19 @@ rectangular common support region, as defined by Lopez and Gutman (2017),
 and filters the matrix of generalized propensity scores based on these
 boundaries. The function returns a matrix of observations whose generalized
 propensity scores lie within the treatment group-specific boundaries.
+}
+\examples{
+# We could estimate simples generalized propensity scores for the `iris`
+# dataset
+gps <- estimate_gps(Species ~ Sepal.Length, data = iris)
+
+# And then define the common support region boundaries using `csregion()`
+gps_csr <- csregion(gps)
+
+# The additional information of the CSR-calculation process are
+# accessible through the attributes described in the `*Value*` section
+attr(gps_csr, "filter_matrix")
+attr(gps_csr, "csr_summary")
+attr(gps_csr, "csr_data")
+
 }

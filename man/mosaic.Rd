@@ -10,8 +10,10 @@ mosaic(
   group = NULL,
   facet = NULL,
   ncol = 1,
+  group_counts = FALSE,
+  group_counts_size = 4,
   significance = FALSE,
-  plot.name = NULL,
+  plot_name = NULL,
   overwrite = FALSE,
   ...
 )
@@ -42,20 +44,28 @@ only when \code{facet} is not NULL, specifying the number of columns in the
 \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}} call. The distribution plots will be arranged into
 the number of columns defined by \code{ncol}.}
 
+\item{group_counts}{A logical flag. If \code{TRUE}, the sizes of the groups will
+be displayed inside the rectangles in the plot created by the \code{mosaic()}
+function. If \code{FALSE} (default), the group sizes will not be shown.}
+
+\item{group_counts_size}{A single numeric value that specifies the size of
+the group count labels in millimeters ('mm'). This value is passed to the
+\code{size} argument of \code{\link[ggplot2:geom_text]{ggplot2::geom_text()}}.}
+
 \item{significance}{A logical flag; defaults to \code{FALSE}. When \code{TRUE}, a
-Chi-squared (χ²) test of independence is performed on the
-contingency table of \code{y} and \code{group}. Note that \code{group} must be specified
-for the test to be calculated. If \code{facet} is provided, the significance is
-assessed separately for each \code{facet} subgroup. Additionally, the function
-calculates standardized Pearson residuals (differences between observed and
-expected counts) and fills mosaic plot cells based on the level of partial
+Chi-squared test of independence is performed on the contingency table
+of \code{y} and \code{group}. Note that \code{group} must be specified for the test to be
+calculated. If \code{facet} is provided, the significance is assessed separately
+for each \code{facet} subgroup. Additionally, the function calculates
+standardized Pearson residuals (differences between observed and expected
+counts) and fills mosaic plot cells based on the level of partial
 significance for each cell.}
 
-\item{plot.name}{A string specifying a valid file name or path for the plot.
+\item{plot_name}{A string specifying a valid file name or path for the plot.
 If set to \code{NULL}, the plot is displayed to the current graphical device but
 not saved locally. If a valid name with \code{.png} or \code{.pdf} extension is
 provided, the plot is saved locally. Users can also include a subdirectory
-in \code{plot.name}. Ensure the file path follows the correct syntax for your
+in \code{plot_name}. Ensure the file path follows the correct syntax for your
 operating system.}
 
 \item{overwrite}{A logical flag (default \code{FALSE}) that is evaluated only if
@@ -81,31 +91,36 @@ enabling straightforward comparisons of imbalance across treatment groups.
 }
 \examples{
 ## Example: Creating a Mosaic Plot of the Titanic Dataset
-## This plot visualizes survival rates by gender across different passenger classes.
-## By setting `significance = TRUE`, you can highlight statistically significant
-## differences within each rectangle of the mosaic plot.
+## This plot visualizes survival rates by gender across different passenger
+## classes. By setting `significance = TRUE`, you can highlight statistically
+## significant differences within each rectangle of the mosaic plot.
 library(ggplot2)
 
 # Load Titanic dataset and convert to data frame
 titanic_df <- as.data.frame(Titanic)
 
 # Expand the dataset by repeating rows according to 'Freq'
-titanic_long <- titanic_df[rep(1:nrow(titanic_df), titanic_df$Freq), ]
+titanic_long <- titanic_df[rep(
+  seq_len(nrow(titanic_df)),
+  titanic_df$Freq
+), ]
 
 # Remove the 'Freq' column as it is no longer needed
 titanic_long$Freq <- NULL
 
 # Plot the data using mosaic() and modify the result using additional ggplot2
 # functions
-p <- vecmatch::mosaic(data = titanic_long,
-                      y = Survived,
-                      group = Sex,
-                      facet = Class,
-                      ncol = 2,
-                      significance = TRUE)
+p <- vecmatch::mosaic(
+  data = titanic_long,
+  y = Survived,
+  group = Sex,
+  facet = Class,
+  ncol = 2,
+  significance = TRUE
+)
 
 p <- p +
-     theme_minimal()
+  theme_minimal()
 
 p
 

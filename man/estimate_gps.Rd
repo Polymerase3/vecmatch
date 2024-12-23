@@ -11,11 +11,10 @@ estimate_gps(
   link = NULL,
   reference = NULL,
   by = NULL,
-  missing = NULL,
   subset = NULL,
-  ordinal.treat = NULL,
-  fit.object = FALSE,
-  verbose.output = FALSE,
+  ordinal_treat = NULL,
+  fit_object = FALSE,
+  verbose_output = FALSE,
   ...
 )
 }
@@ -26,18 +25,14 @@ balanced is on the left side, while the covariates used to predict the
 treatment variable are on the right side. To define the interactions
 between covariates, use \code{*}. For more details, refer to \code{\link[stats:formula]{stats::formula()}}.}
 
-\item{data}{a data frame with columns specified in the \code{formula} argument.
-Doesn't need to be provided, as the columns can also be specified directly
-and explicitly in the formula, using \code{$} operator and the name of the
-dataset.}
+\item{data}{a data frame with columns specified in the \code{formula} argument.}
 
 \item{method}{a single string describing the model used for the calculation
 of generalized propensity scores. The default value is set to \code{multinom}.
-For available methods refer to the Details section below}
+For available methods refer to the Details section below.}
 
 \item{link}{a single string; determines an alternative model for a method
-used for estimation. For available links, see XXX --> Actually do wywalenia
-i zastąpić to method}
+used for estimation. For available links, see Details.}
 
 \item{reference}{a single string describing one class from the treatment
 variable, referred to as the baseline category in the calculation of
@@ -49,34 +44,32 @@ argument. Tha dataset will be divided by the groups created by the grouping
 out separately for each group. The results will then be merged and
 presented to the uesr as a single GPS matrix.}
 
-\item{missing}{a single string describing the mtehod to be used in the
-handling of the missing data. For possible values refer to XXX. The default
-value is \code{complete.cases}. FIXXXXXX}
-
 \item{subset}{a logical atomic vector of length equal to the number of rows
 in the \code{data} arguments. Allows to filter out observations from the further
-analysis, for which the value of the vector is qual to \code{FALSE}.}
+analysis, for which the value of the vector is equal to \code{FALSE}.}
 
-\item{ordinal.treat}{an atomic vector of the length equal to the length of
+\item{ordinal_treat}{an atomic vector of the length equal to the length of
 unique levels of the treatment variable. Confirms, that the treatment
 variable is an ordinal variable and adjusts its levels, to the order of
-levels specified in the argument. Is a call to the function \verb{factor(treat, levels = ordinal.treat, ordered = TRUE}.}
+levels specified in the argument. Is a call to the function \verb{factor(treat, levels = ordinal_treat, ordered = TRUE}.}
 
-\item{fit.object}{a logical flag. If \code{TRUE}, the the fitted object is
+\item{fit_object}{a logical flag. If \code{TRUE}, the the fitted object is
 returned instead of the GPS matrix.}
 
-\item{verbose.output}{a logical flag. If \code{TRUE} a more verbose version of the
+\item{verbose_output}{a logical flag. If \code{TRUE} a more verbose version of the
 function is run and the output is printed out to the console.}
 
 \item{...}{additional arguments, that can be passed to the fitting function
 and are not controlled by the above arguments. For more details and
-examples refer to XXX}
+examples refer to the Details section and documentations of corresponding
+functions.}
 }
 \value{
-A numeric matrix with the number of columns equal to the number of
-unique treatment variable levels plus one (for the treatment variable
-itself) and the number of row equal to the number of subjects in the
-initial dataset.
+A numeric matrix of class \code{gps} with the number of columns equal to
+the number of unique treatment variable levels plus one (for the treatment
+variable itself) and the number of row equal to the number of subjects in
+the initial dataset. The original dataset used for estimation can be
+accessed as \code{original_data} attribute.
 }
 \description{
 \code{estimate_gps()} computes generalized propensity scores for
@@ -86,7 +79,7 @@ a matrix of GPS probabilities for each subject and treatment group
 \details{
 The main goal of the \code{estimate_gps()} function is to calculate the
 generalized propensity scores aka. treatment allocation probabilities. It
-is the first step in the workflow vector matching algorithm and is
+is the first step in the workflow of the vector matching algorithm and is
 essential for the further analysis. The returned matrix of class \code{gps} can
 then be passed to the \code{csregion()} function to calculate the rectangular
 common support region boundaries and drop samples uneligible for the
@@ -95,21 +88,26 @@ further analysis. The list of available methods operated by the
 used for the calculations:
 \itemize{
 \item \code{multinom} - multinomial logistic regression model \code{\link[nnet:multinom]{nnet::multinom()}}
-\item \code{vglm} - vector generalized linear model for multinomial data \code{\link[VGAM:vglm]{VGAM::vglm()}},
-\item \code{brglm2} - bias reduction model for multinomial respones using the poisson trick \code{\link[brglm2:brmultinom]{brglm2::brmultinom()}},
+\item \code{vglm} - vector generalized linear model for multinomial data
+\code{\link[VGAM:vglm]{VGAM::vglm()}},
+\item \code{brglm2} - bias reduction model for multinomial respones using the
+poisson trick \code{\link[brglm2:brmultinom]{brglm2::brmultinom()}},
 \item \code{mblogit} - baseline-category logit models \code{\link[mclogit:mblogit]{mclogit::mblogit()}}.
-\item \code{polr} - ordered logistic or probit regression onyl for ordered factor variables from \code{\link[MASS:polr]{MASS::polr()}}. The \code{method} argument of the underlying \code{MASS::polr()} package function can be controlled with the \code{link} argument. Available options: \code{link = c("logistic", "probit", "loglog", "cloglog", "cauchit")}
+\item \code{polr} - ordered logistic or probit regression onyl for ordered factor
+variables from \code{\link[MASS:polr]{MASS::polr()}}. The \code{method} argument of the underlying
+\code{MASS::polr()} package function can be controlled with the \code{link} argument.
+Available options: \code{link = c("logistic", "probit", "loglog", "cloglog",   "cauchit")}
 }
 }
 \examples{
 
-library('brglm2')
+library("brglm2")
 
 # Conducting covariate balancing on the `airquality` dataset. Our goal was to
-# compare ozone levels by month, but we discovered that ozone levels are strongly
-# correlated with wind intensity (measured in mph), and the average wind intensity
-# varies across months. Therefore, we need to balance the months by wind values
-# to ensure a valid comparison of ozone levels.
+# compare ozone levels by month, but we discovered that ozone levels are
+# strongly correlated with wind intensity (measured in mph), and the average
+# wind intensity varies across months. Therefore, we need to balance the
+# months by wind values to ensure a valid comparison of ozone levels.
 
 # Initial imbalance of means
 tapply(airquality$Wind, airquality$Month, mean)
@@ -119,22 +117,29 @@ formula_air <- formula(Month ~ Wind)
 
 # Estimating the generalized propensity scores using brglm2 method using
 # maximum penalized likelihood estimators with powers of the Jeffreys
-gp_scores <- estimate_gps(formula_air, data = airquality, method = 'brglm2',
-                         reference = '5', verbose.output = TRUE,
-                         control = brglmControl(type = 'MPL_Jeffreys'))
+gp_scores <- estimate_gps(formula_air,
+  data = airquality, method = "brglm2",
+  reference = "5", verbose_output = TRUE,
+  control = brglmControl(type = "MPL_Jeffreys")
+)
 
 # Filtering the observations outside the csr region
 gps_csr <- csregion(gp_scores)
 
 # Calculating imbalance after csr
-filter_which <- attr(gps_csr, 'filter_vector')
+filter_which <- attr(gps_csr, "filter_vector")
 filtered_air <- airquality[filter_which, ]
 
 tapply(filtered_air$Wind, filtered_air$Month, mean)
 
 # We can also investigate the imbalance using the raincloud function
 raincloud(filtered_air,
-          y = Wind,
-          group = Month,
-          significance = 't_test')
+  y = Wind,
+  group = Month,
+  significance = "t_test"
+)
+}
+\seealso{
+\code{\link[=csregion]{csregion()}} for the calculation of common support region,
+\code{\link[=match_gps]{match_gps()}} for the matching of generalized propensity scores
 }

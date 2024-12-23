@@ -12,6 +12,8 @@ raincloud(
   ncol = 1,
   significance = NULL,
   sig.label.size = 2L,
+  sig.label.color = FALSE,
+  smd.type = "mean",
   limits = NULL,
   jitter = 0.1,
   alpha = 0.4,
@@ -51,11 +53,27 @@ p-values in multiple comparisons between groups defined by the \code{group}
 argument. Significant comparisons are represented by bars connecting the
 compared groups on the left side of the boxplots. Note that if there are
 many significant tests, the plot size may adjust accordingly. For available
-methods refer to the \emph{Details} section.}
+methods refer to the \emph{Details} section. If the \code{significance} argument is
+not \code{NULL}, standardized mean differences (SMDs) are also calculated and
+displayed on the right side of the jittered point plots.}
 
 \item{sig.label.size}{An integer specifying the size of the significance and
 SMD (standardized mean difference) labels displayed on the bars on the
 right side of the plot.}
+
+\item{sig.label.color}{Logical flag. If \code{FALSE} (default), significance and
+SMD bars and text are displayed in the default color (black). If \code{TRUE},
+colors are applied dynamically based on value: nonsignificant tests and SMD
+values below 0.10 are displayed in green, while significant tests and SMD
+values of 0.10 or higher are displayed in red.}
+
+\item{smd.type}{A single string indicating the type of effect size to
+calculate and display on the left side of the jittered point plots:
+\itemize{
+\item \code{mean} - Cohen's d is calculated,
+\item \code{median} - the Wilcoxon effect size (r) is calculated based on the Z
+statistic extracted from the Wilcoxon test.
+}}
 
 \item{limits}{A numeric atomic vector of length two, specifying the \code{y} axis
 limits in the distribution plots. The first element sets the minimum value,
@@ -92,7 +110,7 @@ an error is thrown. If no such plot exists, the plot is saved normally.}
 p-values when the \code{significance} argument is specified. For available
 functions associated with different \code{significance} methods, please refer to
 the \emph{Details} section and consult the documentation for the relevant
-functions in the \code{rstatix} or \code{multcomp} packages.}
+functions in the \code{rstatix} package.}
 }
 \value{
 A \code{ggplot} object representing the distribution of the \code{y} variable
@@ -100,22 +118,42 @@ across the levels of the \code{group} and \code{facet} variables in \code{data}.
 }
 \description{
 The \code{raincloud()} function allows to generate distribution plots
-for continuous data in an easy and uncomplicated way.
-
-Raincloud plots consist of three main elements: Distribution plots For
-example density plots, histograms or violin plots wit the mean values of
-respective groups Jittered point plots Depicting the underlying
-distribution of the data in the rawest form Boxplots The function is based
-on the \code{ggplot2} package, which must already be preinstalled
+for continuous data in an easy and uncomplicated way. The function is based
+on the \code{ggplot2} package, which must already be preinstalled Raincloud
+plots consist of three main elements:
+\itemize{
+\item Distribution plots, specifically  violin plots with the mean values and
+standard deviations of respective groups,
+\item Jittered point plots depicting the underlying distribution of the data in
+the rawest form,
+\item Boxplots, summarizing the most important statistics of the underlying
+distribution.
+}
 }
 \details{
 Available methods for the argument \code{significance} are:
 \itemize{
-\item \code{"t_test"} - Performs a pairwise comparison using the two-sample t-test, with the default Holm adjustment for multiple comparisons. This test assumes normally distributed data and equal variances. The adjustment can be modified via the \code{p.adjust.method} argument. The test is implemented via \code{\link[rstatix:t_test]{rstatix::pairwise_t_test()}}
-\item \code{"dunn_test"} - Executes Dunn's test for pairwise comparisons following a Kruskal-Wallis test. It is a non-parametric alternative to the t-test when assumptions of normality are violated. Implemented via \code{\link[rstatix:dunn_test]{rstatix::dunn_test()}}.
-\item \code{"tukeyHSD_test"} - Uses Tukey's Honest Significant Difference (HSD) test for pairwise comparisons between group means. Suitable for comparing all pairs when the overall ANOVA is significant. The method assumes equal variance between groups and is implemented via \code{\link[rstatix:tukey_hsd]{rstatix::tukey_hsd()}}.
-\item \code{"games_howell_test"} - A post-hoc test used after ANOVA, which does not assume equal variances or equal sample sizes. It’s particularly robust for data that violate homogeneity of variance assumptions. Implemented via \code{\link[rstatix:games_howell_test]{rstatix::games_howell_test()}}.
-\item \code{"wilcoxon_test"} - Performs the Wilcoxon rank-sum test (also known as the Mann-Whitney U test) for non-parametric pairwise comparisons. Useful when data are not normally distributed. Implemented via \code{\link[rstatix:wilcox_test]{rstatix::pairwise_wilcox_test()}}.
+\item \code{"t_test"} - Performs a pairwise comparison using the two-sample t-test,
+with the default Holm adjustment for multiple comparisons. This test assumes
+normally distributed data and equal variances. The adjustment can be
+modified via the \code{p.adjust.method} argument. The test is implemented via
+\code{\link[rstatix:t_test]{rstatix::pairwise_t_test()}}
+\item \code{"dunn_test"} - Executes Dunn's test for pairwise comparisons following a
+Kruskal-Wallis test. It is a non-parametric alternative to the t-test when
+assumptions of normality or homogeneity of variances are violated.
+Implemented via \code{\link[rstatix:dunn_test]{rstatix::dunn_test()}}.
+\item \code{"tukeyHSD_test"} - Uses Tukey's Honest Significant Difference (HSD) test
+for pairwise comparisons between group means. Suitable for comparing all
+pairs when the overall ANOVA is significant. The method assumes equal
+variance between groups and is implemented via \code{\link[rstatix:tukey_hsd]{rstatix::tukey_hsd()}}.
+\item \code{"games_howell_test"} - A post-hoc test used after ANOVA, which does not
+assume equal variances or equal sample sizes. It’s particularly robust for
+data that violate homogeneity of variance assumptions. Implemented via
+\code{\link[rstatix:games_howell_test]{rstatix::games_howell_test()}}.
+\item \code{"wilcoxon_test"} - Performs the Wilcoxon rank-sum test (also known as the
+Mann-Whitney U test) for non-parametric pairwise comparisons. Useful when
+data are not normally distributed. Implemented via
+\code{\link[rstatix:wilcox_test]{rstatix::pairwise_wilcox_test()}}.
 }
 }
 \examples{
@@ -143,4 +181,7 @@ p <- p +
 
 p
 
+}
+\seealso{
+\code{\link[=mosaic]{mosaic()}} which summarizes the distribution of discrete data
 }

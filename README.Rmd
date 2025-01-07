@@ -13,57 +13,108 @@ knitr::opts_chunk$set(
 )
 ```
 
-# vecmatch
+# vecmatch:  Calculate Genaralized Propensity Scores and Match Multiple Groups 
+<img src="man/figures/logo.png" align="right" height="139" alt="" />
 
 <!-- badges: start -->
 
+[![R-CMD-check](https://github.com/Polymerase3/vecmatch/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Polymerase3/vecmatch/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/Polymerase3/vecmatch/graph/badge.svg)](https://app.codecov.io/gh/Polymerase3/vecmatch)
+
 <!-- badges: end -->
 
-An implementation of Vector Matching algorithm. Enables the assesment of initial covariate imbalances through ellegant graphics, estimates treatment assignment probabilities using various methods, defines the common support region, and performs matching across multiple groups.
+## Overview
+
+The `vecmatch` package implements the Vector Matching algorithm introduced in the paper *Estimation of Causal Effects with Multiple Treatments: A Review and New Ideas* by Lopez and Gutman (2017). This package allows users to:  
+
+- Visualize initial covariate imbalances with elegant graphics.  
+- Estimate treatment assignment probabilities using various regression models.  
+- Define the common support region.  
+- Perform matching across multiple treatment groups.  
+- Evaluate the quality of matching.  
 
 ## Installation
 
-You can install the development version of `vecmatch` from [GitHub](https://github.com/Polymerase3/vecmatch) with:
+You can install the latest version of `vecmatch` from [GitHub](https://github.com/Polymerase3/vecmatch) with:
 
 ``` r
-# install.packages("devtools")
+# Install devtools if its not already installed
+if(!require(devtools)){
+    install.packages("devtools")
+    library(devtools)
+}
+
+# Install the vecmatch package directly from github
 devtools::install_github("Polymerase3/vecmatch")
 ```
 
-## Example
+Once the package is released on CRAN, you can install it using the standard workflow: ```install.packages("vecmatch")```.
 
-At present, the only fully operational function in the package is `raincloud()`, 
-which creates elegant visualizations to assess the imbalance of continuous 
-covariates. To access the documentation for `raincloud()`, type:
+## vecmatch Workflow
 
-``` r
-help(raincloud)
+The vecmatch package has an exact workflow and it is advisable to follow it. It consists of 5 steps and ensures the best possible matching quality using the vector matching algorithm:
+
+### *1. Initial imbalance assessment* 
+Visualize covariate imbalances in your dataset using the `raincloud()` function for continuous variables and the `mosaic()` function for categorical variables. Both functions support grouping by up to two categorical variables (`group` and `facet` arguments) and provide standardized mean differences and significance tests.  
+
+```{r results='hide', message = FALSE, fig.keep='all'}
+raincloud(data = cancer,
+          y = bmi,
+          group = status,
+          facet = sex,
+          significance = 't_test',
+          sig_label_color = TRUE,
+          sig_label_size = 3,
+          limits = c(7, 48))
 ```
 
-An example of how to use raincloud() is provided below. For detailed descriptions of the individual arguments, please refer to the function's documentation:
+### *2. Estimate Generalized Propensity Scores (GPS)* 
+Next, calculate generalized propensity scores for the treatment variable. These scores represent treatment assignment probabilities based on user-defined covariates. Use the `estimate_gps()` function to estimate GPS. As a result, a matrix of generalized propensity scores is returned:
 
-``` r
-## Example: Creating a raincloud plot for the ToothGrowth dataset.
-## This plot visualizes the distribution of the `len` variable by
-## `dose` (using different colors) and facets by `supp`. Group
-## differences by `dose` are calculated using a `t_test`, and standardized
-## mean differences (SMDs) are displayed through jittered points.
+```{r}
+formula_cancer <- formula(status ~ bmi * sex)
 
-p <- raincloud(ToothGrowth, len, dose, supp,
-               significance = 't_test',
-               jitter = 0.15, alpha = 0.4)
+gps_matrix <- estimate_gps(formula_cancer,
+                           data = cancer,
+                           method = 'vglm',
+                           reference = 'control')
 
-## As `p` is a valid `ggplot` object, we can manipulate its characteristics using
-## the `ggplot2` or `ggpubr` packages to create publication grade plot:
-p <- p +
-  theme_classic2() %+replace%
-  theme(axis.line.y = element_blank(),
-        axis.ticks.y = element_blank()) +
-  guides(fill = guide_legend('Dose [mg]')) +
-  ylab('Length [cm]')
-
-p
+head(gps_matrix, n = 7)
 
 ```
 
-![Raincloud plot for the `len` variable in the `ToothGrowth` dataset](man/figures/README-raincloud.png)
+As you can see, each row in the resulting GPS matrix contains treatment assignment probabilities for all levels of the treatment variable, summing to 1.
+
+### *3. Define the Common Support Region (CSR)* 
+The next step involves estimating the boundaries of the common support region (CSR). The lower and upper CSR boundaries define the range of propensity scores where observations are present across all treatment groups. You can calculate these boundaries by applying the `csregion()` function to the `gps_matrix` object:
+
+```{r}
+csr_matrix <- csregion(gps_matrix)
+```
+
+The `csregion()` function outputs a matrix of generalized propensity scores, excluding any observations that fall outside the CSR. Additionally, it provides a summary of the process in the console. You can retrieve additional attributes of the csr_matrix object using the `attr()` function. Details about these attributes can be found in the documentation for `csregion()`.
+
+### *4. Matching on the Generalized Propensity Scores*
+You can use the `csr_matrix` object to perform the actual matching with the vector matching algorithm using the `match_gps()` function. In this example, matching is performed without replacement, using a larger caliper and a one-to-one matching ratio:
+
+```{r message = FALSE, warning=FALSE}
+matched_data <- match_gps(csmatrix = csr_matrix,
+                          reference = 'control',
+                          caliper = 1)
+```
+
+### *5. Assessing Matching Quality* 
+Finally, the quality of the matching process can be evaluated using the `balqual()` function. This function provides both mean and maximum values for various metrics, such as the standardized mean difference, variance ratio, and r-effect size coefficient.
+
+```{r}
+balqual(matched_data, 
+        formula_cancer,
+        statistic = 'max')
+```
+
+## Help
+You can open the full documentation of the vecmatch package using:
+
+```{r}
+help(package = vecmatch)
+```

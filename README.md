@@ -171,30 +171,30 @@ balqual(matched_data,
 #> -------------------------------------------------- 
 #> Treatment                 | Before     | After      
 #> -------------------------------------------------- 
-#> adenoma                   | 355        | 171        
-#> control                   | 304        | 171        
-#> crc_beningn               | 278        | 171        
-#> crc_malignant             | 247        | 171        
+#> adenoma                   | 355        | 170        
+#> control                   | 304        | 170        
+#> crc_beningn               | 278        | 170        
+#> crc_malignant             | 247        | 170        
 #> -------------------------------------------------- 
 #> 
 #> 
 #> Matching summary statistics:
 #> ---------------------------------------- 
 #> Total n before matching:  1184 
-#> Total n after matching:       684 
-#> % of matched observations:    57.77 %
-#> Total  maximal   SMD value:   0.049 
+#> Total n after matching:       680 
+#> % of matched observations:    57.43 %
+#> Total  maximal   SMD value:   0.05 
 #> Total  maximal   r value:     0.002 
-#> Total  maximal   Var value:   1.1 
+#> Total  maximal   Var value:   1.092 
 #> 
 #> 
 #> Maximal values :
 #> -------------------------------------------------------------------------------- 
 #> Variable                  | Coef  | Before       | After        | Quality      
 #> -------------------------------------------------------------------------------- 
-#> bmi                       | SMD   | 0.259        | 0.049        | Balanced     
+#> bmi                       | SMD   | 0.259        | 0.050        | Balanced     
 #> bmi                       | r     | 0.010        | 0.002        | Balanced     
-#> bmi                       | Var   | 1.128        | 1.100        | Balanced     
+#> bmi                       | Var   | 1.128        | 1.092        | Balanced     
 #> sexF                      | SMD   | 0.153        | 0.012        | Balanced     
 #> sexF                      | r     | 0.006        | 0.001        | Balanced     
 #> sexF                      | Var   | 1.004        | 1.002        | Balanced     
@@ -204,7 +204,7 @@ balqual(matched_data,
 #> bmi:sexF                  | SMD   | 0.151        | 0.013        | Balanced     
 #> bmi:sexF                  | r     | 0.007        | 0.001        | Balanced     
 #> bmi:sexF                  | Var   | 1.046        | 1.004        | Balanced     
-#> bmi:sexM                  | SMD   | 0.151        | 0.022        | Balanced     
+#> bmi:sexM                  | SMD   | 0.151        | 0.016        | Balanced     
 #> bmi:sexM                  | r     | 0.006        | 0.001        | Balanced     
 #> bmi:sexM                  | Var   | 1.023        | 1.012        | Balanced     
 #> --------------------------------------------------------------------------------

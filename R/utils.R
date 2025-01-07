@@ -499,7 +499,7 @@ scale_0_to_1 <- function(x) {
 ## --changes the name of arglist to match names of funlist formals--------------
 match_add_args <- function(arglist, funlist) {
   if (is.list(arglist) && length(arglist) == sum(names(arglist) != "",
-        na.rm = TRUE
+    na.rm = TRUE
   )) {
     argnames <- names(arglist)
     formlist <- {

@@ -59,14 +59,16 @@ Visualize covariate imbalances in your dataset using the `raincloud()` function 
 ```{r results='hide', message = FALSE, fig.keep='all'}
 library(vecmatch)
 
-raincloud(data = cancer,
-          y = bmi,
-          group = status,
-          facet = sex,
-          significance = 't_test',
-          sig_label_color = TRUE,
-          sig_label_size = 3,
-          limits = c(7, 48))
+raincloud(
+  data = cancer,
+  y = bmi,
+  group = status,
+  facet = sex,
+  significance = "t_test",
+  sig_label_color = TRUE,
+  sig_label_size = 3,
+  limits = c(7, 48)
+)
 ```
 
 ### *2. Estimate Generalized Propensity Scores (GPS)* 
@@ -76,12 +78,12 @@ Next, calculate generalized propensity scores for the treatment variable. These 
 formula_cancer <- formula(status ~ bmi * sex)
 
 gps_matrix <- estimate_gps(formula_cancer,
-                           data = cancer,
-                           method = 'vglm',
-                           reference = 'control')
+  data = cancer,
+  method = "vglm",
+  reference = "control"
+)
 
 head(gps_matrix, n = 7)
-
 ```
 
 As you can see, each row in the resulting GPS matrix contains treatment assignment probabilities for all levels of the treatment variable, summing to 1.
@@ -99,18 +101,21 @@ The `csregion()` function outputs a matrix of generalized propensity scores, exc
 You can use the `csr_matrix` object to perform the actual matching with the vector matching algorithm using the `match_gps()` function. In this example, matching is performed without replacement, using a larger caliper and a one-to-one matching ratio:
 
 ```{r message = FALSE, warning=FALSE}
-matched_data <- match_gps(csmatrix = csr_matrix,
-                          reference = 'control',
-                          caliper = 1)
+matched_data <- match_gps(
+  csmatrix = csr_matrix,
+  reference = "control",
+  caliper = 1
+)
 ```
 
 ### *5. Assessing Matching Quality* 
 Finally, the quality of the matching process can be evaluated using the `balqual()` function. This function provides both mean and maximum values for various metrics, such as the standardized mean difference, variance ratio, and r-effect size coefficient.
 
 ```{r}
-balqual(matched_data, 
-        formula_cancer,
-        statistic = 'max')
+balqual(matched_data,
+  formula_cancer,
+  statistic = "max"
+)
 ```
 
 ## Help

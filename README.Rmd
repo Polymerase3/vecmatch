@@ -58,6 +58,8 @@ The vecmatch package has an exact workflow and it is advisable to follow it. It 
 Visualize covariate imbalances in your dataset using the `raincloud()` function for continuous variables and the `mosaic()` function for categorical variables. Both functions support grouping by up to two categorical variables (`group` and `facet` arguments) and provide standardized mean differences and significance tests.  
 
 ```{r results='hide', message = FALSE, fig.keep='all'}
+library(vecmatch)
+
 raincloud(data = cancer,
           y = bmi,
           group = status,

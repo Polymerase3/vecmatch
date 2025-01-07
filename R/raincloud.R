@@ -477,7 +477,7 @@ raincloud <- function(data = NULL,
       )
 
 
-      for (i in seq_along(nrow(freq_table))) {
+      for (i in seq_len(nrow(freq_table))) {
         message <- sprintf(
           "%s (n = %s, %s)",
           freq_table[i, 1],
@@ -709,7 +709,7 @@ raincloud <- function(data = NULL,
     freq_table <- as.data.frame(table(data[, "facet"]))
 
     labeller_vec <- c()
-    for (i in seq_along(nrow(freq_table))) {
+    for (i in seq_len(nrow(freq_table))) {
       message <- sprintf(
         "%s (n = %s)",
         freq_table[i, 1],

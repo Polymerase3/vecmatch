@@ -1,9 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# vecmatch: Calculate Genaralized Propensity Scores and Match Multiple Groups
-
-<img src="man/figures/logo.png" align="right" height="139" alt="" />
+# vecmatch: Calculate Genaralized Propensity Scores and Match Multiple Groups <img src="man/figures/logo.png" align="right" height="139" alt="" />
 
 <!-- badges: start -->
 
@@ -173,30 +171,30 @@ balqual(matched_data,
 #> -------------------------------------------------- 
 #> Treatment                 | Before     | After      
 #> -------------------------------------------------- 
-#> adenoma                   | 355        | 167        
-#> control                   | 304        | 167        
-#> crc_beningn               | 278        | 167        
-#> crc_malignant             | 247        | 167        
+#> adenoma                   | 355        | 168        
+#> control                   | 304        | 168        
+#> crc_beningn               | 278        | 168        
+#> crc_malignant             | 247        | 168        
 #> -------------------------------------------------- 
 #> 
 #> 
 #> Matching summary statistics:
 #> ---------------------------------------- 
 #> Total n before matching:  1184 
-#> Total n after matching:       668 
-#> % of matched observations:    56.42 %
-#> Total  maximal   SMD value:   0.04 
+#> Total n after matching:       672 
+#> % of matched observations:    56.76 %
+#> Total  maximal   SMD value:   0.036 
 #> Total  maximal   r value:     0.002 
-#> Total  maximal   Var value:   1.098 
+#> Total  maximal   Var value:   1.087 
 #> 
 #> 
 #> Maximal values :
 #> -------------------------------------------------------------------------------- 
 #> Variable                  | Coef  | Before       | After        | Quality      
 #> -------------------------------------------------------------------------------- 
-#> bmi                       | SMD   | 0.259        | 0.040        | Balanced     
-#> bmi                       | r     | 0.010        | 0.002        | Balanced     
-#> bmi                       | Var   | 1.128        | 1.098        | Balanced     
+#> bmi                       | SMD   | 0.259        | 0.036        | Balanced     
+#> bmi                       | r     | 0.010        | 0.001        | Balanced     
+#> bmi                       | Var   | 1.128        | 1.087        | Balanced     
 #> sexF                      | SMD   | 0.153        | 0.012        | Balanced     
 #> sexF                      | r     | 0.006        | 0.001        | Balanced     
 #> sexF                      | Var   | 1.004        | 1.001        | Balanced     
@@ -206,9 +204,9 @@ balqual(matched_data,
 #> bmi:sexF                  | SMD   | 0.151        | 0.013        | Balanced     
 #> bmi:sexF                  | r     | 0.007        | 0.001        | Balanced     
 #> bmi:sexF                  | Var   | 1.046        | 1.002        | Balanced     
-#> bmi:sexM                  | SMD   | 0.151        | 0.022        | Balanced     
+#> bmi:sexM                  | SMD   | 0.151        | 0.021        | Balanced     
 #> bmi:sexM                  | r     | 0.006        | 0.002        | Balanced     
-#> bmi:sexM                  | Var   | 1.023        | 1.013        | Balanced     
+#> bmi:sexM                  | Var   | 1.023        | 1.011        | Balanced     
 #> --------------------------------------------------------------------------------
 ```
 

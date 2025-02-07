@@ -48,6 +48,15 @@
 #'   where the dataset is large and there are many potential matches, setting
 #'   `replace = FALSE` often results in a substantial speedup with negligible or
 #'   no bias.
+#' @param full_match Logical; determines whether to perform an inner or outer
+#'   join after matching. Default is `FALSE`, which applies an inner join,
+#'   keeping only observations that have a match with the same observation in
+#'   the control group. This ensures equal group sizes. If `TRUE`, an outer join
+#'   is used, retaining all matched treatment observations, even if they do not
+#'   have a match wit the same observation in the control group. It is
+#'   recommended to use `replace = TRUE` with this setting. It increases the
+#'   percentage of matched observations but may negatively affect matching
+#'   quality. The default (`FALSE`) is recommended by Lopez and Gutman (2017).
 #' @param kmeans_args A list of arguments to pass to [stats::kmeans]. These
 #'   arguments must be provided inside a `list()` in the paired `name = value`
 #'   format.
@@ -116,6 +125,7 @@ match_gps <- function(csmatrix = NULL,
                       combos = NULL,
                       ratio = 1,
                       replace = FALSE,
+                      full_match = FALSE,
                       kmeans_args = NULL,
                       kmeans_cluster = 5,
                       verbose_output = FALSE,
@@ -248,6 +258,9 @@ match_gps <- function(csmatrix = NULL,
   }
 
   args[["replace"]] <- .vectorize(replace, matches_n)
+
+  # full_match
+  chk::chk_flag(full_match)
 
   # process caliper
   .chk_cond(
@@ -439,7 +452,7 @@ match_gps <- function(csmatrix = NULL,
 
   ## Works for all combos:
   match_results_outer <- Reduce(
-    function(x, y) merge(x, y, all = FALSE),
+    function(x, y) merge(x, y, all = full_match),
     match_results
   )
 
@@ -450,6 +463,7 @@ match_gps <- function(csmatrix = NULL,
 
   # return original csr data.frame but matched
   csr_data <- attr(csmatrix, "csr_data")
+
   csr_data <- as.data.frame(csr_data[matched_filter, ])
   attr(csr_data, "matching_filter") <- matched_filter
   if ("csr" %in% class(csmatrix)) {

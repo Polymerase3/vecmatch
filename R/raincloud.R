@@ -440,7 +440,7 @@ raincloud <- function(data = NULL,
     if (is.null(symlist[["facet"]])) {
       freq_table <- as.data.frame(table(data[, symlist[["group"]]]))
 
-      for (i in seq_along(nrow(freq_table))) {
+      for (i in seq_len(nrow(freq_table))) {
         message <- sprintf(
           "%s (n = %s)",
           freq_table[i, 1],

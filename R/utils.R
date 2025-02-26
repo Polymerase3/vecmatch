@@ -499,15 +499,18 @@ scale_0_to_1 <- function(x) {
 ## --changes the name of arglist to match names of funlist formals--------------
 match_add_args <- function(arglist, funlist) {
   if (is.list(arglist) && length(arglist) == sum(names(arglist) != "",
-    na.rm = TRUE
+        na.rm = TRUE
   )) {
     argnames <- names(arglist)
+
     formlist <- {
       if (length(funlist) == 1L && is.function(funlist)) {
         formals(funlist)
       } else if (is.list(funlist)) {
         unlist(lapply(funlist, function(x) {
-          formals(x)
+          forms <- formals(x)
+          forms[unlist(lapply(forms, is.null))] <- NA
+          forms
         }))
       }
     }
@@ -606,7 +609,11 @@ verbosely <- function(expr, verbose = TRUE) {
 
 ## --get rid of cli package note------------------------------------------------
 ignore_unused_imports <- function() {
-  cli::cli_warn
+  c(
+    cli::cli_warn,
+    Matching::Match,
+    optmatch::match_on
+  )
 }
 
 ## --process reference----------------------------------------------------------
@@ -632,7 +639,7 @@ ignore_unused_imports <- function() {
       !anyNA(reference))) {
       chk::abort_chk(strwrap("The argument `reference` must be a single string
                              of length 1", prefix = " ", initial = ""))
-    } else if (!(reference %in% levels_treat)) {
+    } else if (reference %nin% levels_treat) {
       chk::abort_chk(strwrap("The argument `reference` is not in the unique
       levels of the treatment variable", prefix = " ", initial = ""))
     } else {
@@ -751,4 +758,17 @@ create_balqual_output <- function(coeflist,
 
   # filter output
   quality_table[filter_rows, ]
+}
+
+## --ordering function for match_gps()------------------------------------------
+.ordering_func <- function(gps_vec, order = "desc", ...) {
+  if (order == "desc") {
+    order(gps_vec, decreasing = TRUE, ...)
+  } else if (order == "asc") {
+    order(gps_vec, decreasing = FALSE, ...)
+  } else if (order == "original") {
+    seq_len(length(gps_vec))
+  } else if (order == "random") {
+    withr::with_preserve_seed(sample(gps_vec))
+  }
 }

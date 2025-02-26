@@ -25,7 +25,7 @@
 #' @param ... Additional arguments to pass to `rstatix::chisq_test` when
 #'   `significance = TRUE`.
 #'
-#' @returns A `ggplot` object representing the contingency table of `y` and
+#' @return A `ggplot` object representing the contingency table of `y` and
 #'   `group` as a mosaic plot, optionally grouped by `facet` if specified.
 #'
 #' @examples

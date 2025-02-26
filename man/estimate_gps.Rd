@@ -39,10 +39,10 @@ variable, referred to as the baseline category in the calculation of
 generalized propensity scores.}
 
 \item{by}{a single string with the name of a column, contained in the \code{data}
-argument. Tha dataset will be divided by the groups created by the grouping
+argument. The dataset will be divided by the groups created by the grouping
 \code{by} variable and the calculation of the propensity scores will be carried
 out separately for each group. The results will then be merged and
-presented to the uesr as a single GPS matrix.}
+presented to the user as a single GPS matrix.}
 
 \item{subset}{a logical atomic vector of length equal to the number of rows
 in the \code{data} arguments. Allows to filter out observations from the further
@@ -82,7 +82,7 @@ generalized propensity scores aka. treatment allocation probabilities. It
 is the first step in the workflow of the vector matching algorithm and is
 essential for the further analysis. The returned matrix of class \code{gps} can
 then be passed to the \code{csregion()} function to calculate the rectangular
-common support region boundaries and drop samples uneligible for the
+common support region boundaries and drop samples not eligible for the
 further analysis. The list of available methods operated by the
 \code{estimate_gps()} is provided below with a short description and function
 used for the calculations:
@@ -90,10 +90,10 @@ used for the calculations:
 \item \code{multinom} - multinomial logistic regression model \code{\link[nnet:multinom]{nnet::multinom()}}
 \item \code{vglm} - vector generalized linear model for multinomial data
 \code{\link[VGAM:vglm]{VGAM::vglm()}},
-\item \code{brglm2} - bias reduction model for multinomial respones using the
-poisson trick \code{\link[brglm2:brmultinom]{brglm2::brmultinom()}},
+\item \code{brglm2} - bias reduction model for multinomial responses using the
+Poisson trick \code{\link[brglm2:brmultinom]{brglm2::brmultinom()}},
 \item \code{mblogit} - baseline-category logit models \code{\link[mclogit:mblogit]{mclogit::mblogit()}}.
-\item \code{polr} - ordered logistic or probit regression onyl for ordered factor
+\item \code{polr} - ordered logistic or probit regression only for ordered factor
 variables from \code{\link[MASS:polr]{MASS::polr()}}. The \code{method} argument of the underlying
 \code{MASS::polr()} package function can be controlled with the \code{link} argument.
 Available options: \code{link = c("logistic", "probit", "loglog", "cloglog",   "cauchit")}

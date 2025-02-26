@@ -102,7 +102,7 @@
 #'   tuning parameters are `caliper` and `ratio`.
 
 #'
-#' @returns A `data.frame` similar to the one provided as the `data` argument in
+#' @return A `data.frame` similar to the one provided as the `data` argument in
 #'   the [estimate_gps()] function, containing the same columns but only the
 #'   observations for which a match was found. The returned object includes two
 #'   attributes, accessible with the `attr()` function:

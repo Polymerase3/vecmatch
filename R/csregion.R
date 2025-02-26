@@ -16,7 +16,7 @@
 #'   to the number of subjects for which generalized propensity scores were
 #'   estimated.
 #'
-#' @returns A numeric matrix similar to the one returned by `estimate_gps()`,
+#' @return A numeric matrix similar to the one returned by `estimate_gps()`,
 #'   but with the number of rows reduced to exclude those observations that do
 #'   not fit within the common support region (CSR) boundaries. The returned
 #'   object also possesses additional attributes that summarize the calculation

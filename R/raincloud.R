@@ -108,7 +108,7 @@
 #'  data are not normally distributed. Implemented via
 #'  [rstatix::pairwise_wilcox_test()].
 #'
-#' @returns A `ggplot` object representing the distribution of the `y` variable
+#' @return A `ggplot` object representing the distribution of the `y` variable
 #'   across the levels of the `group` and `facet` variables in `data`.
 #'
 #' @seealso [mosaic()] which summarizes the distribution of discrete data

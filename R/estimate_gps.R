@@ -22,10 +22,10 @@
 #'   variable, referred to as the baseline category in the calculation of
 #'   generalized propensity scores.
 #' @param by a single string with the name of a column, contained in the `data`
-#'   argument. Tha dataset will be divided by the groups created by the grouping
+#'   argument. The dataset will be divided by the groups created by the grouping
 #'   `by` variable and the calculation of the propensity scores will be carried
 #'   out separately for each group. The results will then be merged and
-#'   presented to the uesr as a single GPS matrix.
+#'   presented to the user as a single GPS matrix.
 #' @param ordinal_treat an atomic vector of the length equal to the length of
 #'   unique levels of the treatment variable. Confirms, that the treatment
 #'   variable is an ordinal variable and adjusts its levels, to the order of
@@ -40,7 +40,7 @@
 #'   examples refer to the Details section and documentations of corresponding
 #'   functions.
 #'
-#' @returns A numeric matrix of class `gps` with the number of columns equal to
+#' @return A numeric matrix of class `gps` with the number of columns equal to
 #'   the number of unique treatment variable levels plus one (for the treatment
 #'   variable itself) and the number of row equal to the number of subjects in
 #'   the initial dataset. The original dataset used for estimation can be
@@ -51,17 +51,17 @@
 #'   is the first step in the workflow of the vector matching algorithm and is
 #'   essential for the further analysis. The returned matrix of class `gps` can
 #'   then be passed to the `csregion()` function to calculate the rectangular
-#'   common support region boundaries and drop samples uneligible for the
+#'   common support region boundaries and drop samples not eligible for the
 #'   further analysis. The list of available methods operated by the
 #'   `estimate_gps()` is provided below with a short description and function
 #'   used for the calculations:
 #'   * `multinom` - multinomial logistic regression model [nnet::multinom()]
 #'   * `vglm` - vector generalized linear model for multinomial data
 #'   [VGAM::vglm()],
-#'   * `brglm2` - bias reduction model for multinomial respones using the
-#'   poisson trick [brglm2::brmultinom()],
+#'   * `brglm2` - bias reduction model for multinomial responses using the
+#'   Poisson trick [brglm2::brmultinom()],
 #'   * `mblogit` - baseline-category logit models [mclogit::mblogit()].
-#'   * `polr` - ordered logistic or probit regression onyl for ordered factor
+#'   * `polr` - ordered logistic or probit regression only for ordered factor
 #'   variables from [MASS::polr()]. The `method` argument of the underlying
 #'   `MASS::polr()` package function can be controlled with the `link` argument.
 #'   Available options: `link = c("logistic", "probit", "loglog", "cloglog",

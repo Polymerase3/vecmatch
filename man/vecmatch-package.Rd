@@ -3,11 +3,11 @@
 \docType{package}
 \name{vecmatch-package}
 \alias{vecmatch-package}
-\title{vecmatch: Calculate Genaralized Propensity Scores and Match Multiple Groups}
+\title{vecmatch: Calculate Generalized Propensity Scores and Match Multiple Groups}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-An implementation of Vector Matching algorithm. Enables the assesment of initial covariate imbalances through ellegant graphics, estimates treatment assignment probabilities using various methods, defines the common support region, and performs matching across multiple groups.
+An implementation of Vector Matching algorithm. Enables the assessment of initial covariate imbalances through ellegant graphics, estimates treatment assignment probabilities using various methods, defines the common support region, and performs matching across multiple groups.
 }
 \seealso{
 Useful links:

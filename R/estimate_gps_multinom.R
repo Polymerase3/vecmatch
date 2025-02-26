@@ -37,9 +37,11 @@
   args[["verbose"]] <- verbose_output
   args[["link"]] <- link
 
+
+
   ################### FITTING THE MODELS #######################################
   if (treat_type == "multinom" || treat_type == "binary" ||
-    (treat_type == "ordinal" && method != "polr")) {
+        (treat_type == "ordinal" && method != "polr")) {
     ## --NNET::multinom()-------------------------------------------------------
     if (method == "multinom") {
       infos <- .gps_methods[["multinom"]]
@@ -51,6 +53,8 @@
         arglist = args,
         funlist = lapply(infos$fun.arg.check, function(x) eval(parse(text = x)))
       )
+
+      suppressWarnings(args <- Filter(function(x) !all(is.na(x)), args))
 
       # fixing single column bug for binary treatments
       if (nunique(args[["data"]][, "treat"]) == 2) {
@@ -111,7 +115,7 @@
           .chk_cond(
             !args[["control_call"]] ||
               (args[["control_call_char"]] != "VGAM::vglm.control" &&
-                args[["control_call_char"]] != "vglm.control"),
+                 args[["control_call_char"]] != "vglm.control"),
             "The argument control has to be a valid function
               call to the function VGAM::vglm.control()"
           )
@@ -119,7 +123,7 @@
           .chk_cond(
             !args[["control_call"]] ||
               (args[["control_call_char"]] != "VGAM::rrvglm.control" &&
-                args[["control_call_char"]] != "rrvglm.control"),
+                 args[["control_call_char"]] != "rrvglm.control"),
             "The argument control has to be a valid function call
                      to the function VGAM::rrvglm.control()"
           )
@@ -151,6 +155,8 @@
         arglist = args,
         funlist = lapply(infos$fun.arg.check, function(x) eval(parse(text = x)))
       )
+
+      suppressWarnings(args <- Filter(function(x) !all(is.na(x)), args))
 
       ## Overwriting args
       ## trace (verbose)
@@ -207,7 +213,7 @@
           .chk_cond(
             !args[["control_call"]] ||
               (args[["control_call_char"]] != "brglm2::brglmControl" &&
-                args[["control_call_char"]] != "brglmControl"),
+                 args[["control_call_char"]] != "brglmControl"),
             "The argument control has to be a valid function call
                     to the function brglm2::brglmControl()"
           )
@@ -219,6 +225,8 @@
         arglist = args,
         funlist = lapply(infos$fun.arg.check, function(x) eval(parse(text = x)))
       )
+
+      suppressWarnings(args <- Filter(function(x) !all(is.na(x)), args))
 
       ## Fit the brglm2
       if (link %in% infos$link_fun) {
@@ -263,9 +271,9 @@
           .chk_cond(
             !args[["control_call"]] ||
               (args[["control_call_char"]] != "mclogit::mclogit.control" &&
-                args[["control_call_char"]] != "mclogit.control" &&
-                args[["control_call_char"]] != "mclogit::mmclogit.control" &&
-                args[["control_call_char"]] != "mmclogit.control"),
+                 args[["control_call_char"]] != "mclogit.control" &&
+                 args[["control_call_char"]] != "mclogit::mmclogit.control" &&
+                 args[["control_call_char"]] != "mmclogit.control"),
             "The argument control has to be a valid function call to the
                   function mclogit::mclogit.control()"
           )
@@ -283,6 +291,8 @@
         funlist = lapply(infos$fun.arg.check, function(x) eval(parse(text = x)))
       )
 
+      suppressWarnings(args <- Filter(function(x) !all(is.na(x)), args))
+
       if (link %in% infos$link_fun) {
         # Fit model
         tryCatch(
@@ -296,9 +306,10 @@
           ),
           error = function(e) {
             chk::abort_chk(strwrap(sprintf(
-              "There was a problem fitting the %s regressions with %s.\n
-                               Error message: (from %s) %s",
-              link, fun_used, fun_used, conditionMessage(e)
+              "There was a problem fitting the %s regressions with
+              `mclogit::mblogit.\n
+              Error message: (from `mclogit::mblogit`) %s",
+              link, conditionMessage(e)
             ), prefix = " ", initial = ""), tidy = FALSE)
           }
         )
@@ -345,6 +356,8 @@
         arglist = args,
         funlist = lapply(infos$fun.arg.check, function(x) eval(parse(text = x)))
       )
+
+      suppressWarnings(args <- Filter(function(x) !all(is.na(x)), args))
 
       if (link %in% infos$link_fun) {
         tryCatch(

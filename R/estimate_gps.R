@@ -249,9 +249,9 @@ estimate_gps <- function(formula,
   # assembling the arguments list
   if (use_subset) {
     args[["treat"]] <- args[["treat"]][subset_logvec]
-    args["covs"] <- list(data_list[["reported_covs"]][subset_logvec, ,
-      drop = FALSE
-    ])
+    args["covs"] <- list(
+      data_list[["reported_covs"]][subset_logvec, , drop = FALSE]
+    )
 
     args[".data"] <- list(data[subset_logvec, , drop = FALSE])
     args[["by"]] <- .process_by(by, data, args[["treat"]])[subset_logvec, ,

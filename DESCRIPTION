@@ -5,10 +5,10 @@ Authors@R:
     person("Mateusz", "Kolek", , "mati.kolek13@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-6470-4830"))
 Description: An implementation of Vector Matching algorithm. Enables the
-    assessment of initial covariate imbalances through ellegant graphics,
+    assessment of initial confounder imbalances through elegant graphics,
     estimates treatment assignment probabilities using various methods,
-    defines the common support region, and performs matching across
-    multiple groups.
+    defines the common support region, performs matching across
+    multiple groups and assesses its quality.
 License: GPL (>= 3) + file LICENSE
 URL: https://github.com/Polymerase3/vecmatch
 BugReports: https://github.com/Polymerase3/vecmatch/issues

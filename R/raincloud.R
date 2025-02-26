@@ -163,6 +163,10 @@ raincloud <- function(data = NULL,
   args_signif <- list(...)
 
   #--check data frame-----------------------------------------------------------
+  if('matched' %in% class(data)) {
+    class(data) <- 'data.frame'
+  }
+
   ## must be an object of class data frame
   .check_df(data)
 
@@ -309,6 +313,11 @@ raincloud <- function(data = NULL,
       .sig_methods[[significance]]$args_check_fun
     )
 
+    suppressWarnings(args_signif <- Filter(
+      function(x) !all(is.na(x)),
+      args_signif
+    ))
+
     # correcting pool.sd to logical if default value for t_test
     if (!is.logical(args_signif[["pool.sd"]]) && significance == "t_test") {
       args_signif[["pool.sd"]] <- !args_signif[["paired"]]
@@ -383,10 +392,16 @@ raincloud <- function(data = NULL,
         args_signif[["formula"]]
       )
 
+      smd <- smd[, c('group1', 'group2', 'effsize')]
+
+      colnames(smd)[colnames(smd) == "effsize"] <- "smd"
+
+      smd$smd <- abs(round(smd$smd, 2))
+
       # binding the results together
-      test_results[[i]] <- cbind(test_results[[i]],
-        smd = abs(round(smd$effsize, 2))
-      )
+      test_results[[i]] <- merge(test_results[[i]], smd,
+                                 by = c("group1", "group2"),
+                                 all = TRUE)
 
       # adding the facet var
       if (facet_levels > 1) {
@@ -587,11 +602,11 @@ raincloud <- function(data = NULL,
     ggplot2::coord_flip() +
     ## defining theme
     ggplot2::theme_classic() %+replace%
-    ggplot2::theme(
-      axis.ticks.y = ggplot2::element_blank(),
-      axis.line.y = ggplot2::element_blank(),
-      legend.title = ggplot2::element_text(face = "bold")
-    ) +
+      ggplot2::theme(
+        axis.ticks.y = ggplot2::element_blank(),
+        axis.line.y = ggplot2::element_blank(),
+        legend.title = ggplot2::element_text(face = "bold")
+      ) +
     ## define ylabs
     ggplot2::ylab(symlist[["y"]])
 

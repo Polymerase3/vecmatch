@@ -1,6 +1,6 @@
 Package: vecmatch
 Title: Calculate Generalized Propensity Scores and Match Multiple Groups
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: 
     person("Mateusz", "Kolek", , "mati.kolek13@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-6470-4830"))

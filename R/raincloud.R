@@ -131,7 +131,7 @@
 #' ## characteristics usingthe `ggplot2` or `ggpubr` packages
 #' ## to create publication grade plot:
 #' p <- p +
-#'   theme_classic2() %+replace%
+#'   theme_classic2() +
 #'   theme(
 #'     axis.line.y = element_blank(),
 #'     axis.ticks.y = element_blank()

@@ -160,25 +160,27 @@ formula_cancer <- formula(status ~ age + sex)
 
 # Step 1.) Estimation of the generalized propensity scores
 gp_scores <- estimate_gps(formula_cancer,
-                          data = cancer,
-                          method = "multinom",
-                          reference = "control",
-                          verbose_output = TRUE)
+  data = cancer,
+  method = "multinom",
+  reference = "control",
+  verbose_output = TRUE
+)
 
 # Step 2.) Defining the common support region
 gps_csr <- csregion(gp_scores)
 
 # Step 3.) Matching the gps
 matched_cancer <- match_gps(gps_csr,
-                            caliper = 0.25,
-                            reference = "control",
-                            method = "fullopt",
-                            kmeans_cluster = 2,
-                            kmeans_args = list(
-                              iter.max = 200,
-                              algorithm = "Forgy"
-                            ),
-                            verbose_output = TRUE)
+  caliper = 0.25,
+  reference = "control",
+  method = "fullopt",
+  kmeans_cluster = 2,
+  kmeans_args = list(
+    iter.max = 200,
+    algorithm = "Forgy"
+  ),
+  verbose_output = TRUE
+)
 
 }
 \references{

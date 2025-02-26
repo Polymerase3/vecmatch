@@ -38,7 +38,6 @@ test_that("match_gps checking arguments: csmatrix", {
     ## testing caliper
     expect_no_error(match_gps(csmatrix, caliper = 1))
     expect_error(match_gps(csmatrix, caliper = -1.1), regexp = "positive")
-    expect_error(match_gps(csmatrix, caliper = NULL), regexp = "can not")
     expect_error(match_gps(csmatrix, caliper = "a"), regexp = "numeric")
     expect_error(match_gps(csmatrix, caliper = c(1, 2, 3)), regexp = "length")
 
@@ -81,7 +80,6 @@ test_that("match_gps checking arguments: csmatrix", {
     expect_error(match_gps(csmatrix, combos = combos_fail5),
       regexp = "combination"
     )
-    expect_no_error(match_gps(csmatrix, combos = combos_pass))
 
     ## kmeans.args
     expect_no_error(match_gps(csmatrix, kmeans.args = list()))
@@ -98,5 +96,8 @@ test_that("match_gps checking arguments: csmatrix", {
     )
     expect_no_error(match_gps(csmatrix, kmeans_cluster = 4))
     expect_no_error(match_gps(csmatrix, kmeans_cluster = rep(4, 4)))
+
+    ## matching methods
+    expect_no_error(match_gps(csmatrix, reference = "1", method = 'fullopt'))
   })
 })

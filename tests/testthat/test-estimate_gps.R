@@ -183,7 +183,7 @@ test_that("Formals checking: subset", {
 })
 
 ## --testing methods and scenarios----------------------------------------------
-test_that("estiamte_gps: methods and scenarios", {
+test_that("estimate_gps: methods and scenarios", {
   data <- data.frame(
     treat = rep(c(1, 2, 3, 4, 5), 20),
     treat_fold = factor(rep(c(1, 2, 3, 4, 5), 20),

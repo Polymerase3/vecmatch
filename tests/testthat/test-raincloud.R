@@ -63,6 +63,7 @@ test_that("Formals checking: significance", {
   expect_error(raincloud(datax, random, significance = "asd"),
     regexp = "one group"
   )
+  raincloud(datax2, y, logg, significance = "t_test")
   expect_no_error(raincloud(datax2, y, logg, significance = "t_test"))
   expect_no_error(raincloud(datax2, y, logg, significance = "tukeyHSD_test"))
   expect_error(raincloud(datax2, y, logg, significance = "test"),

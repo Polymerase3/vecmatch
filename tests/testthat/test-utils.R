@@ -56,7 +56,7 @@ test_that("Testing match_add_args()", {
 
   expect_no_error(match_add_args(arglist, funlist))
   expect_type(match_add_args(arglist, funlist), type = "list")
-  expect_length(match_add_args(arglist, funlist), 18)
+  expect_length(match_add_args(arglist, funlist), 19)
   expect_no_error(match_add_args(arglist, funlist2))
   expect_length(match_add_args(arglist, funlist2), 7)
   expect_no_error(match_add_args(arglist, funlist3))

@@ -99,7 +99,7 @@
 #'   type = "smd",
 #'   statistic = "max",
 #'   round = 3,
-#'   cutoffs = 0.05
+#'   cutoffs = 0.2
 #' )
 #'
 #' @seealso [match_gps()] for matching the generalized propensity scores;
@@ -326,7 +326,8 @@ balqual <- function(matched_data = NULL,
     quality_dataframe,
     operation = "+",
     round = round,
-    which_coefs = type
+    which_coefs = type,
+    cutoffs = cutoffs
   )
 
   # maxes
@@ -334,7 +335,8 @@ balqual <- function(matched_data = NULL,
     quality_dataframe,
     operation = "max",
     round = round,
-    which_coefs = type
+    which_coefs = type,
+    cutoffs = cutoffs
   )
 
   # % Matched
@@ -485,8 +487,13 @@ show_quality <- function(object) {
   # Print summary_head (maximal values for each variable)
   for (i in seq_along(object$summary_head)) {
     sum_text <- "maximal"
-    tab_after <- ifelse(names(object$summary_head[i]) == "r" &&
-      "max" %nin% object$statistic, "\t\t", "\t")
+    tab_after <- ifelse(
+      names(
+        object$summary_head[i]
+      ) == "r" && "max" %nin% object$statistic,
+      "\t\t",
+      "\t"
+    )
     cat(
       "Total ", sum_text, " ", names(object$summary_head[i]), "value:",
       tab_after, object$summary_head[i], "\n"

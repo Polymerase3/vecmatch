@@ -13,6 +13,9 @@
 #'   of the common support region and the estimation of generalized propensity
 #'   scores. It is crucial that the common support region was calculated using
 #'   the `csregion()` function to ensure compatibility.
+#' @param method A single string specifying the matching method to use. The
+#'   default is `"nnm"`, which applies the k-nearest neighbors matching
+#'   algorithm. See the Details section for a full list of available methods.
 #' @param caliper A numeric value specifying the caliper width, which defines
 #'   the allowable range within which observations can be matched. It is
 #'   expressed as a percentage of the standard deviation of the
@@ -28,17 +31,9 @@
 #'   values. Instead, choose a level with covariate or propensity score
 #'   distributions that are centrally positioned among all treatment groups to
 #'   maximize the number of matches.
-#' @param combos An optional `data.frame` with two columns. Each row specifies a
-#'   single execution of the matching algorithm, where the treatment level in
-#'   the second column is matched to the treatment level in the first column
-#'   (reference). Matching is performed within clusters calculated by the
-#'   k-means algorithm, utilizing generalized propensity scores from all other
-#'   treatment levels, excluding the two specified in the `combos` data frame.
-#'   The data frame must contain valid strings representing treatment levels,
-#'   and its number of rows must be fewer than the total number of unique
-#'   pairwise combinations of treatment levels.
-#' @param ratio A scalar for the number of matches which should be found. The
-#'   default is one-to-one matching.
+#' @param ratio A scalar for the number of matches which should be found for
+#'   each control observation. The default is one-to-one matching. Only
+#'   available for the methods `"nnm"` and `"pairopt"`.
 #' @param replace Logical value indicating whether matching should be done with
 #'   replacement. If `FALSE`, the order of matches generally matters. Matches
 #'   are found in the same order as the data is sorted. Specifically, the
@@ -47,16 +42,27 @@
 #'   generally not recommended as it tends to increase bias. However, in cases
 #'   where the dataset is large and there are many potential matches, setting
 #'   `replace = FALSE` often results in a substantial speedup with negligible or
-#'   no bias.
-#' @param full_match Logical; determines whether to perform an inner or outer
-#'   join after matching. Default is `FALSE`, which applies an inner join,
-#'   keeping only observations that have a match with the same observation in
-#'   the control group. This ensures equal group sizes. If `TRUE`, an outer join
-#'   is used, retaining all matched treatment observations, even if they do not
-#'   have a match wit the same observation in the control group. It is
-#'   recommended to use `replace = TRUE` with this setting. It increases the
-#'   percentage of matched observations but may negatively affect matching
-#'   quality. The default (`FALSE`) is recommended by Lopez and Gutman (2017).
+#'   no bias. Only available for the method `"nnm"`
+#' @param order A string specifying the order in which logit-transformed GPS
+#'   values are sorted before matching. The available options are:
+#'  * `"desc"` – sorts GPS values from highest to lowest (default).
+#'  * `"asc"` – sorts GPS values from lowest to highest.
+#'  * `"original"` – preserves the original order of GPS values.
+#'  * `"random"` – randomly shuffles GPS values. To generate different random
+#'  orders, set a seed using [set.seed()].
+#' @param ties A logical flag indicating how tied matches should be handled.
+#'   Available only for the `"nnm"` method, with a default value of `FALSE` (all
+#'   tied matches are included in the final dataset, but only unique
+#'   observations are retained). For more details, see the `ties` argument in
+#'   [Matching::Matchby()].
+#' @param min_controls The minimum number of treatment observations that should
+#'   be matched to each control observation. Available only for the `"fullopt"`
+#'   method. For more details, see the `min.controls` argument in
+#'   [optmatch::fullmatch()].
+#' @param max_controls The maximum number of treatment observations that can be
+#'   matched to each control observation. Available only for the `"fullopt"`
+#'   method. For more details, see the `max.controls` argument in
+#'   [optmatch::fullmatch()].
 #' @param kmeans_args A list of arguments to pass to [stats::kmeans]. These
 #'   arguments must be provided inside a `list()` in the paired `name = value`
 #'   format.
@@ -64,8 +70,37 @@
 #'   [stats::kmeans].
 #' @param verbose_output a logical flag. If `TRUE` a more verbose version of the
 #'   function is run and the output is printed out to the console.
-#' @param ... Additional arguments to be passed to the [Matching::Matchby()]
+#' @param ... Additional arguments to be passed to the matching
 #'   function.
+#'
+#' @details Propensity score matching can be performed using various matching
+#'   algorithms. Lopez and Gutman (2017) do not explicitly specify the matching
+#'   algorithm used, but it is assumed they applied the commonly used k-nearest
+#'   neighbors matching algorithm, implemented as `method = "nnm"`. However,
+#'   this algorithm can sometimes be challenging to use, especially when
+#'   treatment and control groups have unequal sizes. When `replace = FALSE`,
+#'   the number of matches is strictly limited by the smaller group, and even
+#'   with `replace = TRUE`, the results may not always be satisfactory. To
+#'   address these limitations, we have implemented an additional matching
+#'   algorithm to maximize the number of matched observations within a dataset.
+#'
+#'   The available matching methods are:
+#'
+#'   * `"nnm"` – classic k-nearest neighbors matching, implemented using
+#'   [Matching::Matchby()]. The tunable parameters in `match_gps()` are
+#'   `caliper`, `ratio`, `replace`, `order`, and `ties`. Additional arguments
+#'   can be passed to [Matching::Matchby()] via the `...` argument.
+#'   * `"fullopt"` – optimal full matching algorithm, implemented with
+#'   [optmatch::fullmatch()]. This method calculates a discrepancy matrix to
+#'   identify all possible matches, often optimizing the percentage of matched
+#'   observations. The available tuning parameters are `caliper`,
+#'   `min_controls`, and `max_controls`.
+#'   * `"pairmatch"` – optimal 1:1 and 1:k matching algorithm, implemented using
+#'   [optmatch::pairmatch()], which is actually a wrapper around
+#'   [optmatch::fullmatch()]. Like `"fullopt"`, this method calculates a
+#'   discrepancy matrix and finds matches that minimize its sum. The available
+#'   tuning parameters are `caliper` and `ratio`.
+
 #'
 #' @returns A `data.frame` similar to the one provided as the `data` argument in
 #'   the [estimate_gps()] function, containing the same columns but only the
@@ -83,49 +118,47 @@
 #' Sci. 32(3), 432-454, (August 2017)
 #'
 #' @seealso [estimate_gps()] for the calculation of generalized propensity
-#' scores; [Matching::Matchby()] for the documentation of the matching function;
-#' [stats::kmeans()] for the documentation of the k-Means algorithm.
+#'   scores; [MatchIt::matchit()], [optmatch::fullmatch()] and
+#'   [optmatch::pairmatch()] for the documentation of the matching functions;
+#'   [stats::kmeans()] for the documentation of the k-Means algorithm.
 #'
 #' @examples
-#' # Loading the lalonde dataset from the `Matching` package
-#' library(Matching)
-#' data(lalonde)
-#'
 #' # Defining the formula used for gps estimation
-#' formula_lalonde <- formula(treat ~ age * black * married + educ)
+#' formula_cancer <- formula(status ~ age + sex)
 #'
 #' # Step 1.) Estimation of the generalized propensity scores
-#' gp_scores <- estimate_gps(formula_lalonde,
-#'   data = lalonde,
-#'   method = "brglm2",
-#'   reference = "0",
-#'   verbose_output = TRUE
-#' )
+#' gp_scores <- estimate_gps(formula_cancer,
+#'                           data = cancer,
+#'                           method = "multinom",
+#'                           reference = "control",
+#'                           verbose_output = TRUE)
 #'
 #' # Step 2.) Defining the common support region
 #' gps_csr <- csregion(gp_scores)
 #'
 #' # Step 3.) Matching the gps
-#' matched_lalonde <- match_gps(gps_csr,
-#'   caliper = 100, # very big caliper to let
-#'   reference = "0", # the gps match freely
-#'   replace = FALSE,
-#'   kmeans_cluster = 1,
-#'   kmeans_args = list(
-#'     iter.max = 200,
-#'     algorithm = "Forgy"
-#'   ),
-#'   verbose_output = TRUE
-#' )
+#' matched_cancer <- match_gps(gps_csr,
+#'                             caliper = 0.25,
+#'                             reference = "control",
+#'                             method = "fullopt",
+#'                             kmeans_cluster = 2,
+#'                             kmeans_args = list(
+#'                               iter.max = 200,
+#'                               algorithm = "Forgy"
+#'                             ),
+#'                             verbose_output = TRUE)
 #'
 #' @export
 match_gps <- function(csmatrix = NULL,
+                      method = "nnm",
                       caliper = 0.2,
                       reference = NULL,
-                      combos = NULL,
-                      ratio = 1,
-                      replace = FALSE,
-                      full_match = FALSE,
+                      ratio = NULL,
+                      replace = NULL,
+                      order = NULL,
+                      ties = NULL,
+                      min_controls = NULL,
+                      max_controls = NULL,
                       kmeans_args = NULL,
                       kmeans_cluster = 5,
                       verbose_output = FALSE,
@@ -133,8 +166,12 @@ match_gps <- function(csmatrix = NULL,
   ####################### INPUT CHECKING #######################################
   ########################### AND ##############################################
   ####################### DATA PROCESSING ######################################
-  args <- list(...)
+
+  # capture arguments
+  all_args <- as.list(environment())
+  ellipsis_args <- list(...)
   kmeans_args <- kmeans_args %||% list()
+  args <- list()
 
   # check and process the csmatrix
   .chk_cond(
@@ -151,14 +188,82 @@ match_gps <- function(csmatrix = NULL,
   # Perform the logit transformation and combine with treatment
   logit_matrix <- cbind(treatment = csmatrix[, 1], logit(csmatrix[, -1]))
 
-  # reference
+  # defining the main data.frame
+  data_name <- .match_methods[[method]]$data_name
+  args[[data_name]] <- logit_matrix
+
+  # Reset the rows counter on the logit_matrix
+  rownames(args[[data_name]]) <- NULL
+
+  # Control the method argument
+  .chk_cond(
+    method %nin% names(.match_methods),
+    sprintf(
+      "The argument `method` is only allowed to have following
+             values: %s",
+      word_list(names(.match_methods), quotes = TRUE)
+    )
+  )
+
+  # Process the variable args for different methods
+  varargs <- c(
+    "caliper", "ratio", "replace", "order",
+    "ties", "min_controls", "max_controls"
+  )
+
+  # define which varags are possible for given methods (both named args and ...)
+  allowed_varargs <- unlist(
+    lapply(
+      .match_methods[[method]]$args_check_fun,
+      function(x) {
+        forms <- formals(x)
+        forms[unlist(lapply(forms, is.null))] <- NA
+        names(forms)
+      }
+    )
+  )
+
+  allowed_varargs <- c(
+    .match_methods[[method]]$allowed_args,
+    unique(allowed_varargs)
+  )
+
+  # check which varargs were specified (both names and ...)
+  specified_varargs <- Filter(Negate(is.null), all_args)
+  varargs_filter <- names(specified_varargs) %in% varargs
+  specified_varargs <- c(
+    specified_varargs[varargs_filter],
+    ellipsis_args
+  )
+
+  # filter out only allowed args from the specified ones
+  checked_varargs_filter <- names(specified_varargs) %in% allowed_varargs
+
+  # if not allowed varargs were specified:
+  .chk_cond(
+    !all(checked_varargs_filter),
+    error = FALSE,
+    sprintf(
+      "Following specified arguments are not
+                    allowed for the method %s and will be ignored: %s",
+      add_quotes(method),
+      word_list(
+        names(specified_varargs[!checked_varargs_filter])
+      )
+    )
+  )
+
+  # reference processing
   csmatrix$treatment <- as.factor(csmatrix$treatment)
   ref_list <- .process_ref(csmatrix$treatment,
     ordinal_treat = NULL,
     reference = reference
   )
 
-  args[["treatment"]] <- ref_list[["data.relevel"]]
+  if (.match_methods[[method]]$treat_var) {
+    args[["Tr"]] <- ref_list[["data.relevel"]]
+  }
+
   reference <- ref_list[["reference"]]
 
   # kmeans_args, check list, process later
@@ -167,11 +272,14 @@ match_gps <- function(csmatrix = NULL,
   }
 
   # process combos
-  if (is.null(combos)) {
+  if ("combos" %nin% names(ellipsis_args)) {
     # generate all possible matches with reference on the left
     combos <- expand.grid(group1 = reference, group2 = colnames(csmatrix)[-1])
     combos <- combos[combos[, 2] != reference, ]
   } else {
+    # extracting combos
+    combos <- ellipsis_args[["combos"]]
+
     # check if data frame
     .check_df(combos, data_name = "combos")
 
@@ -226,64 +334,143 @@ match_gps <- function(csmatrix = NULL,
   combos[] <- lapply(combos, as.character)
   matches_n <- nrow(combos)
 
+  ## varargs processing section ================================================
   # ratio
-  if (length(ratio) != 1) {
-    .chk_cond(
-      !.check_vecl(ratio, matches_n, check_numeric = FALSE),
-      "The `ratio` argument must be either a single integer or an atomic
-              vector with a length equal to the number of rows in the `combos`
-              data frame."
+  if ("ratio" %in% allowed_varargs) {
+    ratio <- .chk_null_default(ratio, "ratio", method, 1)
+
+    .chk_vararg_length(ratio, "ratio",
+      type_n = "integer",
+      matches_n = matches_n
     )
+    .check_integer(ratio, x_name = "ratio")
+
+    args[["M"]] <- .vectorize(ratio, matches_n)
   }
 
-  .check_integer(ratio, x_name = "ratio")
-
-  args[["M"]] <- .vectorize(ratio, matches_n)
-
   # replace
-  if (length(replace) != 1) {
-    .chk_cond(
-      !.check_vecl(replace, matches_n, check_numeric = FALSE),
-      "The `replace` argument must be either a single logical flag or an
-              atomic vector with a length equal to the number of rows in the
-              `combos` data frame."
+  if ("replace" %in% allowed_varargs) {
+    replace <- .chk_null_default(replace, "replace", method, FALSE)
+
+    .chk_vararg_length(replace, "replace",
+      type_n = "logical flag",
+      matches_n = matches_n
     )
 
     .chk_cond(
       !is.logical(replace) || anyNA(replace),
       "All values in the `replace` argument have to be logical flags."
     )
-  } else {
-    chk::chk_flag(replace)
+
+    args[["replace"]] <- .vectorize(replace, matches_n)
   }
 
-  args[["replace"]] <- .vectorize(replace, matches_n)
-
-  # full_match
-  chk::chk_flag(full_match)
-
   # process caliper
-  .chk_cond(
-    is.null(caliper),
-    "The `caliper` argument can not be NULL."
-  )
+  if ("caliper" %in% allowed_varargs) {
+    caliper <- .chk_null_default(caliper, "caliper", method, 0.25)
 
-  .chk_cond(
-    !(.check_vecl(caliper, leng = matches_n, check_numeric = TRUE) ||
-      .check_vecl(caliper, leng = 1, check_numeric = TRUE)),
-    "The `caliper` argument must be either a single numeric or an atomic
-            vector with a length equal to the number of rows in the `combos`
-            data frame."
-  )
+    .chk_vararg_length(caliper, "caliper",
+      TRUE,
+      type_n = "numeric",
+      matches_n
+    )
 
-  .chk_cond(
-    any(caliper <= 0),
-    "The `caliper` argument has to be a positive number."
-  )
+    .chk_cond(
+      any(caliper <= 0),
+      "The `caliper` argument has to be a positive number."
+    )
 
-  caliper <- caliper * stats::sd(as.matrix(logit_matrix[, -1]))
+    caliper <- caliper * stats::sd(as.matrix(args[[data_name]][, reference]))
 
-  args[["caliper"]] <- .vectorize(caliper, matches_n)
+    args[["caliper"]] <- .vectorize(caliper, matches_n)
+  }
+
+  # define the matching formula based on combos
+  if (.match_methods[[method]]$formula_necessary) {
+    matching_formulas <- apply(
+      combos,
+      1,
+      function(row) {
+        paste0("treatment", " ~ ", row[1])
+      }
+    )
+    args[["x"]] <- unlist(matching_formulas)
+  }
+
+  # processing the ties argument
+  if ("ties" %in% allowed_varargs) {
+    ties <- .chk_null_default(ties, "ties", method, TRUE)
+
+    .chk_vararg_length(ties, "ties",
+      type_n = "logical flag",
+      matches_n = matches_n
+    )
+
+    .chk_cond(
+      !is.logical(ties) || anyNA(ties),
+      "All values in the `ties` argument have to be logical flags."
+    )
+
+    args[["ties"]] <- .vectorize(ties, matches_n)
+  }
+
+  # processing the order argument
+  if ("order" %in% allowed_varargs) {
+    order <- .chk_null_default(order, "order", method, "desc")
+
+    .chk_vararg_length(order, "order",
+      type_n = "text string",
+      matches_n = matches_n
+    )
+
+    allowed_orders <- c("desc", "asc", "original", "random")
+
+    .chk_cond(
+      order %nin% allowed_orders,
+      sprintf(
+        "The `order` argument has to be one of the following values: %s",
+        word_list(allowed_orders, quotes = TRUE)
+      )
+    )
+
+    sort_before_matching <- .vectorize(order, matches_n)
+  }
+
+  # processing the min_controls
+  if ("min_controls" %in% allowed_varargs) {
+    min_controls <- .chk_null_default(min_controls, "min_controls", method, 0)
+
+    .chk_vararg_length(min_controls, "min_controls",
+      TRUE,
+      type_n = "numeric",
+      matches_n
+    )
+
+    .chk_cond(
+      any(min_controls < 0),
+      "The `min_controls` argument has to be a non-negative finite number."
+    )
+
+    args[["min.controls"]] <- .vectorize(min_controls, matches_n)
+  }
+
+  # processing the max_controls
+  if ("max_controls" %in% allowed_varargs) {
+    max_controls <- .chk_null_default(max_controls, "max_controls", method, Inf)
+
+    .chk_vararg_length(max_controls, "max_controls",
+      TRUE,
+      type_n = "numeric",
+      matches_n
+    )
+
+    .chk_cond(
+      any(max_controls <= 0),
+      "The `max_controls` argument has to be a non-negative number."
+    )
+
+    args[["max_controls"]] <- .vectorize(caliper, matches_n)
+  }
 
   # process kmeans_cluster
   .chk_cond(
@@ -291,12 +478,10 @@ match_gps <- function(csmatrix = NULL,
     "The `kmeans_cluster` argument can not be NULL."
   )
 
-  .chk_cond(
-    !(.check_vecl(kmeans_cluster, leng = matches_n, check_numeric = TRUE) ||
-      .check_vecl(kmeans_cluster, leng = 1, check_numeric = TRUE)),
-    "The `kmeans_cluster` argument must be either a single integer or an
-            atomic vector with a length equal to the number of rows in the
-            `combos` data frame."
+  .chk_vararg_length(kmeans_cluster, "kmeans_cluster",
+    TRUE,
+    type_n = "integer",
+    matches_n
   )
 
   .check_integer(kmeans_cluster, x_name = "kmeans_cluster")
@@ -323,53 +508,56 @@ match_gps <- function(csmatrix = NULL,
   ## vectorize the args
   kmeans_args <- lapply(kmeans_args, .vectorize, matches_n)
 
-  ## check if tolerance specified
-  tolerance_spec <- is.null(args[["tolerance"]])
-
   ## processing the matching arglist
   args <- match_add_args(
     arglist = args,
-    funlist = Matching::Matchby
+    funlist = .match_methods[[method]]$args_check_fun
   )
+
+  if (method == "nnm") {
+    args <- args[names(args) %nin% c("Z", "V", "tolerance")]
+  }
+
+  args <- Filter(function(x) !all(is.na(x)), args)
 
   ## vectorize args
   args <- lapply(args, .vectorize, matches_n)
-  args <- args[unlist(lapply(args, function(x) !is.null(x)))]
 
-  ## remove tolerance if not specified earlier
-  if (tolerance_spec) args <- args[names(args) %nin% "tolerance"]
+  ## change ratio to controls in "pairopt"
+  if (method == "pairopt") names(args)[names(args) == "M"] <- "controls"
 
   ######################## MATCHING ############################################
-  ## Steps
-  ## 1.) combos --> check and generate
-  ## 2.) expand ratio and replace to vectors
-  ## 3.) k.cluster argument --> to specify the number of clusters
-  ## 4.) actual matching process
-  ## 5.) merging the datasets
-  ## 6.) output with special class (vector_matched)
-  ## 7.) vecotrize kmeans_args and ... args
-  ## 8.) refine logic for checking args
-
   match_results <- list()
-  logit_matrix <- cbind(
-    ID = seq_len(nrow(logit_matrix)),
-    logit_matrix
-  )
 
   for (i in seq_len(matches_n)) {
     ## select only treatment which in current combos loop
-    obs_filter <- logit_matrix[, "treatment"] %in% as.vector(combos[i, ])
+    obs_filter <- args[[data_name]][, "treatment"] %in% as.vector(combos[i, ])
 
     # selecting elements from arguments list based on current iteration
     kmeans_args_loop <- lapply(kmeans_args, function(x) x[[i]])
-    args_loop <- lapply(args, function(x) x[[i]])
+
+    # doing the same for args, but without data args
+    args_length <- lengths(args)
+    args_length[names(args_length) %in% c("Tr", "data", "X")] <- 0
+
+    args_loop <- mapply(
+      function(x, y) {
+        if (x == matches_n) {
+          y[[i]]
+        } else {
+          y
+        }
+      }, args_length,
+      args,
+      SIMPLIFY = FALSE
+    )
 
     # selecting columns for kmeans clustering
-    cols_kmeans <- colnames(logit_matrix)[-c(1:2)]
+    cols_kmeans <- colnames(args[[data_name]])[-1]
     cols_kmeans <- cols_kmeans[cols_kmeans %nin% as.vector(combos[i, ])]
 
     # selecting from df
-    kmeans_args_loop[["x"]] <- logit_matrix[, cols_kmeans]
+    kmeans_args_loop[["x"]] <- args[[data_name]][, cols_kmeans]
 
     # fitting kmeans clusters
     tryCatch(
@@ -393,29 +581,116 @@ match_gps <- function(csmatrix = NULL,
       }
     )
 
+    ############################ FIXING AREA ###################################
     # adding the clusters to matching arguments
-    args_loop[["by"]] <- k_res$cluster[obs_filter]
+    kmeans_strata <- as.factor(k_res$cluster[obs_filter])
 
     # selecting columns for matching --> we need only one column of gps!
-    cols_matching <- colnames(logit_matrix) == combos[i, 1]
-
-    # selecting data for matching: X argument
-    args_loop[["X"]] <- logit_matrix[obs_filter, cols_matching]
-    ids_df <- logit_matrix[obs_filter, "ID"]
-
-    # defining Tr args for matching function
-    args_loop[["Tr"]] <- ifelse(logit_matrix[obs_filter, 2] == combos[i, 1],
-      0,
-      1
+    cols_matching <- colnames(args[[data_name]]) %in% c(
+      "treatment",
+      combos[i, 1]
     )
 
-    # performing the matching
+    # arg processing for Matching::Matchby
+
+    if (method == "nnm") {
+      # filtering the data frame for matching
+      args_loop[[data_name]] <- args_loop[[data_name]][, -1, drop = FALSE]
+      args_loop[[data_name]] <- args_loop[[data_name]][
+        obs_filter,
+        cols_matching
+      ]
+
+      # defining data order
+      order_data <- .ordering_func(args_loop[[data_name]][, reference],
+        order = sort_before_matching[i]
+      )
+      order_original <- seq_len(nrow(args_loop[[data_name]]))
+      order_original <- order_original[order_data]
+
+      # reordering the data
+      args_loop[[data_name]] <- args_loop[[data_name]][order_data, ]
+
+      # adding the clusters to matching arguments
+      args_loop[["by"]] <- k_res$cluster[obs_filter]
+      args_loop[["by"]] <- args_loop[["by"]][order_data]
+
+      # defining Tr args for matching function
+      args_loop[["Tr"]] <- args_loop[["Tr"]][obs_filter]
+      args_loop[["Tr"]] <- ifelse(args_loop[["Tr"]] == combos[i, 1],
+        1,
+        0
+      )
+      args_loop[["Tr"]] <- args_loop[["Tr"]][order_data]
+    } else if (method %in% c("fullopt", "pairopt")) {
+      # selecting observations and adding "by" argument from kmeans
+      args_loop[[data_name]] <- args[[data_name]][obs_filter, cols_matching]
+      args_loop[[data_name]] <- cbind(args_loop[[data_name]],
+        kmeans_strata = kmeans_strata
+      )
+
+      args_loop[[data_name]] <- as.data.frame(args_loop[[data_name]])
+
+      # defining the order
+      order_data <- .ordering_func(args_loop[[data_name]][, reference],
+        order = order
+      )
+      order_original <- seq_len(nrow(args_loop[[data_name]]))
+      order_original <- order_original[order_data]
+
+      # reordering the data
+      args_loop[[data_name]] <- args_loop[[data_name]][order_data, ]
+
+      # converting treatment to binary
+      args_loop[[data_name]][, "treatment"] <- ifelse(
+        args_loop[[data_name]][, "treatment"] == combos[i, 1],
+        0,
+        1
+      )
+
+      # converting the formula to add kmeans stratas
+      args_loop[["x"]] <- paste0(
+        args_loop[["x"]],
+        " + optmatch::strata(kmeans_strata)"
+      )
+      args_loop[["x"]] <- stats::as.formula(args_loop[["x"]])
+
+      # performing the prematching =============================================
+      tryCatch(
+        {
+          verbosely(
+            withr::with_preserve_seed(
+              prematched <- do.call(
+                .match_methods[[method]]$args_check_fun[[1]],
+                args_loop
+              )
+            ),
+            verbose = verbose_output
+          )
+        },
+        error = function(e) {
+          chk::abort_chk(strwrap(sprintf(
+            "There was a problem with matching the samples using
+        `%s`.\n Error message:
+        (from `%s`) %s",
+            deparse(substitute(.match_methods[[method]]$args_check_fun[[1]])),
+            deparse(substitute(.match_methods[[method]]$args_check_fun[[1]])),
+            conditionMessage(e)
+          ), prefix = " ", initial = ""), tidy = FALSE)
+        }
+      )
+
+      # replacing args in the args_loop list for the subsequent matching
+      args_loop[["x"]] <- prematched
+    }
+
+    # performing the matching ==================================================
     tryCatch(
       {
         verbosely(
           withr::with_preserve_seed(
             matched <- do.call(
-              Matching::Matchby,
+              .match_methods[[method]]$matching_fun,
               args_loop
             )
           ),
@@ -425,8 +700,10 @@ match_gps <- function(csmatrix = NULL,
       error = function(e) {
         chk::abort_chk(strwrap(sprintf(
           "There was a problem with matching the samples using
-        `Matching::Matchby()`.\n Error message:
-        (from `Matching::Matchby()`) %s",
+        `%s`.\n Error message:
+        (from `%s`) %s",
+          deparse(substitute(.match_methods[[method]]$matching_fun)),
+          deparse(substitute(.match_methods[[method]]$matching_fun)),
           conditionMessage(e)
         ), prefix = " ", initial = ""), tidy = FALSE)
       }
@@ -438,28 +715,98 @@ match_gps <- function(csmatrix = NULL,
       "No matches found!"
     )
 
-    res_df <- data.frame(
-      control = ids_df[matched$index.control],
-      treatment = ids_df[matched$index.treated]
+    ## ids of the matched samples
+    if (method == "nnm") {
+      ids_filtered <- as.numeric(rownames(args_loop[[data_name]]))
+
+
+      ids_matched <- data.frame(
+        control = ids_filtered[matched$index.treated],
+        treatment = ids_filtered[matched$index.control]
+      )
+
+      colnames(ids_matched) <- paste0("level_", combos[i, 1:2])
+    } else if (method %in% c("fullopt", "pairopt")) {
+      ids_matched <- stats::na.omit(matched)
+    }
+
+    match_results <- append(
+      match_results,
+      list(ids_matched)
     )
-
-    colnames(res_df) <- paste0("level_", combos[i, 1:2])
-
-    match_results <- append(match_results, list(res_df))
   }
 
-  names(match_results) <- paste0("combos_", seq_len(matches_n))
+  ############
+  if (method == "nnm") {
+    # defining the name of control column
+    control_name <- paste0("level_", reference)
 
-  ## Works for all combos:
-  match_results_outer <- Reduce(
-    function(x, y) merge(x, y, all = full_match),
-    match_results
-  )
+    # extracting the control columns
+    matched_ids <- lapply(match_results, function(x) {
+      sort(unique(x[, control_name, drop = TRUE]))
+    })
 
-  merged_ids <- unlist(match_results_outer)
+    common_controls <- Reduce(intersect, matched_ids)
+
+    # extract the respective matches
+    extracted_matches <- lapply(match_results, function(x) {
+      filter_vector <- x[, control_name] %in% common_controls
+      unique(x[filter_vector, 2, drop = TRUE])
+    })
+
+    extracted_matches <- append(extracted_matches, list(common_controls))
+
+    # merging all extracted ids
+    all_extracted_ids <- Reduce(c, extracted_matches)
+  } else if (method %in% c("fullopt", "pairopt")) {
+    # extract only the ids of matched samples for common control identification
+    matched_ids <- lapply(match_results, function(x) as.numeric(names(x)))
+
+    # define the numbers of controls in logit_matrix
+    control_range <- which(args[[data_name]]$treatment == reference)
+
+    # extract the common controls
+    matched_ids <- append(matched_ids, list(control_range))
+    common_controls <- Reduce(intersect, matched_ids)
+
+    # extract matched groups of controls
+    common_controls_groups <- lapply(
+      match_results,
+      function(x) {
+        filter_ids <- names(x) %in% common_controls
+        x[filter_ids]
+      }
+    )
+
+    # remove controls from match_results
+    match_results <- lapply(
+      match_results,
+      function(x) {
+        filter_ids <- names(x) %in% control_range
+        x[!filter_ids]
+      }
+    )
+
+    # extract matches with same groups
+    extracted_matches <- mapply(function(x, y) y[y %in% x],
+      common_controls_groups,
+      match_results,
+      SIMPLIFY = FALSE
+    )
+
+    extracted_matches <- lapply(
+      extracted_matches,
+      function(x) as.numeric(names(x))
+    )
+
+    extracted_matches <- append(extracted_matches, list(common_controls))
+
+    # merging all extracted ids
+    all_extracted_ids <- Reduce(c, extracted_matches)
+  }
 
   # returning logical vector
-  matched_filter <- seq_len(nrow(csmatrix)) %in% merged_ids
+  matched_filter <- seq_len(nrow(csmatrix)) %in% all_extracted_ids
 
   # return original csr data.frame but matched
   csr_data <- attr(csmatrix, "csr_data")

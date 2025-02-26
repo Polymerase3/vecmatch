@@ -112,3 +112,46 @@
     )
   )
 )
+
+## --list with all allowable matching methods and their arguments---------------
+.match_methods <- list(
+  "nnm" = list(
+    allowed_args = c(
+      "caliper", "ratio", "replace", "ties", "order"
+    ),
+    args_check_fun = list(
+      Matching::Match,
+      Matching::Matchby
+    ),
+    matching_fun = Matching::Matchby,
+    formula_necessary = FALSE,
+    data_name = "X",
+    treat_var = TRUE
+  ),
+  "fullopt" = list(
+    allowed_args = c(
+      "caliper", "order", "min_controls", "max_controls"
+    ),
+    args_check_fun = list(
+      optmatch::match_on,
+      optmatch::fullmatch
+    ),
+    matching_fun = optmatch::fullmatch,
+    formula_necessary = TRUE,
+    data_name = "data",
+    treat_var = FALSE
+  ),
+  "pairopt" = list(
+    allowed_args = c(
+      "caliper", "order", "ratio"
+    ),
+    args_check_fun = list(
+      optmatch::match_on,
+      optmatch::pairmatch
+    ),
+    matching_fun = optmatch::pairmatch,
+    formula_necessary = TRUE,
+    data_name = "data",
+    treat_var = FALSE
+  )
+)

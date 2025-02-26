@@ -6,11 +6,15 @@
 \usage{
 match_gps(
   csmatrix = NULL,
+  method = "nnm",
   caliper = 0.2,
   reference = NULL,
-  combos = NULL,
-  ratio = 1,
-  replace = FALSE,
+  ratio = NULL,
+  replace = NULL,
+  order = NULL,
+  ties = NULL,
+  min_controls = NULL,
+  max_controls = NULL,
   kmeans_args = NULL,
   kmeans_cluster = 5,
   verbose_output = FALSE,
@@ -24,6 +28,10 @@ treatment variable, with additional attributes describing the calculation
 of the common support region and the estimation of generalized propensity
 scores. It is crucial that the common support region was calculated using
 the \code{csregion()} function to ensure compatibility.}
+
+\item{method}{A single string specifying the matching method to use. The
+default is \code{"nnm"}, which applies the k-nearest neighbors matching
+algorithm. See the Details section for a full list of available methods.}
 
 \item{caliper}{A numeric value specifying the caliper width, which defines
 the allowable range within which observations can be matched. It is
@@ -42,18 +50,9 @@ values. Instead, choose a level with covariate or propensity score
 distributions that are centrally positioned among all treatment groups to
 maximize the number of matches.}
 
-\item{combos}{An optional \code{data.frame} with two columns. Each row specifies a
-single execution of the matching algorithm, where the treatment level in
-the second column is matched to the treatment level in the first column
-(reference). Matching is performed within clusters calculated by the
-k-means algorithm, utilizing generalized propensity scores from all other
-treatment levels, excluding the two specified in the \code{combos} data frame.
-The data frame must contain valid strings representing treatment levels,
-and its number of rows must be fewer than the total number of unique
-pairwise combinations of treatment levels.}
-
-\item{ratio}{A scalar for the number of matches which should be found. The
-default is one-to-one matching.}
+\item{ratio}{A scalar for the number of matches which should be found for
+each control observation. The default is one-to-one matching. Only
+available for the methods \code{"nnm"} and \code{"pairopt"}.}
 
 \item{replace}{Logical value indicating whether matching should be done with
 replacement. If \code{FALSE}, the order of matches generally matters. Matches
@@ -63,7 +62,33 @@ for the second observation, and so on. Matching without replacement is
 generally not recommended as it tends to increase bias. However, in cases
 where the dataset is large and there are many potential matches, setting
 \code{replace = FALSE} often results in a substantial speedup with negligible or
-no bias.}
+no bias. Only available for the method \code{"nnm"}}
+
+\item{order}{A string specifying the order in which logit-transformed GPS
+values are sorted before matching. The available options are:
+\itemize{
+\item \code{"desc"} – sorts GPS values from highest to lowest (default).
+\item \code{"asc"} – sorts GPS values from lowest to highest.
+\item \code{"original"} – preserves the original order of GPS values.
+\item \code{"random"} – randomly shuffles GPS values. To generate different random
+orders, set a seed using \code{\link[=set.seed]{set.seed()}}.
+}}
+
+\item{ties}{A logical flag indicating how tied matches should be handled.
+Available only for the \code{"nnm"} method, with a default value of \code{FALSE} (all
+tied matches are included in the final dataset, but only unique
+observations are retained). For more details, see the \code{ties} argument in
+\code{\link[Matching:Matchby]{Matching::Matchby()}}.}
+
+\item{min_controls}{The minimum number of treatment observations that should
+be matched to each control observation. Available only for the \code{"fullopt"}
+method. For more details, see the \code{min.controls} argument in
+\code{\link[optmatch:fullmatch]{optmatch::fullmatch()}}.}
+
+\item{max_controls}{The maximum number of treatment observations that can be
+matched to each control observation. Available only for the \code{"fullopt"}
+method. For more details, see the \code{max.controls} argument in
+\code{\link[optmatch:fullmatch]{optmatch::fullmatch()}}.}
 
 \item{kmeans_args}{A list of arguments to pass to \link[stats:kmeans]{stats::kmeans}. These
 arguments must be provided inside a \code{list()} in the paired \code{name = value}
@@ -75,7 +100,7 @@ format.}
 \item{verbose_output}{a logical flag. If \code{TRUE} a more verbose version of the
 function is run and the output is printed out to the console.}
 
-\item{...}{Additional arguments to be passed to the \code{\link[Matching:Matchby]{Matching::Matchby()}}
+\item{...}{Additional arguments to be passed to the matching
 function.}
 }
 \value{
@@ -99,37 +124,61 @@ treatment groups within these clusters. This approach ensures efficient and
 structured comparisons across treatment levels while accounting for the
 propensity score distribution.
 }
-\examples{
-# Loading the lalonde dataset from the `Matching` package
-library(Matching)
-data(lalonde)
+\details{
+Propensity score matching can be performed using various matching
+algorithms. Lopez and Gutman (2017) do not explicitly specify the matching
+algorithm used, but it is assumed they applied the commonly used k-nearest
+neighbors matching algorithm, implemented as \code{method = "nnm"}. However,
+this algorithm can sometimes be challenging to use, especially when
+treatment and control groups have unequal sizes. When \code{replace = FALSE},
+the number of matches is strictly limited by the smaller group, and even
+with \code{replace = TRUE}, the results may not always be satisfactory. To
+address these limitations, we have implemented an additional matching
+algorithm to maximize the number of matched observations within a dataset.
 
+The available matching methods are:
+\itemize{
+\item \code{"nnm"} – classic k-nearest neighbors matching, implemented using
+\code{\link[Matching:Matchby]{Matching::Matchby()}}. The tunable parameters in \code{match_gps()} are
+\code{caliper}, \code{ratio}, \code{replace}, \code{order}, and \code{ties}. Additional arguments
+can be passed to \code{\link[Matching:Matchby]{Matching::Matchby()}} via the \code{...} argument.
+\item \code{"fullopt"} – optimal full matching algorithm, implemented with
+\code{\link[optmatch:fullmatch]{optmatch::fullmatch()}}. This method calculates a discrepancy matrix to
+identify all possible matches, often optimizing the percentage of matched
+observations. The available tuning parameters are \code{caliper},
+\code{min_controls}, and \code{max_controls}.
+\item \code{"pairmatch"} – optimal 1:1 and 1:k matching algorithm, implemented using
+\code{\link[optmatch:pairmatch]{optmatch::pairmatch()}}, which is actually a wrapper around
+\code{\link[optmatch:fullmatch]{optmatch::fullmatch()}}. Like \code{"fullopt"}, this method calculates a
+discrepancy matrix and finds matches that minimize its sum. The available
+tuning parameters are \code{caliper} and \code{ratio}.
+}
+}
+\examples{
 # Defining the formula used for gps estimation
-formula_lalonde <- formula(treat ~ age * black * married + educ)
+formula_cancer <- formula(status ~ age + sex)
 
 # Step 1.) Estimation of the generalized propensity scores
-gp_scores <- estimate_gps(formula_lalonde,
-  data = lalonde,
-  method = "brglm2",
-  reference = "0",
-  verbose_output = TRUE
-)
+gp_scores <- estimate_gps(formula_cancer,
+                          data = cancer,
+                          method = "multinom",
+                          reference = "control",
+                          verbose_output = TRUE)
 
 # Step 2.) Defining the common support region
 gps_csr <- csregion(gp_scores)
 
 # Step 3.) Matching the gps
-matched_lalonde <- match_gps(gps_csr,
-  caliper = 100, # very big caliper to let
-  reference = "0", # the gps match freely
-  replace = FALSE,
-  kmeans_cluster = 1,
-  kmeans_args = list(
-    iter.max = 200,
-    algorithm = "Forgy"
-  ),
-  verbose_output = TRUE
-)
+matched_cancer <- match_gps(gps_csr,
+                            caliper = 0.25,
+                            reference = "control",
+                            method = "fullopt",
+                            kmeans_cluster = 2,
+                            kmeans_args = list(
+                              iter.max = 200,
+                              algorithm = "Forgy"
+                            ),
+                            verbose_output = TRUE)
 
 }
 \references{
@@ -139,6 +188,7 @@ Sci. 32(3), 432-454, (August 2017)
 }
 \seealso{
 \code{\link[=estimate_gps]{estimate_gps()}} for the calculation of generalized propensity
-scores; \code{\link[Matching:Matchby]{Matching::Matchby()}} for the documentation of the matching function;
+scores; \code{\link[MatchIt:matchit]{MatchIt::matchit()}}, \code{\link[optmatch:fullmatch]{optmatch::fullmatch()}} and
+\code{\link[optmatch:pairmatch]{optmatch::pairmatch()}} for the documentation of the matching functions;
 \code{\link[stats:kmeans]{stats::kmeans()}} for the documentation of the k-Means algorithm.
 }

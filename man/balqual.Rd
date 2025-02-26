@@ -125,7 +125,7 @@ balqual(
   type = "smd",
   statistic = "max",
   round = 3,
-  cutoffs = 0.05
+  cutoffs = 0.2
 )
 
 }

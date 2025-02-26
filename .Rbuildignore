@@ -5,3 +5,5 @@
 ^data-raw$
 ^\.github$
 ^revdep$
+^doc$
+^Meta$

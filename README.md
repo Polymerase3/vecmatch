@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# vecmatch: Calculate Genaralized Propensity Scores and Match Multiple Groups <img src="man/figures/logo.png" align="right" height="139" alt="" />
+# vecmatch: Calculate Generalized Propensity Scores and Match Multiple Groups <img src="man/figures/logo.png" align="right" height="139" alt="" />
 
 <!-- badges: start -->
 
@@ -61,14 +61,16 @@ standardized mean differences and significance tests.
 ``` r
 library(vecmatch)
 
-raincloud(data = cancer,
-          y = bmi,
-          group = status,
-          facet = sex,
-          significance = 't_test',
-          sig_label_color = TRUE,
-          sig_label_size = 3,
-          limits = c(7, 48))
+raincloud(
+  data = cancer,
+  y = bmi,
+  group = status,
+  facet = sex,
+  significance = "t_test",
+  sig_label_color = TRUE,
+  sig_label_size = 3,
+  limits = c(7, 48)
+)
 #> Warning: Removed 9 rows containing missing values or values outside the scale range
 #> (`geom_flat_violin()`).
 ```
@@ -87,9 +89,10 @@ returned:
 formula_cancer <- formula(status ~ bmi * sex)
 
 gps_matrix <- estimate_gps(formula_cancer,
-                           data = cancer,
-                           method = 'vglm',
-                           reference = 'control')
+  data = cancer,
+  method = "vglm",
+  reference = "control"
+)
 
 head(gps_matrix, n = 7)
 #>   treatment   control   adenoma crc_beningn crc_malignant
@@ -147,9 +150,11 @@ example, matching is performed without replacement, using a larger
 caliper and a one-to-one matching ratio:
 
 ``` r
-matched_data <- match_gps(csmatrix = csr_matrix,
-                          reference = 'control',
-                          caliper = 1)
+matched_data <- match_gps(
+  csmatrix = csr_matrix,
+  reference = "control",
+  caliper = 1
+)
 ```
 
 ### *5. Assessing Matching Quality*
@@ -160,9 +165,10 @@ values for various metrics, such as the standardized mean difference,
 variance ratio, and r-effect size coefficient.
 
 ``` r
-balqual(matched_data, 
-        formula_cancer,
-        statistic = 'max')
+balqual(matched_data,
+  formula_cancer,
+  statistic = "max"
+)
 #> 
 #> Matching Quality Evaluation
 #> ================================================================================ 
@@ -171,42 +177,42 @@ balqual(matched_data,
 #> -------------------------------------------------- 
 #> Treatment                 | Before     | After      
 #> -------------------------------------------------- 
-#> adenoma                   | 355        | 170        
-#> control                   | 304        | 170        
-#> crc_beningn               | 278        | 170        
-#> crc_malignant             | 247        | 170        
+#> adenoma                   | 355        | 144        
+#> control                   | 304        | 144        
+#> crc_beningn               | 278        | 144        
+#> crc_malignant             | 247        | 144        
 #> -------------------------------------------------- 
 #> 
 #> 
 #> Matching summary statistics:
 #> ---------------------------------------- 
 #> Total n before matching:  1184 
-#> Total n after matching:       680 
-#> % of matched observations:    57.43 %
-#> Total  maximal   SMD value:   0.05 
-#> Total  maximal   r value:     0.002 
-#> Total  maximal   Var value:   1.092 
+#> Total n after matching:       576 
+#> % of matched observations:    48.65 %
+#> Total  maximal   SMD value:   0.018 
+#> Total  maximal   r value:     0.001 
+#> Total  maximal   Var value:   1.019 
 #> 
 #> 
 #> Maximal values :
 #> -------------------------------------------------------------------------------- 
 #> Variable                  | Coef  | Before       | After        | Quality      
 #> -------------------------------------------------------------------------------- 
-#> bmi                       | SMD   | 0.259        | 0.050        | Balanced     
-#> bmi                       | r     | 0.010        | 0.002        | Balanced     
-#> bmi                       | Var   | 1.128        | 1.092        | Balanced     
-#> sexF                      | SMD   | 0.153        | 0.012        | Balanced     
-#> sexF                      | r     | 0.006        | 0.001        | Balanced     
-#> sexF                      | Var   | 1.004        | 1.002        | Balanced     
-#> sexM                      | SMD   | 0.153        | 0.012        | Balanced     
-#> sexM                      | r     | 0.006        | 0.001        | Balanced     
-#> sexM                      | Var   | 1.004        | 1.002        | Balanced     
-#> bmi:sexF                  | SMD   | 0.151        | 0.013        | Balanced     
+#> bmi                       | SMD   | 0.259        | 0.018        | Balanced     
+#> bmi                       | r     | 0.010        | 0.001        | Balanced     
+#> bmi                       | Var   | 1.128        | 1.019        | Balanced     
+#> sexF                      | SMD   | 0.153        | 0.000        | Balanced     
+#> sexF                      | r     | 0.006        | 0.000        | Balanced     
+#> sexF                      | Var   | 1.004        | 1.000        | Balanced     
+#> sexM                      | SMD   | 0.153        | 0.000        | Balanced     
+#> sexM                      | r     | 0.006        | 0.000        | Balanced     
+#> sexM                      | Var   | 1.004        | 1.000        | Balanced     
+#> bmi:sexF                  | SMD   | 0.151        | 0.005        | Balanced     
 #> bmi:sexF                  | r     | 0.007        | 0.001        | Balanced     
 #> bmi:sexF                  | Var   | 1.046        | 1.004        | Balanced     
-#> bmi:sexM                  | SMD   | 0.151        | 0.016        | Balanced     
+#> bmi:sexM                  | SMD   | 0.151        | 0.003        | Balanced     
 #> bmi:sexM                  | r     | 0.006        | 0.001        | Balanced     
-#> bmi:sexM                  | Var   | 1.023        | 1.012        | Balanced     
+#> bmi:sexM                  | Var   | 1.023        | 1.003        | Balanced     
 #> --------------------------------------------------------------------------------
 ```
 

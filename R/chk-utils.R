@@ -1,7 +1,12 @@
 #--check custom condition-------------------------------------------------------
-.chk_cond <- function(condition, error_message, ...) {
-  if (condition) {
+.chk_cond <- function(condition, error_message, error = TRUE, ...) {
+  if (condition && error) {
     chk::abort_chk(
+      strwrap(error_message, prefix = " ", initial = ""),
+      ...
+    )
+  } else if (condition && !error) {
+    chk::wrn(
       strwrap(error_message, prefix = " ", initial = ""),
       ...
     )
@@ -215,5 +220,36 @@
         )
       )))
     }
+  )
+}
+
+## --check null and replace with default----------------------------------------
+.chk_null_default <- function(x, x_name, method, default) {
+  .chk_cond(is.null(x),
+    error = FALSE,
+    sprintf(
+      "The `%s` argument for the method %s was not provided
+                    and will default to `%s`.",
+      x_name,
+      add_quotes(method),
+      default
+    )
+  )
+
+  if (is.null(x)) x <- default
+
+  return(x)
+}
+
+.chk_vararg_length <- function(x, x_name,
+                               check_numeric = FALSE,
+                               type_n = "integer",
+                               matches_n) {
+  .chk_cond(
+    !(.check_vecl(x, matches_n, check_numeric = check_numeric) ||
+        .check_vecl(x, leng = 1, check_numeric = check_numeric)),
+    sprintf("The `%s` argument must be either a single %s or an atomic
+            vector with a length equal to the number of rows in the `combos`
+            data frame.", x_name, type_n)
   )
 }

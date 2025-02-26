@@ -24,6 +24,7 @@ Imports:
     ggpubr,
     productplots,
     cli,
+    optmatch,
     Matching
 Suggests: 
     mclogit,

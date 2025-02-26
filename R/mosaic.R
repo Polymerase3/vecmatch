@@ -81,8 +81,8 @@ mosaic <- function(data = NULL,
 
   #--check data frame-----------------------------------------------------------
   ## must be an object of class data frame
-  if('matched' %in% class(data)) {
-    class(data) <- 'data.frame'
+  if ("matched" %in% class(data)) {
+    class(data) <- "data.frame"
   }
 
   .check_df(data)
@@ -341,11 +341,11 @@ mosaic <- function(data = NULL,
       ggplot2::ylab(symlist[["y"]]) +
       # removing x scale
       ggplot2::theme_classic() %+replace%
-        ggplot2::theme(
-          axis.text.x = ggplot2::element_blank(),
-          axis.line.x = ggplot2::element_blank(),
-          axis.ticks.x = ggplot2::element_blank()
-        )
+      ggplot2::theme(
+        axis.text.x = ggplot2::element_blank(),
+        axis.line.x = ggplot2::element_blank(),
+        axis.ticks.x = ggplot2::element_blank()
+      )
   } else {
     #### CASE 2 - group, no facet
     main <- main +
@@ -441,10 +441,10 @@ mosaic <- function(data = NULL,
       if (use_facet) {
         main_layers <- main_layers +
           ggplot2::theme_classic() %+replace%
-            ggplot2::theme(
-              plot.margin = ggplot2::margin(t = 0.2, b = 1, unit = "cm"),
-              panel.spacing = ggplot2::unit(1.5, "cm")
-            )
+          ggplot2::theme(
+            plot.margin = ggplot2::margin(t = 0.2, b = 1, unit = "cm"),
+            panel.spacing = ggplot2::unit(1.5, "cm")
+          )
       } else {
         main_layers <- main_layers +
           ggplot2::theme_classic() %+replace%

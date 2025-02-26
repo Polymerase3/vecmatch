@@ -98,6 +98,6 @@ test_that("match_gps checking arguments: csmatrix", {
     expect_no_error(match_gps(csmatrix, kmeans_cluster = rep(4, 4)))
 
     ## matching methods
-    expect_no_error(match_gps(csmatrix, reference = "1", method = 'fullopt'))
+    expect_no_error(match_gps(csmatrix, reference = "1", method = "fullopt"))
   })
 })

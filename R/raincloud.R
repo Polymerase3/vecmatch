@@ -163,8 +163,8 @@ raincloud <- function(data = NULL,
   args_signif <- list(...)
 
   #--check data frame-----------------------------------------------------------
-  if('matched' %in% class(data)) {
-    class(data) <- 'data.frame'
+  if ("matched" %in% class(data)) {
+    class(data) <- "data.frame"
   }
 
   ## must be an object of class data frame
@@ -392,7 +392,7 @@ raincloud <- function(data = NULL,
         args_signif[["formula"]]
       )
 
-      smd <- smd[, c('group1', 'group2', 'effsize')]
+      smd <- smd[, c("group1", "group2", "effsize")]
 
       colnames(smd)[colnames(smd) == "effsize"] <- "smd"
 
@@ -400,8 +400,9 @@ raincloud <- function(data = NULL,
 
       # binding the results together
       test_results[[i]] <- merge(test_results[[i]], smd,
-                                 by = c("group1", "group2"),
-                                 all = TRUE)
+        by = c("group1", "group2"),
+        all = TRUE
+      )
 
       # adding the facet var
       if (facet_levels > 1) {
@@ -602,11 +603,11 @@ raincloud <- function(data = NULL,
     ggplot2::coord_flip() +
     ## defining theme
     ggplot2::theme_classic() %+replace%
-      ggplot2::theme(
-        axis.ticks.y = ggplot2::element_blank(),
-        axis.line.y = ggplot2::element_blank(),
-        legend.title = ggplot2::element_text(face = "bold")
-      ) +
+    ggplot2::theme(
+      axis.ticks.y = ggplot2::element_blank(),
+      axis.line.y = ggplot2::element_blank(),
+      legend.title = ggplot2::element_text(face = "bold")
+    ) +
     ## define ylabs
     ggplot2::ylab(symlist[["y"]])
 

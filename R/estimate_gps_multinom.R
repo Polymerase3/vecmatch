@@ -41,7 +41,7 @@
 
   ################### FITTING THE MODELS #######################################
   if (treat_type == "multinom" || treat_type == "binary" ||
-        (treat_type == "ordinal" && method != "polr")) {
+    (treat_type == "ordinal" && method != "polr")) {
     ## --NNET::multinom()-------------------------------------------------------
     if (method == "multinom") {
       infos <- .gps_methods[["multinom"]]
@@ -115,7 +115,7 @@
           .chk_cond(
             !args[["control_call"]] ||
               (args[["control_call_char"]] != "VGAM::vglm.control" &&
-                 args[["control_call_char"]] != "vglm.control"),
+                args[["control_call_char"]] != "vglm.control"),
             "The argument control has to be a valid function
               call to the function VGAM::vglm.control()"
           )
@@ -123,7 +123,7 @@
           .chk_cond(
             !args[["control_call"]] ||
               (args[["control_call_char"]] != "VGAM::rrvglm.control" &&
-                 args[["control_call_char"]] != "rrvglm.control"),
+                args[["control_call_char"]] != "rrvglm.control"),
             "The argument control has to be a valid function call
                      to the function VGAM::rrvglm.control()"
           )
@@ -213,7 +213,7 @@
           .chk_cond(
             !args[["control_call"]] ||
               (args[["control_call_char"]] != "brglm2::brglmControl" &&
-                 args[["control_call_char"]] != "brglmControl"),
+                args[["control_call_char"]] != "brglmControl"),
             "The argument control has to be a valid function call
                     to the function brglm2::brglmControl()"
           )
@@ -271,9 +271,9 @@
           .chk_cond(
             !args[["control_call"]] ||
               (args[["control_call_char"]] != "mclogit::mclogit.control" &&
-                 args[["control_call_char"]] != "mclogit.control" &&
-                 args[["control_call_char"]] != "mclogit::mmclogit.control" &&
-                 args[["control_call_char"]] != "mmclogit.control"),
+                args[["control_call_char"]] != "mclogit.control" &&
+                args[["control_call_char"]] != "mclogit::mmclogit.control" &&
+                args[["control_call_char"]] != "mmclogit.control"),
             "The argument control has to be a valid function call to the
                   function mclogit::mclogit.control()"
           )

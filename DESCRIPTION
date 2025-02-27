@@ -9,7 +9,7 @@ Description: An implementation of Vector Matching algorithm. Enables the
     estimates treatment assignment probabilities using various methods,
     defines the common support region, performs matching across
     multiple groups and assesses its quality.
-License: GPL (>= 3) + file LICENSE
+License: GPL (>= 3)
 URL: https://github.com/Polymerase3/vecmatch
 BugReports: https://github.com/Polymerase3/vecmatch/issues
 Depends: 

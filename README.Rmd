@@ -19,6 +19,7 @@ knitr::opts_chunk$set(
 
 [![R-CMD-check](https://github.com/Polymerase3/vecmatch/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Polymerase3/vecmatch/actions/workflows/R-CMD-check.yaml)
 [![Codecov test coverage](https://codecov.io/gh/Polymerase3/vecmatch/graph/badge.svg)](https://app.codecov.io/gh/Polymerase3/vecmatch)
+[![styler](https://github.com/Polymerase3/vecmatch/actions/workflows/style.yaml/badge.svg)](https://github.com/Polymerase3/vecmatch/actions/workflows/style.yaml)
 
 <!-- badges: end -->
 

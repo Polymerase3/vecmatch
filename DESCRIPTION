@@ -1,6 +1,6 @@
 Package: vecmatch
 Title: Generalized Propensity Score Estimation and Matching for Multiple Groups
-Version: 1.0.1
+Version: 1.0.2
 Authors@R: 
     person("Mateusz", "Kolek", , "mati.kolek13@gmail.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0001-6470-4830"))

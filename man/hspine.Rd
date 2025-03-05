@@ -6,6 +6,9 @@
 \usage{
 hspine(...)
 }
+\value{
+No return value, called for side effects
+}
 \description{
 Fixing bug in productplots::prodcalc
 }

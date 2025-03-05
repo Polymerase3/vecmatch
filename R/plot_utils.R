@@ -214,6 +214,7 @@ facet_wrap_scales <- function(..., scales_custom = NULL) {
 
 #' Fixing bug in productplots::prodcalc
 #' @keywords internal
+#' @return No return value, called for side effects
 #' @export
 vspine <- function(...) {
   productplots::vspine(...)
@@ -221,6 +222,7 @@ vspine <- function(...) {
 
 #' Fixing bug in productplots::prodcalc
 #' @keywords internal
+#' @return No return value, called for side effects
 #' @export
 hspine <- function(...) {
   productplots::hspine(...)

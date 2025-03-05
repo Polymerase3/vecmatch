@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# vecmatch:  Calculate Generalized Propensity Scores and Match Multiple Groups <img src="man/figures/logo.png" align="right" height="139" alt="" />
+# vecmatch: Generalized Propensity Score Estimation and Matching for Multiple Groups <img src="man/figures/logo.png" align="right" height="139" alt="" />
 
 <!-- badges: start -->
 
@@ -72,7 +72,7 @@ raincloud(
 ```
 
 ### *2. Estimate Generalized Propensity Scores (GPS)* 
-Next, calculate generalized propensity scores for the treatment variable. These scores represent treatment assignment probabilities based on user-defined covariates. Use the `estimate_gps()` function to estimate GPS. As a result, a matrix of generalized propensity scores is returned:
+Next, estimate generalized propensity scores for the treatment variable. These scores represent treatment assignment probabilities based on user-defined covariates. Use the `estimate_gps()` function to estimate GPS. As a result, a matrix of generalized propensity scores is returned:
 
 ```{r}
 formula_cancer <- formula(status ~ bmi * sex)

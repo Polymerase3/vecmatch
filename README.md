@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# vecmatch: Calculate Generalized Propensity Scores and Match Multiple Groups <img src="man/figures/logo.png" align="right" height="139" alt="" />
+# vecmatch: Generalized Propensity Score Estimation and Matching for Multiple Groups <img src="man/figures/logo.png" align="right" height="139" alt="" />
 
 <!-- badges: start -->
 
@@ -79,11 +79,10 @@ raincloud(
 
 ### *2. Estimate Generalized Propensity Scores (GPS)*
 
-Next, calculate generalized propensity scores for the treatment
-variable. These scores represent treatment assignment probabilities
-based on user-defined covariates. Use the `estimate_gps()` function to
-estimate GPS. As a result, a matrix of generalized propensity scores is
-returned:
+Next, estimate generalized propensity scores for the treatment variable.
+These scores represent treatment assignment probabilities based on
+user-defined covariates. Use the `estimate_gps()` function to estimate
+GPS. As a result, a matrix of generalized propensity scores is returned:
 
 ``` r
 formula_cancer <- formula(status ~ bmi * sex)
@@ -177,42 +176,42 @@ balqual(matched_data,
 #> -------------------------------------------------- 
 #> Treatment                 | Before     | After      
 #> -------------------------------------------------- 
-#> adenoma                   | 355        | 150        
-#> control                   | 304        | 150        
-#> crc_beningn               | 278        | 150        
-#> crc_malignant             | 247        | 150        
+#> adenoma                   | 355        | 145        
+#> control                   | 304        | 145        
+#> crc_beningn               | 278        | 145        
+#> crc_malignant             | 247        | 145        
 #> -------------------------------------------------- 
 #> 
 #> 
 #> Matching summary statistics:
 #> ---------------------------------------- 
 #> Total n before matching:  1184 
-#> Total n after matching:       600 
-#> % of matched observations:    50.68 %
-#> Total  maximal   SMD value:   0.025 
-#> Total  maximal   r value:     0.002 
-#> Total  maximal   Var value:   1.016 
+#> Total n after matching:       580 
+#> % of matched observations:    48.99 %
+#> Total  maximal   SMD value:   0.013 
+#> Total  maximal   r value:     0.001 
+#> Total  maximal   Var value:   1.022 
 #> 
 #> 
 #> Maximal values :
 #> -------------------------------------------------------------------------------- 
 #> Variable                  | Coef  | Before       | After        | Quality      
 #> -------------------------------------------------------------------------------- 
-#> bmi                       | SMD   | 0.259        | 0.025        | Balanced     
-#> bmi                       | r     | 0.010        | 0.002        | Balanced     
-#> bmi                       | Var   | 1.128        | 1.016        | Balanced     
+#> bmi                       | SMD   | 0.259        | 0.013        | Balanced     
+#> bmi                       | r     | 0.010        | 0.001        | Balanced     
+#> bmi                       | Var   | 1.128        | 1.022        | Balanced     
 #> sexF                      | SMD   | 0.153        | 0.000        | Balanced     
 #> sexF                      | r     | 0.006        | 0.000        | Balanced     
 #> sexF                      | Var   | 1.004        | 1.000        | Balanced     
 #> sexM                      | SMD   | 0.153        | 0.000        | Balanced     
 #> sexM                      | r     | 0.006        | 0.000        | Balanced     
 #> sexM                      | Var   | 1.004        | 1.000        | Balanced     
-#> bmi:sexF                  | SMD   | 0.151        | 0.006        | Balanced     
+#> bmi:sexF                  | SMD   | 0.151        | 0.004        | Balanced     
 #> bmi:sexF                  | r     | 0.007        | 0.001        | Balanced     
-#> bmi:sexF                  | Var   | 1.046        | 1.006        | Balanced     
+#> bmi:sexF                  | Var   | 1.046        | 1.004        | Balanced     
 #> bmi:sexM                  | SMD   | 0.151        | 0.003        | Balanced     
 #> bmi:sexM                  | r     | 0.006        | 0.001        | Balanced     
-#> bmi:sexM                  | Var   | 1.023        | 1.003        | Balanced     
+#> bmi:sexM                  | Var   | 1.023        | 1.002        | Balanced     
 #> --------------------------------------------------------------------------------
 ```
 

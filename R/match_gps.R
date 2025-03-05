@@ -510,6 +510,9 @@ match_gps <- function(csmatrix = NULL,
   ## vectorize the args
   kmeans_args <- lapply(kmeans_args, .vectorize, matches_n)
 
+  ## change ratio to controls in "pairopt"
+  if (method == "pairopt") names(args)[names(args) == "M"] <- "controls"
+
   ## processing the matching arglist
   args <- match_add_args(
     arglist = args,
@@ -524,9 +527,6 @@ match_gps <- function(csmatrix = NULL,
 
   ## vectorize args
   args <- lapply(args, .vectorize, matches_n)
-
-  ## change ratio to controls in "pairopt"
-  if (method == "pairopt") names(args)[names(args) == "M"] <- "controls"
 
   ######################## MATCHING ############################################
   match_results <- list()

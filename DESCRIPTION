@@ -1,14 +1,16 @@
 Package: vecmatch
-Title: Calculate Generalized Propensity Scores and Match Multiple Groups
+Title: Generalized Propensity Score Estimation and Matching for Multiple Groups
 Version: 1.0.1
 Authors@R: 
     person("Mateusz", "Kolek", , "mati.kolek13@gmail.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0001-6470-4830"))
-Description: An implementation of Vector Matching algorithm. Enables the
-    assessment of initial confounder imbalances through elegant graphics,
-    estimates treatment assignment probabilities using various methods,
-    defines the common support region, performs matching across
-    multiple groups and assesses its quality.
+Description: Implements the Vector Matching algorithm to match multiple
+    treatment groups based on previously estimated generalized propensity
+    scores. The package includes tools for visualizing initial confounder
+    imbalances, estimating treatment assignment probabilities using various
+    methods, defining the common support region, performing matching across
+    multiple groups, and evaluating matching quality. For more details, see 
+    Lopez and Gutman (2017) <doi:10.1214/17-STS612>.
 License: GPL (>= 3)
 URL: https://github.com/Polymerase3/vecmatch
 BugReports: https://github.com/Polymerase3/vecmatch/issues

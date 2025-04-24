@@ -2,10 +2,12 @@
 
 ## Major changes
 
-* Updated `csregion()` to control the behavior of the function at the borders of the CSR.
-* Updated `match_gps()` to handle databases with only two unique treatments.
+* `csregion()` now allows specifying how to handle observations at the borders 
+  of the Common Support Region (CSR) using the new `borders` argument.
+* `match_gps()` has been updated to support datasets with only two unique 
+  treatment groups.
 
 ## Minor changes
 
-* Added a vignette.
-* Added a `NEWS.md` file to track changes in the package.
+* Added a vignette demonstrating usage and functionality.
+* Introduced this `NEWS.md` file to document package changes.

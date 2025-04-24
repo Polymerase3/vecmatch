@@ -16,6 +16,18 @@
 #'   to the number of subjects for which generalized propensity scores were
 #'   estimated.
 #'
+#' @param borders A character string specifying how to handle observations at
+#'   the edges of the Common Support Region (CSR). Acceptable values are
+#'   `"include"` and `"exclude"`. If `"include"` is selected (default),
+#'   observations with Generalized Propensity Scores (GPS) exactly equal to the
+#'   CSR boundaries are retained for further analysis. This corresponds to a
+#'   non-strict inequality: \code{lower_bound <= GPS <= upper_bound}. If
+#'   `"exclude"` is selected, observations lying exactly on the CSR boundaries
+#'   are removed. This corresponds to a strict inequality: \code{lower_bound <
+#'   GPS < upper_bound}. Using `"exclude"` will typically result in a slightly
+#'   smaller matched sample size compared to `"include"`, but may be preferred
+#'   for more conservative matching.
+
 #' @return A numeric matrix similar to the one returned by `estimate_gps()`,
 #'   but with the number of rows reduced to exclude those observations that do
 #'   not fit within the common support region (CSR) boundaries. The returned
@@ -48,13 +60,24 @@
 #' attr(gps_csr, "csr_data")
 #'
 #' @export
-csregion <- function(gps_matrix) {
+csregion <- function(gps_matrix,
+                     borders = "include") {
   csr_data <- attr(gps_matrix, "original_data")
 
   .chk_cond(
     "gps" %nin% class(gps_matrix),
     "The `gps_matrix` argument must be of class `gps`."
   )
+
+  # check borders arg
+  chk::chk_character(borders)
+  chk::chk_length(borders, length = 1)
+  .chk_cond(
+    borders %nin% c("include", "exclude"),
+    'The `borders` argument can only take one of the
+            following values: "include", "exclude".'
+  )
+
 
   ## Calculating the csr_low
   csr_low <- apply(
@@ -78,7 +101,9 @@ csregion <- function(gps_matrix) {
 
   ## filter out the unvalid observations
   filter_matrix <- mapply(function(df_col, vec_low, vec_high) {
-    vec_low < df_col & vec_high > df_col
+    switch(borders,
+           include = vec_low <= df_col & df_col <= vec_high,
+           exclude = vec_low < df_col & df_col < vec_high)
   }, gps_matrix[, 2:ncol(gps_matrix)], csr_low, csr_high)
 
   ## summarizing the logical matrix to a subset vector

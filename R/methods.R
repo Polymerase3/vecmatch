@@ -128,6 +128,22 @@
     data_name = "X",
     treat_var = TRUE
   ),
+
+  # placeholder for Matching::Match() - used only when method = "nnm" and two
+  # treatment groups are present
+  "nnm_2t" = list(
+    allowed_args = c(
+      "caliper", "ratio", "replace", "ties", "order"
+    ),
+    args_check_fun = list(
+      Matching::Match
+    ),
+    matching_fun = Matching::Match,
+    formula_necessary = FALSE,
+    data_name = "X",
+    treat_var = TRUE
+  ),
+
   "fullopt" = list(
     allowed_args = c(
       "caliper", "order", "min_controls", "max_controls"

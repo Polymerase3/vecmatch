@@ -1,0 +1,267 @@
+---
+title: "Matching Patients in the `cancer` Dataset with `vecmatch`"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+link-citations: TRUE
+vignette: >
+  %\VignetteIndexEntry{Matching Patients in the `cancer` Dataset with `vecmatch`}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.8,
+  echo = TRUE
+)
+```
+
+# Practical Example of the Vector Matching Workflow
+
+In this chapter, we will describe an exemplary data analysis of the
+`cancer` dataset from the `vecmatch` package, matching multiple cohorts
+based on selected covariates. The `vecmatch` package follows a strict
+workflow based on the vector matching algorithm defined by
+@lopez2017estimation, and it is advisable to follow it. The whole
+process consists of five steps to ensure the best possible matching
+quality using the vector matching algorithm.
+
+## Step 1: Data Exploration and Initial Imbalance Assessment
+
+The `vecmatch` package provides two graphical functions for assessing
+initial dataset imbalance: `raincloud()` and `mosaic()`. The
+`raincloud()` function is designed for continuous variables, while
+`mosaic()` is for categorical variables. Both functions allow grouping
+by up to two categorical variables using the `group` and `facet`
+aesthetics and compute various statistical summaries, including
+significance tests and effect size coefficients.
+
+In this example analysis, we focus on two predictor variables from the
+`cancer` dataset: the discrete `sex` and the continuous `age`. To
+evaluate differences in age across `status` groups, we can use the
+`raincloud()` function as follows:
+
+```{r, message=FALSE}
+library(vecmatch)
+library(ggplot2)
+
+raincloud(cancer,
+          age,
+          status,
+          significance = "t_test",
+          sig_label_color = TRUE,
+          sig_label_size = 3,
+          limits = c(10, 120)) +
+    scale_y_continuous(breaks = seq(10, 100, 10))
+```
+
+This plot presents the conditional distribution of `age` across
+different `status` groups. The standardized mean differences (SMD) are
+represented by the brackets on the right side of the jittered point
+plot. The results of the Student's t-tests are displayed alongside the
+boxplots on the right, providing insights into the statistical
+significance of the differences in `age` between the groups.
+
+Similarly, we can evaluate the differences in the `sex` variable using
+the `mosaic()` function. The code snippet below demonstrates this:
+
+```{r, message=FALSE}
+mosaic(cancer,
+       status,
+       sex,
+       group_counts = TRUE,
+       significance = TRUE)
+```
+
+The plot shows the conditional distribution of `sex` across different
+`status` groups. The counts for all groups are displayed inside the
+corresponding boxes, representing each subgroup within the mosaic plot.
+Partial significance is visually coded through color filling aesthetics.
+The labels provide the results of the Chi-squared test of independence,
+summarizing the statistical assessment of the relationship between the
+`sex` and `status` variables.
+
+Based on the plots, we can observe some imbalance in the `age` and `sex`
+variables. However, in both cases, the differences between the `status`
+groups appear to be rather moderate. All Student's t-tests, adjusted for
+multiple comparisons, resulted in statistically insignificant
+differences in mean age values between the groups. Additionally, 2 out
+of the 6 calculated standardized mean differences (SMDs) fell below the
+0.10 threshold, indicating relatively small differences.
+
+After a closer examination of the mean age values, we can notice that
+they form two separate clusters. The first cluster includes controls and
+patients with adenomas, who tend to be younger, while the second cluster
+consists of patients with benign and malignant colorectal cancer, who
+are generally older. The primary objective of the matching process will
+then be to align these two clusters, ensuring they have a common mean
+age value.
+
+There were no significant differences in the `sex` distributions across
+the `status` groups, as the overall Chi-square test of independence was
+insignificant. All partial significance tests were statistically
+insignificant, indicating small values of standardized Pearson's
+residuals.
+
+Given the relatively small differences between the `status` groups, the
+vector matching algorithm is expected to produce satisfactory results.
+
+## Step 2: Estimation of Generalized Propensity Scores
+
+The next step in the vector matching algorithm is the calculation of
+generalized propensity scores (GPS) for the treatment variable. These
+scores represent the treatment assignment probabilities and are based on
+user-defined covariates. The relationship between the treatment variable
+and predictors can be easily defined using `R`-specific formula
+notation, allowing for both additive and interaction effects.
+
+The `vecmatch` package provides a straightforward method for calculating
+the GPS-matrix with different methods using the `estimate_gps()`
+function. However, custom approaches can also be applied within the
+vector-matching workflow. The GPS-matrix used in subsequent analyses
+must have the exact same structure as the output of `estimate_gps`,
+containing the treatment variable and the treatment assignment
+probabilities for each level of the treatment variable. Importantly, the
+probabilities for each row in the GPS-matrix must sum to 1. The
+resulting `data.frame` has to be of class `gps`.
+
+In the following example, we will use a simple formula with `age` and
+`sex` as predictors, allowing for an interaction effect. The method used
+to estimate the generalized propensity scores (GPS) will be a
+multinomial logistic regression, which can handle multiple levels of the
+treatment variable. The code for estimating the GPS using the
+multinomial logistic regression model is as follows:
+
+```{r}
+formula_cancer <- status ~ age * sex
+gps_matrix <- estimate_gps(formula_cancer,
+                           cancer,
+                           method = 'multinom',
+                           reference = 'control')
+head(gps_matrix, 7)
+```
+
+## Step 3: Calculating Common Support Region Borders
+
+To remove observations that are not eligible for further matching, the
+borders of the common support region (CSR) must be calculated. The
+`csregion()` function facilitates this process by taking the
+`gps_matrix` object as its sole argument. It computes the CSR borders
+and automatically filters the input `gps_matrix` to include only the
+observations that fall within the calculated CSR borders.
+
+The function returns an object of class `csr_matrix`, which contains the
+filtered data along with several additional attributes. These attributes
+enable users to manually filter the initial `gps_matrix` or access a
+summary of the CSR border calculation as a `data.frame` object. The
+`csregion()` function can be used as follows:
+
+```{r}
+csr_matrix <- csregion(gps_matrix)
+```
+
+We can then compare the dimensions of the original `gps_matrix` and the
+filtered `csr_matrix`.
+
+```{r}
+dim(gps_matrix)
+dim(csr_matrix)
+```
+
+Clearly, 24 observations have been filtered out of the original matrix.
+
+Next, as recommended by @lopez2017estimation, the GPS can be recalculated
+using only the data within the CSR. However, in our experience, this additional
+step does not result in a significant improvement in matching quality,
+especially if the number of observations that fall outside of the CSR is
+relatively small in comparison to the whole dataset size. Therefore, we decided
+to bypass this step and proceed with matching directly on the filtered dataset.
+
+## Step 4: k-Means Clustering and Matching {#sec-examatch}
+
+The most crucial step of the vector matching algorithm is the *k*-means
+clustering and subsequent matching within the resulting clusters. This approach
+ensures that only observations with similar GPS vectors are matched, thereby
+justifying the name *vector matching*. The core components of this step are the
+`stats::kmeans()` function [@rlang2024], which performs clustering, and the
+`Matching::Matchby()` or `optmatch::fullmatch()` functions
+[@sekhon2011multivariate, @hansen2006optimal], which match observations within
+each *k*-means cluster. These functionalities are combined into a single
+function named `match_gps()`.
+
+The `match_gps()` function takes the `csr_matrix` as input and returns a matched
+dataset. The matching process can be customized using various arguments, and it
+is advisable to experiment with different parameter combinations to optimize
+both matching quality and the number of matched samples (see appendix
+\ref{app:practical}). For the replicability of results, it is also crucial to
+set the random number generator seed before running the clustering and matching
+procedures. This ensures that the clustering assignments and matches are
+consistent across different runs of the analysis, allowing others to reproduce
+the results exactly.
+
+The `match_gps()` function can be used as follows:
+
+```{r}
+set.seed(164373)
+matched_cancer <- match_gps(csr_matrix,
+                            caliper = 0.21,
+                            kmeans_cluster = 2,
+                            reference = 'control',
+                            replace = TRUE,
+                            method = 'fullopt',
+                            order = 'desc')
+```
+
+## Step 5: Post-Matching Quality Assessment {#quality}
+The `vecmatch` package provides a dedicated function, `balqual()`, to assess
+the quality of post-matching results. This function compares various metrics and
+statistical summaries between the pre- and post-matching datasets, using a
+user-defined formula to evaluate balance. Its usage is straightforward and
+requires only the matched dataset (produced by `match_gps()`) and the formula
+used for the calculation of the GPS:
+
+```{r}
+balqual(matched_cancer,
+        formula_cancer,
+        type = 'smd',
+        statistic = 'max',
+        round = 4)
+```
+
+After assessing the quality with `balqual()`, we can combine both matched and unmatched datasets into a single data frame to visualize age and sex using `raincloud()` and `mosaic()`:
+
+```{r}
+  matched_cancer$dataset <- 'matched'
+  unmatched_cancer <- cancer
+  unmatched_cancer$dataset <- 'unmatched'
+  data_full <- rbind(matched_cancer, unmatched_cancer)
+```
+
+```{r, message=FALSE, fig.asp=1.5}
+raincloud(data_full,
+          age,
+          status,
+          dataset,
+          significance = "t_test",
+          sig_label_color = TRUE,
+          sig_label_size = 3,
+          limits = c(10, 120)) +
+    scale_y_continuous(breaks = seq(10, 100, 10))
+```
+
+```{r, message=FALSE, fig.asp=1.5}
+mosaic(data_full,
+       status,
+       sex,
+       dataset,
+       group_counts = TRUE,
+       significance = TRUE)
+```
+
+## References

@@ -125,13 +125,13 @@ csr_matrix <- csregion(gps_matrix)
 #> 
 #> Treatment       | Lower CSR limit | Upper CSR limit | Number excluded 
 #> -------------------------------------------------------------------- 
-#> control         | 0.1900629       | 0.3530295       | 27              
-#> adenoma         | 0.2678156       | 0.3802609       | 20              
-#> crc_beningn     | 0.1429038       | 0.3802038       | 27              
-#> crc_malignant   | 0.1605948       | 0.2214335       | 27              
+#> control         | 0.1900629       | 0.3530295       | 25              
+#> adenoma         | 0.2678156       | 0.3802609       | 18              
+#> crc_beningn     | 0.1429038       | 0.3802038       | 25              
+#> crc_malignant   | 0.1605948       | 0.2214335       | 25              
 #> 
 #> ===================================================
-#> The total number of excluded observations is:     40 
+#> The total number of excluded observations is:     37 
 #> Note: You can view the summary of the CSR calculation using the  `attr()` function.
 ```
 
@@ -177,42 +177,42 @@ balqual(matched_data,
 #> -------------------------------------------------- 
 #> Treatment                 | Before     | After      
 #> -------------------------------------------------- 
-#> adenoma                   | 355        | 142        
-#> control                   | 304        | 142        
-#> crc_beningn               | 278        | 142        
-#> crc_malignant             | 247        | 142        
+#> adenoma                   | 355        | 147        
+#> control                   | 304        | 147        
+#> crc_beningn               | 279        | 147        
+#> crc_malignant             | 249        | 147        
 #> -------------------------------------------------- 
 #> 
 #> 
 #> Matching summary statistics:
 #> ---------------------------------------- 
-#> Total n before matching:  1184 
-#> Total n after matching:       568 
-#> % of matched observations:    47.97 %
-#> Total  maximal   SMD value:   0.018 
+#> Total n before matching:  1187 
+#> Total n after matching:       588 
+#> % of matched observations:    49.54 %
+#> Total  maximal   SMD value:   0.015 
 #> Total  maximal   r value:     0.001 
-#> Total  maximal   Var value:   1.017 
+#> Total  maximal   Var value:   1.018 
 #> 
 #> 
 #> Maximal values :
 #> -------------------------------------------------------------------------------- 
 #> Variable                  | Coef  | Before       | After        | Quality      
 #> -------------------------------------------------------------------------------- 
-#> bmi                       | SMD   | 0.259        | 0.018        | Balanced     
+#> bmi                       | SMD   | 0.245        | 0.015        | Balanced     
 #> bmi                       | r     | 0.010        | 0.001        | Balanced     
-#> bmi                       | Var   | 1.128        | 1.017        | Balanced     
+#> bmi                       | Var   | 1.101        | 1.018        | Balanced     
 #> sexF                      | SMD   | 0.153        | 0.000        | Balanced     
 #> sexF                      | r     | 0.006        | 0.000        | Balanced     
 #> sexF                      | Var   | 1.004        | 1.000        | Balanced     
 #> sexM                      | SMD   | 0.153        | 0.000        | Balanced     
 #> sexM                      | r     | 0.006        | 0.000        | Balanced     
 #> sexM                      | Var   | 1.004        | 1.000        | Balanced     
-#> bmi:sexF                  | SMD   | 0.151        | 0.005        | Balanced     
+#> bmi:sexF                  | SMD   | 0.152        | 0.004        | Balanced     
 #> bmi:sexF                  | r     | 0.007        | 0.001        | Balanced     
-#> bmi:sexF                  | Var   | 1.046        | 1.004        | Balanced     
+#> bmi:sexF                  | Var   | 1.042        | 1.004        | Balanced     
 #> bmi:sexM                  | SMD   | 0.151        | 0.003        | Balanced     
 #> bmi:sexM                  | r     | 0.006        | 0.001        | Balanced     
-#> bmi:sexM                  | Var   | 1.023        | 1.002        | Balanced     
+#> bmi:sexM                  | Var   | 1.023        | 1.003        | Balanced     
 #> --------------------------------------------------------------------------------
 ```
 

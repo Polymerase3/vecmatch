@@ -4,7 +4,7 @@
 \alias{csregion}
 \title{Filter the data based on common support region}
 \usage{
-csregion(gps_matrix)
+csregion(gps_matrix, borders = "include")
 }
 \arguments{
 \item{gps_matrix}{An object of classes \code{gps} and \code{data.frame} (e.g., created
@@ -16,6 +16,18 @@ equal to the number of unique levels of the treatment variable plus one
 (for the treatment variable itself). The number of rows should correspond
 to the number of subjects for which generalized propensity scores were
 estimated.}
+
+\item{borders}{A character string specifying how to handle observations at
+the edges of the Common Support Region (CSR). Acceptable values are
+\code{"include"} and \code{"exclude"}. If \code{"include"} is selected (default),
+observations with Generalized Propensity Scores (GPS) exactly equal to the
+CSR boundaries are retained for further analysis. This corresponds to a
+non-strict inequality: \code{lower_bound <= GPS <= upper_bound}. If
+\code{"exclude"} is selected, observations lying exactly on the CSR boundaries
+are removed. This corresponds to a strict inequality: \code{lower_bound <
+  GPS < upper_bound}. Using \code{"exclude"} will typically result in a slightly
+smaller matched sample size compared to \code{"include"}, but may be preferred
+for more conservative matching.}
 }
 \value{
 A numeric matrix similar to the one returned by \code{estimate_gps()},

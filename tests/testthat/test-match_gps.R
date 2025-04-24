@@ -11,7 +11,8 @@ test_that("match_gps checking arguments: csmatrix", {
   # estimate the gps
   gps_matrix <- estimate_gps(treat ~ pred, data, method = "multinom")
   gps_matrix_2t <- estimate_gps(treat ~ pred, data[data$treat %in% c("A", "B"), ],
-                                method = "multinom")
+    method = "multinom"
+  )
 
   # drop observations outside the csr
   invisible(capture.output(

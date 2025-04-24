@@ -143,7 +143,6 @@
     data_name = "X",
     treat_var = TRUE
   ),
-
   "fullopt" = list(
     allowed_args = c(
       "caliper", "order", "min_controls", "max_controls"

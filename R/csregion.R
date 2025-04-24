@@ -102,8 +102,9 @@ csregion <- function(gps_matrix,
   ## filter out the unvalid observations
   filter_matrix <- mapply(function(df_col, vec_low, vec_high) {
     switch(borders,
-           include = vec_low <= df_col & df_col <= vec_high,
-           exclude = vec_low < df_col & df_col < vec_high)
+      include = vec_low <= df_col & df_col <= vec_high,
+      exclude = vec_low < df_col & df_col < vec_high
+    )
   }, gps_matrix[, 2:ncol(gps_matrix)], csr_low, csr_high)
 
   ## summarizing the logical matrix to a subset vector

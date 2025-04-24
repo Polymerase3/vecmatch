@@ -197,9 +197,11 @@ match_gps <- function(csmatrix = NULL,
             `data.frame`."
   )
 
-  .chk_cond(n_treat < 2,
-            "The number of unique treatments in the `csmatrix` must be higher
-            or equal to 2.")
+  .chk_cond(
+    n_treat < 2,
+    "The number of unique treatments in the `csmatrix` must be higher
+            or equal to 2."
+  )
 
   # Perform the logit transformation and combine with treatment
   logit_matrix <- cbind(treatment = csmatrix[, 1], logit(csmatrix[, -1]))
@@ -577,7 +579,7 @@ match_gps <- function(csmatrix = NULL,
 
 
     # when only 2 levels, then cols_kmeans is empty and kmeans throws an error
-    if(n_treat > 2) {
+    if (n_treat > 2) {
       # fitting kmeans clusters
       tryCatch(
         {
@@ -631,7 +633,7 @@ match_gps <- function(csmatrix = NULL,
       args_loop[[data_name]] <- args_loop[[data_name]][order_data, ]
 
       # adding the clusters to matching arguments
-      if(n_treat > 2) {
+      if (n_treat > 2) {
         args_loop[["by"]] <- kmeans_strata
         args_loop[["by"]] <- args_loop[["by"]][order_data]
       } else {
@@ -651,9 +653,9 @@ match_gps <- function(csmatrix = NULL,
       args_loop[[data_name]] <- args[[data_name]][obs_filter, cols_matching]
 
       # if more than 2 treatments
-      if(n_treat > 2) {
+      if (n_treat > 2) {
         args_loop[[data_name]] <- cbind(args_loop[[data_name]],
-                                        kmeans_strata = kmeans_strata
+          kmeans_strata = kmeans_strata
         )
 
         # converting the formula to add kmeans stratas
@@ -789,7 +791,6 @@ match_gps <- function(csmatrix = NULL,
     # merging all extracted ids
     all_extracted_ids <- Reduce(c, extracted_matches)
   } else if (method %in% c("fullopt", "pairopt")) {
-
     # extract only the ids of matched samples for common control identification
     matched_ids <- lapply(match_results, function(x) as.numeric(names(x)))
 

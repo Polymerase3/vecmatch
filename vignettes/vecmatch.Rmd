@@ -52,13 +52,14 @@ library(vecmatch)
 library(ggplot2)
 
 raincloud(cancer,
-          age,
-          status,
-          significance = "t_test",
-          sig_label_color = TRUE,
-          sig_label_size = 3,
-          limits = c(10, 120)) +
-    scale_y_continuous(breaks = seq(10, 100, 10))
+  age,
+  status,
+  significance = "t_test",
+  sig_label_color = TRUE,
+  sig_label_size = 3,
+  limits = c(10, 120)
+) +
+  scale_y_continuous(breaks = seq(10, 100, 10))
 ```
 
 This plot presents the conditional distribution of `age` across
@@ -73,10 +74,11 @@ the `mosaic()` function. The code snippet below demonstrates this:
 
 ```{r, message=FALSE}
 mosaic(cancer,
-       status,
-       sex,
-       group_counts = TRUE,
-       significance = TRUE)
+  status,
+  sex,
+  group_counts = TRUE,
+  significance = TRUE
+)
 ```
 
 The plot shows the conditional distribution of `sex` across different
@@ -141,9 +143,10 @@ multinomial logistic regression model is as follows:
 ```{r}
 formula_cancer <- status ~ age * sex
 gps_matrix <- estimate_gps(formula_cancer,
-                           cancer,
-                           method = 'multinom',
-                           reference = 'control')
+  cancer,
+  method = "multinom",
+  reference = "control"
+)
 head(gps_matrix, 7)
 ```
 
@@ -210,12 +213,13 @@ The `match_gps()` function can be used as follows:
 ```{r}
 set.seed(164373)
 matched_cancer <- match_gps(csr_matrix,
-                            caliper = 0.21,
-                            kmeans_cluster = 2,
-                            reference = 'control',
-                            replace = TRUE,
-                            method = 'fullopt',
-                            order = 'desc')
+  caliper = 0.21,
+  kmeans_cluster = 2,
+  reference = "control",
+  replace = TRUE,
+  method = "fullopt",
+  order = "desc"
+)
 ```
 
 ## Step 5: Post-Matching Quality Assessment {#quality}
@@ -228,40 +232,43 @@ used for the calculation of the GPS:
 
 ```{r}
 balqual(matched_cancer,
-        formula_cancer,
-        type = 'smd',
-        statistic = 'max',
-        round = 4)
+  formula_cancer,
+  type = "smd",
+  statistic = "max",
+  round = 4
+)
 ```
 
 After assessing the quality with `balqual()`, we can combine both matched and unmatched datasets into a single data frame to visualize age and sex using `raincloud()` and `mosaic()`:
 
 ```{r}
-  matched_cancer$dataset <- 'matched'
-  unmatched_cancer <- cancer
-  unmatched_cancer$dataset <- 'unmatched'
-  data_full <- rbind(matched_cancer, unmatched_cancer)
+matched_cancer$dataset <- "matched"
+unmatched_cancer <- cancer
+unmatched_cancer$dataset <- "unmatched"
+data_full <- rbind(matched_cancer, unmatched_cancer)
 ```
 
 ```{r, message=FALSE, fig.asp=1.5}
 raincloud(data_full,
-          age,
-          status,
-          dataset,
-          significance = "t_test",
-          sig_label_color = TRUE,
-          sig_label_size = 3,
-          limits = c(10, 120)) +
-    scale_y_continuous(breaks = seq(10, 100, 10))
+  age,
+  status,
+  dataset,
+  significance = "t_test",
+  sig_label_color = TRUE,
+  sig_label_size = 3,
+  limits = c(10, 120)
+) +
+  scale_y_continuous(breaks = seq(10, 100, 10))
 ```
 
 ```{r, message=FALSE, fig.asp=1.5}
 mosaic(data_full,
-       status,
-       sex,
-       dataset,
-       group_counts = TRUE,
-       significance = TRUE)
+  status,
+  sex,
+  dataset,
+  group_counts = TRUE,
+  significance = TRUE
+)
 ```
 
 ## References

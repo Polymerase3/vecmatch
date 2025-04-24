@@ -20,8 +20,8 @@ test_that("csregion() with multinom data", {
 
   # checking if borders work
   invisible(capture.output({
-   s1 <- sum(attr(csregion(gps_matrix3, "include"), 'filter_vector'))
-   s2 <- sum(attr(csregion(gps_matrix3, "exclude"), 'filter_vector'))
+    s1 <- sum(attr(csregion(gps_matrix3, "include"), "filter_vector"))
+    s2 <- sum(attr(csregion(gps_matrix3, "exclude"), "filter_vector"))
   }))
 
   expect_true(s1 > s2)

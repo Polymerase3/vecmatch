@@ -175,6 +175,16 @@ match_gps <- function(csmatrix = NULL,
   kmeans_args <- kmeans_args %||% list()
   args <- list()
 
+  # define the number of unique treatment groups
+  n_treat <- length(unique(csmatrix[, 1]))
+
+  # replace the method to "nnm_2t" - uses Matching::Match()
+  # [Matching:Matchby() can not be used, as it needs the "by" argument;
+  # it cannot be bypassed by passing a vector of 1s]
+  if (method == "nnm" & n_treat == 2) {
+    method <- "nnm_2t"
+  }
+
   # check and process the csmatrix
   .chk_cond(
     is.null(csmatrix) || missing(csmatrix),
@@ -186,6 +196,10 @@ match_gps <- function(csmatrix = NULL,
     "The argument `csmatrix` has to be of classes `gps` and
             `data.frame`."
   )
+
+  .chk_cond(n_treat < 2,
+            "The number of unique treatments in the `csmatrix` must be higher
+            or equal to 2.")
 
   # Perform the logit transformation and combine with treatment
   logit_matrix <- cbind(treatment = csmatrix[, 1], logit(csmatrix[, -1]))
@@ -519,7 +533,7 @@ match_gps <- function(csmatrix = NULL,
     funlist = .match_methods[[method]]$args_check_fun
   )
 
-  if (method == "nnm") {
+  if (method == "nnm" || method == "nnm_2t") {
     args <- args[names(args) %nin% c("Z", "V", "tolerance")]
   }
 
@@ -561,31 +575,34 @@ match_gps <- function(csmatrix = NULL,
     # selecting from df
     kmeans_args_loop[["x"]] <- args[[data_name]][, cols_kmeans]
 
-    # fitting kmeans clusters
-    tryCatch(
-      {
-        verbosely(
-          withr::with_preserve_seed(
-            k_res <- do.call(
-              stats::kmeans,
-              kmeans_args_loop
-            )
-          ),
-          verbose = verbose_output
-        )
-      },
-      error = function(e) {
-        chk::abort_chk(strwrap(sprintf(
-          "There was a problem fitting the kmeans clustering with
-        `stats::kmeans()`.\n Error message: (from `stats::kmeans()`) %s",
-          conditionMessage(e)
-        ), prefix = " ", initial = ""), tidy = FALSE)
-      }
-    )
 
-    ############################ FIXING AREA ###################################
-    # adding the clusters to matching arguments
-    kmeans_strata <- as.factor(k_res$cluster[obs_filter])
+    # when only 2 levels, then cols_kmeans is empty and kmeans throws an error
+    if(n_treat > 2) {
+      # fitting kmeans clusters
+      tryCatch(
+        {
+          verbosely(
+            withr::with_preserve_seed(
+              k_res <- do.call(
+                stats::kmeans,
+                kmeans_args_loop
+              )
+            ),
+            verbose = verbose_output
+          )
+        },
+        error = function(e) {
+          chk::abort_chk(strwrap(sprintf(
+            "There was a problem fitting the kmeans clustering with
+        `stats::kmeans()`.\n Error message: (from `stats::kmeans()`) %s",
+            conditionMessage(e)
+          ), prefix = " ", initial = ""), tidy = FALSE)
+        }
+      )
+
+      # adding the clusters to matching arguments
+      kmeans_strata <- as.factor(k_res$cluster[obs_filter])
+    }
 
     # selecting columns for matching --> we need only one column of gps!
     cols_matching <- colnames(args[[data_name]]) %in% c(
@@ -595,7 +612,7 @@ match_gps <- function(csmatrix = NULL,
 
     # arg processing for Matching::Matchby
 
-    if (method == "nnm") {
+    if (method == "nnm" || method == "nnm_2t") {
       # filtering the data frame for matching
       args_loop[[data_name]] <- args_loop[[data_name]][, -1, drop = FALSE]
       args_loop[[data_name]] <- args_loop[[data_name]][
@@ -614,8 +631,13 @@ match_gps <- function(csmatrix = NULL,
       args_loop[[data_name]] <- args_loop[[data_name]][order_data, ]
 
       # adding the clusters to matching arguments
-      args_loop[["by"]] <- k_res$cluster[obs_filter]
-      args_loop[["by"]] <- args_loop[["by"]][order_data]
+      if(n_treat > 2) {
+        args_loop[["by"]] <- kmeans_strata
+        args_loop[["by"]] <- args_loop[["by"]][order_data]
+      } else {
+        # if 2 treatments - remove "by"
+        args_loop[["by"]] <- NULL
+      }
 
       # defining Tr args for matching function
       args_loop[["Tr"]] <- args_loop[["Tr"]][obs_filter]
@@ -627,9 +649,19 @@ match_gps <- function(csmatrix = NULL,
     } else if (method %in% c("fullopt", "pairopt")) {
       # selecting observations and adding "by" argument from kmeans
       args_loop[[data_name]] <- args[[data_name]][obs_filter, cols_matching]
-      args_loop[[data_name]] <- cbind(args_loop[[data_name]],
-        kmeans_strata = kmeans_strata
-      )
+
+      # if more than 2 treatments
+      if(n_treat > 2) {
+        args_loop[[data_name]] <- cbind(args_loop[[data_name]],
+                                        kmeans_strata = kmeans_strata
+        )
+
+        # converting the formula to add kmeans stratas
+        args_loop[["x"]] <- paste0(
+          args_loop[["x"]],
+          " + optmatch::strata(kmeans_strata)"
+        )
+      }
 
       args_loop[[data_name]] <- as.data.frame(args_loop[[data_name]])
 
@@ -650,11 +682,7 @@ match_gps <- function(csmatrix = NULL,
         1
       )
 
-      # converting the formula to add kmeans stratas
-      args_loop[["x"]] <- paste0(
-        args_loop[["x"]],
-        " + optmatch::strata(kmeans_strata)"
-      )
+      # converting x to valid formula
       args_loop[["x"]] <- stats::as.formula(args_loop[["x"]])
 
       # performing the prematching =============================================
@@ -718,7 +746,7 @@ match_gps <- function(csmatrix = NULL,
     )
 
     ## ids of the matched samples
-    if (method == "nnm") {
+    if (method == "nnm" || method == "nnm_2t") {
       ids_filtered <- as.numeric(rownames(args_loop[[data_name]]))
 
 
@@ -738,8 +766,8 @@ match_gps <- function(csmatrix = NULL,
     )
   }
 
-  ############
-  if (method == "nnm") {
+  ## OUTPUT section ############################################################
+  if (method == "nnm" || method == "nnm_2t") {
     # defining the name of control column
     control_name <- paste0("level_", reference)
 
@@ -761,6 +789,7 @@ match_gps <- function(csmatrix = NULL,
     # merging all extracted ids
     all_extracted_ids <- Reduce(c, extracted_matches)
   } else if (method %in% c("fullopt", "pairopt")) {
+
     # extract only the ids of matched samples for common control identification
     matched_ids <- lapply(match_results, function(x) as.numeric(names(x)))
 

@@ -7,5 +7,5 @@
 
 ## Minor changes
 
-* Added a vignette
-* Added a `NEWS.md` file to track changes to the package.
+* Added a vignette.
+* Added a `NEWS.md` file to track changes in the package.

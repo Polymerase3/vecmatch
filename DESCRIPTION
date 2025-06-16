@@ -37,7 +37,14 @@ Imports:
     VGAM,
     withr
 Suggests: 
+    doFuture,
+    doParallel,
+    doRNG,
+    foreach,
+    future,
     knitr,
+    parallel,
+    progressr,
     rmarkdown,
     spelling,
     testthat (>= 3.0.0)

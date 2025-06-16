@@ -253,3 +253,34 @@
             data frame.", x_name, type_n)
   )
 }
+
+# -- check and validate argument for optarg ------------------------------------
+validate_optarg <- function(x,
+                            allowed_values,
+                            max_length = length(allowed_values),
+                            varname = deparse(substitute(x)),
+                            quotes = TRUE) {
+  ### check input length
+  .chk_cond(
+    length(x) > max_length,
+    sprintf(
+      "Maximal allowed length for the `%s` argument is %s.",
+      varname, max_length
+    )
+  )
+
+  ### check if each entry is unique
+  .chk_cond(
+    any(duplicated(x)),
+    sprintf("Duplicates inside the `%s` vector are not allowed.", varname)
+  )
+
+  ### check if valid
+  .chk_cond(
+    any(x %nin% allowed_values),
+    sprintf(
+      "The `%s` argument has to be one of the following values: %s.\n",
+      varname, word_list(allowed_values, quotes = quotes)
+    )
+  )
+}

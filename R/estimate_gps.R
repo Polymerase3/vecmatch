@@ -29,8 +29,8 @@
 #' @param ordinal_treat an atomic vector of the length equal to the length of
 #'   unique levels of the treatment variable. Confirms, that the treatment
 #'   variable is an ordinal variable and adjusts its levels, to the order of
-#'   levels specified in the argument. Is a call to the function `factor(treat,
-#'   levels = ordinal_treat, ordered = TRUE`.
+#'   levels specified in the argument. Is a call to the function
+#'   `factor(treat, levels = ordinal_treat, ordered = TRUE`.
 #' @param fit_object a logical flag. If `TRUE`, the the fitted object is
 #'   returned instead of the GPS matrix.
 #' @param verbose_output a logical flag. If `TRUE` a more verbose version of the
@@ -299,11 +299,13 @@ estimate_gps <- function(formula,
       # overwrite
       list2env(by_env$subsetted, envir = by_env)
 
-      # model the data
-      fit <- do.call(
-        fit_func,
-        as.list(by_env)
-      )
+      withr::with_preserve_seed({
+        # model the data
+        fit <- do.call(
+          fit_func,
+          as.list(by_env)
+        )
+      })
 
       # append to existing list
       fitted_object <- append(fitted_object, list(fit))
@@ -315,10 +317,12 @@ estimate_gps <- function(formula,
       treat_by[[i]] <- args[["treat"]][by_sub]
     }
   } else {
+    withr::with_preserve_seed({
     fitted_object <- do.call(
       fit_func,
       args
     )
+    })
   }
 
   ####################### OUTPUT OBJECT ########################################
@@ -374,6 +378,9 @@ estimate_gps <- function(formula,
 
   ## adding original data as attribute
   attr(results, "original_data") <- args[[".data"]]
+
+  ## Adding call as attribute (for refit in csregion)
+  attr(results, "function_call") <- call
 
   ## returning gps matrix
   return(results)

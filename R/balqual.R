@@ -120,7 +120,8 @@ balqual <- function(matched_data = NULL,
                     type = c("smd", "r", "var_ratio"),
                     statistic = c("mean", "max"),
                     cutoffs = NULL,
-                    round = 3) {
+                    round = 3,
+                    print_out = TRUE) {
   ############ ARGUMENT CHECKING AND PROCESSING ################################
   # check data
   .chk_cond(
@@ -143,8 +144,9 @@ balqual <- function(matched_data = NULL,
   data_after <- .process_formula(formula, new_data)
 
   # define all posssible pairwise comaparisons of treatment var
-  pairwise_comb <- t(utils::combn(unique(data_before[["treat"]]), 2))
-  pairwise_comb <- as.data.frame(pairwise_comb)
+  pairwise_comb <- t(utils::combn(unique(as.character(data_before[["treat"]])),
+                                  2))
+  pairwise_comb <- data.frame(pairwise_comb)
   pairwise_comb <- pairwise_comb[stats::complete.cases(pairwise_comb), ]
   colnames(pairwise_comb) <- c("group1", "group2")
 
@@ -187,6 +189,18 @@ balqual <- function(matched_data = NULL,
   ############ PERFORMING THE CALCULATIONS #####################################
   # define output list
   quality_list <- .make_list(nrow(pairwise_comb))
+
+  # define output data.frame for smd's (important for the optimization)
+  new_colnames <- colnames(data_after[["model_covs"]])
+
+  # Create a data.frame with same number of rows as pairwise_comb
+  na_columns <- data.frame(matrix(NA,
+                                  nrow = nrow(pairwise_comb),
+                                  ncol = length(new_colnames)))
+  colnames(na_columns) <- new_colnames
+
+  # Combine column-wise
+  smd_df <- cbind(pairwise_comb, na_columns)
 
   # loop over all pairwise combinations to calculate the quality metrics
   for (i in seq_len(nrow(pairwise_comb))) {
@@ -311,6 +325,9 @@ balqual <- function(matched_data = NULL,
 
     # assign to list
     quality_list[[i]] <- as.data.frame(variables)
+
+    # save the smd's to smd_df for optimization selection
+    smd_df[i, 3:ncol(smd_df)] <- abs(smd_after)
   }
 
   # output data.frames
@@ -405,7 +422,10 @@ balqual <- function(matched_data = NULL,
   )
 
   ## print custom output
-  show_quality(quality_list_print)
+  if(print_out) show_quality(quality_list_print)
+
+  ## add attribute
+  attr(quality_list_print, "smd_df_combo") <- smd_df
 
   ## return output list
   return(invisible(quality_list_print))

@@ -27,7 +27,14 @@
 #'   GPS < upper_bound}. Using `"exclude"` will typically result in a slightly
 #'   smaller matched sample size compared to `"include"`, but may be preferred
 #'   for more conservative matching.
-
+#'
+#' @param refit Logical. If `TRUE` (default), the model used to estimate the GPS
+#'   is refitted after excluding samples outside the common support region,
+#'   using the same formula and method as in the original `estimate_gps()` call.
+#'   If `FALSE`, the model is not refitted, but still only samples within the
+#'   CSR are retained. Refitting is recommended, as suggested by Lopez and
+#'   Gutman (2017).
+#'
 #' @return A numeric matrix similar to the one returned by `estimate_gps()`,
 #'   but with the number of rows reduced to exclude those observations that do
 #'   not fit within the common support region (CSR) boundaries. The returned
@@ -61,7 +68,8 @@
 #'
 #' @export
 csregion <- function(gps_matrix,
-                     borders = "include") {
+                     borders = "include",
+                     refit = TRUE) {
   csr_data <- attr(gps_matrix, "original_data")
 
   .chk_cond(
@@ -78,6 +86,8 @@ csregion <- function(gps_matrix,
             following values: "include", "exclude".'
   )
 
+  # check refit arg
+  chk::chk_flag(refit)
 
   ## Calculating the csr_low
   csr_low <- apply(
@@ -114,8 +124,36 @@ csregion <- function(gps_matrix,
   n_negative <- sum(!filter_vector)
   n_negative_matrix <- colSums(!filter_matrix)
 
-  ## subsetting the gps_matrix
-  gps_matrix <- subset(gps_matrix, filter_vector)
+  ## refitting the gps_matrix
+  if (refit) {
+    # 1.) Filter out observations from original data
+    # 2.) Change function call
+    # 3.) Evaluate function call
+    # 4.) Overwrite gps_matrix
+
+    # Limiting original data only to the csr
+    csr_filtered <- csr_data[filter_vector, ]
+
+    # Saving and changing function call for estimate_gps
+    estimate_call <- attr(gps_matrix, "function_call")
+    estimate_call$data <- csr_filtered
+
+    # Evaluating the changed call
+    gps_matrix <- tryCatch(
+      eval(estimate_call),
+      error = function(e) {
+        warning("Refitting caused an error and will be ignored.
+                Setting refit = FALSE.")
+        refit <<- FALSE # Assign to parent env (if refit is defined there)
+        csr_filtered # Return filtered data
+      }
+    )
+  } else {
+    ## subsetting the gps_matrix
+    gps_matrix <- subset(gps_matrix, filter_vector)
+  }
+
+
 
   ## drop unused levels of treatment variable
   gps_matrix[, "treatment"] <- droplevels(gps_matrix[, "treatment"])

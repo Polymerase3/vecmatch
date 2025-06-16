@@ -144,8 +144,10 @@ balqual <- function(matched_data = NULL,
   data_after <- .process_formula(formula, new_data)
 
   # define all posssible pairwise comaparisons of treatment var
-  pairwise_comb <- t(utils::combn(unique(as.character(data_before[["treat"]])),
-                                  2))
+  pairwise_comb <- t(utils::combn(
+    unique(as.character(data_before[["treat"]])),
+    2
+  ))
   pairwise_comb <- data.frame(pairwise_comb)
   pairwise_comb <- pairwise_comb[stats::complete.cases(pairwise_comb), ]
   colnames(pairwise_comb) <- c("group1", "group2")
@@ -195,8 +197,9 @@ balqual <- function(matched_data = NULL,
 
   # Create a data.frame with same number of rows as pairwise_comb
   na_columns <- data.frame(matrix(NA,
-                                  nrow = nrow(pairwise_comb),
-                                  ncol = length(new_colnames)))
+    nrow = nrow(pairwise_comb),
+    ncol = length(new_colnames)
+  ))
   colnames(na_columns) <- new_colnames
 
   # Combine column-wise
@@ -422,7 +425,7 @@ balqual <- function(matched_data = NULL,
   )
 
   ## print custom output
-  if(print_out) show_quality(quality_list_print)
+  if (print_out) show_quality(quality_list_print)
 
   ## add attribute
   attr(quality_list_print, "smd_df_combo") <- smd_df

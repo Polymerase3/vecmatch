@@ -318,10 +318,10 @@ estimate_gps <- function(formula,
     }
   } else {
     withr::with_preserve_seed({
-    fitted_object <- do.call(
-      fit_func,
-      args
-    )
+      fitted_object <- do.call(
+        fit_func,
+        args
+      )
     })
   }
 

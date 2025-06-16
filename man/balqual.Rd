@@ -10,7 +10,8 @@ balqual(
   type = c("smd", "r", "var_ratio"),
   statistic = c("mean", "max"),
   cutoffs = NULL,
-  round = 3
+  round = 3,
+  print_out = TRUE
 )
 }
 \arguments{

@@ -4,7 +4,7 @@
 \alias{csregion}
 \title{Filter the data based on common support region}
 \usage{
-csregion(gps_matrix, borders = "include")
+csregion(gps_matrix, borders = "include", refit = TRUE)
 }
 \arguments{
 \item{gps_matrix}{An object of classes \code{gps} and \code{data.frame} (e.g., created
@@ -28,6 +28,13 @@ are removed. This corresponds to a strict inequality: \code{lower_bound <
   GPS < upper_bound}. Using \code{"exclude"} will typically result in a slightly
 smaller matched sample size compared to \code{"include"}, but may be preferred
 for more conservative matching.}
+
+\item{refit}{Logical. If \code{TRUE} (default), the model used to estimate the GPS
+is refitted after excluding samples outside the common support region,
+using the same formula and method as in the original \code{estimate_gps()} call.
+If \code{FALSE}, the model is not refitted, but still only samples within the
+CSR are retained. Refitting is recommended, as suggested by Lopez and
+Gutman (2017).}
 }
 \value{
 A numeric matrix similar to the one returned by \code{estimate_gps()},

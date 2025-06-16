@@ -51,7 +51,8 @@ analysis, for which the value of the vector is equal to \code{FALSE}.}
 \item{ordinal_treat}{an atomic vector of the length equal to the length of
 unique levels of the treatment variable. Confirms, that the treatment
 variable is an ordinal variable and adjusts its levels, to the order of
-levels specified in the argument. Is a call to the function \verb{factor(treat, levels = ordinal_treat, ordered = TRUE}.}
+levels specified in the argument. Is a call to the function
+\verb{factor(treat, levels = ordinal_treat, ordered = TRUE}.}
 
 \item{fit_object}{a logical flag. If \code{TRUE}, the the fitted object is
 returned instead of the GPS matrix.}

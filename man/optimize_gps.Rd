@@ -2,7 +2,7 @@
 % Please edit documentation in R/optimize_gps.R
 \name{optimize_gps}
 \alias{optimize_gps}
-\title{Optimize the matching process}
+\title{Optimize the Matching Process via Random Search}
 \usage{
 optimize_gps(
   data = NULL,
@@ -14,121 +14,145 @@ optimize_gps(
 )
 }
 \arguments{
-\item{data}{a data frame with columns specified in the \code{formula} argument. If
-\code{opt_args} is provided, the data provided within it must be the same as the
-data passed to the \code{optimize_gps()} function.}
+\item{data}{A \code{data.frame} containing all variables specified in the
+\code{formula} argument. If \code{opt_args} is used, the \code{data} provided within
+\code{opt_args} must match this input exactly.}
 
-\item{formula}{a valid R formula, which describes the model used to
-calculating the probabilities of receiving a treatment. The variable to be
-balanced is on the left side, while the covariates used to predict the
-treatment variable are on the right side. To define the interactions
-between covariates, use \code{*}. For more details, refer to \code{\link[stats:formula]{stats::formula()}}.
-If \code{opt_args} is provided, the formula contained within it must be the same
-as the formula passed to the \code{optimize_gps()} function.}
+\item{formula}{A valid formula object used to estimate the generalized
+propensity scores (GPS). The treatment variable appears on the left-hand
+side, and covariates on the right-hand side. Interactions can be specified
+using \code{*}. See \code{\link[stats:formula]{stats::formula()}} and \code{\link[=estimate_gps]{estimate_gps()}} for more details. If
+\code{opt_args} is provided, the formula within it must be identical to this
+argument.}
 
-\item{ordinal_treat}{an atomic vector of the length equal to the length of
-unique levels of the treatment variable. Confirms, that the treatment
-variable is an ordinal variable and adjusts its levels, to the order of
-levels specified in the argument. Is a call to the function
-\verb{factor(treat, levels = ordinal_treat, ordered = TRUE}. It will be passed
-to the \code{estimate_gps()} function directly. If \code{NULL}, then the \code{polr} GPS
-estimation method will be ignored and excluded from the search.}
+\item{ordinal_treat}{An atomic vector defining the ordered levels of the
+treatment variable. This confirms the variable is ordinal and adjusts its
+levels accordingly using
+\code{factor(treat, levels = ordinal_treat, ordered = TRUE)}. It is passed
+directly to \code{estimate_gps()}. If \code{NULL}, ordinal GPS estimation methods
+such as \code{polr} will be excluded from the optimization. See \code{\link[=estimate_gps]{estimate_gps()}}
+for details.}
 
-\item{n_iter}{Integer. The number of unique combinations of all optimization
-parameters to evaluate during the optimization process. It is recommended
-to start with the default value and increase gradually based on the
-complexity of the problem and available computational resources. Larger
-numbers of combinations generally lead to better optimization results but
-also increase computation time. The efficiency and speed of the
-optimization improve when using multiple cores (\code{n_cores}), especially with
-higher numbers of iterations. Using a high number of cores with a low
-number of iterations can introduce overhead, potentially resulting in
-longer execution times. Overall, execution time depends heavily on the
-number of iterations, number of cores, and the size and complexity of the
-dataset.}
+\item{n_iter}{Integer. Number of unique parameter combinations to evaluate
+during optimization. Higher values generally yield better results but
+increase computation time. For large datasets or high-dimensional parameter
+spaces, increasing \code{n_iter} is recommended. When using parallel processing
+(\code{n_cores > 1}), performance gains become more apparent with larger
+\code{n_iter}. Too many cores with too few iterations may introduce
+overhead and reduce efficiency.}
 
-\item{n_cores}{Integer. The number of CPU cores allocated for parallel
-computation. If \code{n_cores > 1}, a parallel backend is automatically
-registered using \code{\link[future:multisession]{future::multisession()}}. \strong{Warning:} Using multiple
-cores can significantly increase RAM usage, especially when handling large
-datasets and/or a high number of iterations. Users with limited RAM (e.g.,
-16 or 32 GB) should monitor their system resources closely to prevent
-crashes or slowdowns. The multisession backend duplicates the R session
-across workers, which can be memory-intensive. It is advisable to balance
-the number of cores with available memory and dataset size to optimize
-performance and stability. The function is self-contained and performs
-memory cleanup after execution to help manage resources efficiently.}
+\item{n_cores}{Integer. Number of CPU cores to use for parallel execution. If
+set to a value greater than 1, a parallel backend is registered using
+\code{\link[future:multisession]{future::multisession()}}. \strong{Note:} parallel execution can significantly
+increase memory usage. With large datasets or high \code{n_iter} values, RAM
+consumption may spike, especially on systems with 16-32 GB RAM. Users are
+advised to monitor system resources. Internally, the function performs
+memory cleanup post-execution to manage resource usage efficiently.}
 
 \item{opt_args}{An object of class \code{"opt_args"} containing optimization
-arguments and parameter settings. See the documentation of
-\code{\link[=make_opt_args]{make_opt_args()}} for details on creating and customizing this object.}
+parameters and argument settings. Use \code{\link[=make_opt_args]{make_opt_args()}} to create this
+object. It specifies the search space for the GPS estimation and matching
+procedure.}
 }
 \value{
-An object of class \code{best_opt_result}. The main part of the obvject is a data frame with the optimization results.
-For the datiled explanation of the particular columns refer to the \emph{Details} section.
+An S3 object of class \code{best_opt_result}. The core component is a
+\code{data.frame} containing the parameter combinations and results of the
+optimization procedure. You can access it using \code{attr(result, "opt_results")} or by calling \code{View(result)}, where \code{result} is your
+\code{best_opt_result} object.
+
+The object contains the following custom attributes:
+\itemize{
+\item \strong{\code{opt_results}}: A \code{data.frame} of optimization results. Each row corresponds to a unique parameter combination tested. For a complete description of columns, see the \emph{\strong{Details}} section.
+\item \strong{\code{optimization_time}}: Time (in seconds) taken by the optimization loop (i.e., the core \code{for}-loop that evaluates combinations). This does \strong{not} include the time needed for GPS estimation, pre-processing, or merging of results after loop completion. On large datasets, these excluded steps can still be substantial.
+\item \strong{\code{combinations_tested}}: Total number of unique parameter combinations evaluated during optimization.
+\item \strong{\code{smd_results}}: A detailed table of standardized mean differences (SMDs) for all pairwise treatment group comparisons and for all covariates specified in the \code{formula}. This is used by the \code{\link[=select_opt]{select_opt()}} function to filter optimal models based on covariate-level balance across groups.
+\item \strong{\code{treat_names}}: A character vector with the names of the unique treatment groups.
+\item \strong{\code{model_covs}}: A character vector listing the model covariates (main effects and interactions) used in the \code{formula}. These names correspond to the variables shown in the \code{smd_results} table.
+}
 }
 \description{
-The \code{optimize_gps()} function performs a random search algorithm
-to optimize parameters used in \code{match_gps()} and \code{estimate_gps()}. It aims
-to identify parameter combinations that maximize the percentage of matched
-samples (\%matched) while minimizing the standardized mean difference (SMD),
-thereby improving matching quality. The function supports parallel
+The \code{optimize_gps()} function performs a random search to
+identify optimal combinations of parameters for the \code{match_gps()} and
+\code{estimate_gps()} functions. The goal is to maximize the percentage of
+matched samples (\code{perc_matched}) while minimizing the maximum standardized
+mean difference (\code{smd}), thereby improving the overall balance of
+covariates across treatment groups. The function supports parallel
 execution through the \code{foreach} and \code{future} packages, enabling
-multithreaded optimization to significantly accelerate complex parameter
-searches.
+multithreaded computation to accelerate the optimization process,
+particularly when dealing with large datasets or complex parameter spaces.
 }
 \details{
-The result of the \code{optimize_gps()} function is an S3 object of class
-\code{best_opt_result}. Its core component is a \code{data.frame} that contains the
-parameter specifications of the best-performing models identified during the
-optimization process.
+The output is an S3 object of class \code{best_opt_result}. Its core
+component is a \code{data.frame} containing the parameter settings for the
+best-performing models, grouped and ranked based on their balance quality.
 
-The optimization results are categorized into seven bins based on the maximum
+Optimization results are categorized into seven bins based on the maximum
 standardized mean difference (SMD):
 \itemize{
-\item 0.00–0.05
-\item 0.05–0.10
-\item 0.10–0.15
-\item 0.15–0.20
-\item 0.20–0.25
-\item 0.25–0.30
-\item more than 0.30
+\item 0.00-0.05
+\item 0.05-0.10
+\item 0.10-0.15
+\item 0.15-0.20
+\item 0.20-0.25
+\item 0.25-0.30
+\item Greater than 0.30
 }
 
-Within each SMD group, the combination(s) of parameters with the highest
-\code{perc_matched} (i.e., the percentage of matched samples) is selected. If
-multiple combinations have identical \code{smd} and \code{perc_matched} values—which is
-common—all such models are retained in the final \code{data.frame}.
+Within each SMD group, the parameter combination(s) achieving the highest
+\code{perc_matched} (i.e., percentage of matched samples) is selected. In cases
+where multiple combinations yield identical \code{smd} and \code{perc_matched}, all
+such results are retained. Combinations where matching failed or GPS
+estimation did not converge will return \code{NA} in the result columns (e.g.,
+\code{perc_matched}, \code{smd}).
 
-The resulting data frame has 15 columns describing the matching and GPS
-estimation setup:
+The returned \code{data.frame} includes the following columns (depending on the
+number of treatment levels):
 \itemize{
-\item \code{method_match}: Matching method used in \code{\link[=match_gps]{match_gps()}}. Currently supports \code{"nnm"} and \code{"fullopt"}.
-\item \code{caliper}: Caliper distance used in \code{\link[=match_gps]{match_gps()}}.
-\item \code{order}: Sorting order of GPS values prior to matching.
-\item \code{kmeans_cluster}: Number of k-means clusters. Should not exceed the number of treatment levels.
-\item \code{replace}: Whether replacement was used during matching (only defined if \code{method_match == "nnm"}, else \code{NA}).
-\item \code{ties}: Handling of ties in nearest-neighbor matching (only defined if \code{method_match == "nnm"}).
-\item \code{ratio}: Ratio of controls to treated in matching (only defined if \code{method_match == "nnm"}).
-\item \code{min_controls} / \code{max_controls}: Control limits for full matching (only defined if \code{method_match == "fullopt"}).
-\item \code{reference}: Reference treatment group used in both \code{\link[=estimate_gps]{estimate_gps()}} and \code{\link[=match_gps]{match_gps()}}.
-\item \code{perc_matched}: Percentage of matched samples (from \code{\link[=balqual]{balqual()}}).
-\item \code{smd}: Maximum standardized mean difference (from \code{\link[=balqual]{balqual()}}).
-\item \code{method_gps}: Method used to estimate GPS in \code{\link[=estimate_gps]{estimate_gps()}}.
-\item \code{link}: Link function used in the GPS model.
-\item \code{smd_group}: Category corresponding to the SMD range bin.
-\item \code{p_treatlevel}: where \code{treatlevel} are unique levels of the treatment variable. Several columns representing the percentage of matched samples for each group (this means number of matched samples / number of all samples in the groups * 100).
+\item \code{iter_ID}: Unique identifier for each parameter combination
+\item \code{method_match}: Matching method used in \code{\link[=match_gps]{match_gps()}}, e.g., \code{"nnm"} or \code{"fullopt"}
+\item \code{caliper}: Caliper value used in \code{\link[=match_gps]{match_gps()}}
+\item \code{order}: Ordering of GPS scores prior to matching
+\item \code{kmeans_cluster}: Number of k-means clusters used
+\item \code{replace}: Whether replacement was used in matching (\code{nnm} only)
+\item \code{ties}: Tie-breaking rule in nearest-neighbor matching (\code{nnm} only)
+\item \code{ratio}: Control-to-treated ratio for \code{nnm}
+\item \code{min_controls}, \code{max_controls}: Minimum and maximum controls for \code{fullopt}
+\item \code{reference}: Reference group used in both \code{\link[=estimate_gps]{estimate_gps()}} and \code{\link[=match_gps]{match_gps()}}
+\item \code{perc_matched}: Percentage of matched samples (from \code{\link[=balqual]{balqual()}})
+\item \code{smd}: Maximum standardized mean difference (from \code{\link[=balqual]{balqual()}})
+\item \verb{p_\{group_name\}}: Percent matched per treatment group (based on group sample size)
+\item \code{method_gps}: GPS estimation method used (from \code{\link[=estimate_gps]{estimate_gps()}})
+\item \code{link}: Link function used in GPS model
+\item \code{smd_group}: SMD range category for the row
 }
 
-The \code{best_opt_result} object includes a custom \code{print()} method that
-summarizes the outcome. This summary displays:
+The resulting \code{best_opt_result} object also includes a custom \code{print()}
+method that summarizes:
 \itemize{
-\item The number of unique optimal parameter sets within each \code{smd_group}
-\item The corresponding SMDs and percentage matched
-\item The total number of combinations tested
-\item The total optimization runtime
+\item The number of optimal parameter sets per SMD group
+\item Their associated SMD and match rates
+\item Total combinations tested
+\item Total runtime of the optimization loop
 }
+}
+\examples{
+# Define formula for GPS estimation and matching
+formula_cancer <- formula(status ~ age * sex)
 
-Only the top-performing combinations per \code{smd_group}—as described—are shown
-in the printed summary.
+# Set up the optimization parameter space
+opt_args <- make_opt_args(cancer, formula_cancer, gps_method = "m1")
+
+# Run optimization with 2000 random parameter sets and a fixed seed
+\dontrun{
+withr::with_seed(
+  8252, {
+    optimize_gps(
+      data = cancer,
+      formula = formula_cancer,
+      opt_args = opt_args,
+      n_iter = 2000
+    )
+  }
+)
+}
 }

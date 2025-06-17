@@ -2,7 +2,7 @@
 % Please edit documentation in R/optimize_gps.R
 \name{make_opt_args}
 \alias{make_opt_args}
-\title{Defining custom s3 class to create and validate opt_args input}
+\title{Define the Optimization Parameter Space for Matching}
 \usage{
 make_opt_args(
   data = NULL,
@@ -17,13 +17,123 @@ make_opt_args(
   ties = c(TRUE, FALSE),
   ratio = 1,
   min_controls = 1,
-  max_controls = 1,
-  ...
+  max_controls = 1
 )
 }
 \arguments{
-\item{...}{}
+\item{data}{A \code{data.frame} containing all variables referenced in \code{formula}.
+Must match the dataset used in \code{optimize_gps()}.}
+
+\item{formula}{A valid formula specifying the treatment variable (left-hand
+side) and covariates (right-hand side). Interaction terms can be included
+using \code{*}. Must match the formula used in \code{optimize_gps()}.}
+
+\item{reference}{A single string or vector of treatment group levels to be
+used as the reference (baseline) group in both GPS estimation and matching.}
+
+\item{gps_method}{A string or vector of strings specifying GPS estimation
+methods. Allowed values are \code{"m1"} to \code{"m10"}. See \emph{Details} below.}
+
+\item{matching_method}{A string or vector of strings specifying the matching
+method(s) to evaluate. Currently supported options are \code{"nnm"} and
+\code{"fullopt"}. See \code{\link[=match_gps]{match_gps()}}.}
+
+\item{caliper}{A numeric value or vector of values specifying caliper widths
+(i.e., maximum allowed GPS distance for matching). Same as in
+\code{\link[=match_gps]{match_gps()}}, but allows multiple values.}
+
+\item{order}{A string or vector of strings indicating the sorting order of
+logit-transformed GPS values before matching. Options are:
+\itemize{
+\item \code{"desc"}: sort from highest to lowest (default),
+\item \code{"asc"}: sort from lowest to highest,
+\item \code{"original"}: keep original order,
+\item \code{"random"}: randomize order (use \code{\link[=set.seed]{set.seed()}} for reproducibility).
+}}
+
+\item{cluster}{An integer or vector of integers specifying the number of
+clusters for k-means clustering (if applicable).}
+
+\item{replace}{Logical value or vector of logicals indicating whether to
+allow matching with replacement. Same meaning as in \code{\link[=match_gps]{match_gps()}}, but
+supports multiple settings.}
+
+\item{ties}{Logical value or vector of logicals defining how ties should be
+handled during nearest-neighbor matching.}
+
+\item{ratio}{A numeric value or vector specifying the ratio of control to
+treated units for matching (used in \code{"nnm"}).}
+
+\item{min_controls}{A scalar or vector specifying the \strong{minimum} number of
+controls to be matched to each treated unit (used in \code{"fullopt"}).}
+
+\item{max_controls}{A scalar or vector specifying the \strong{maximum} number of
+controls to be matched to each treated unit (used in \code{"fullopt"}).}
+}
+\value{
+An object of class \code{"opt_args"}, containing all valid parameter
+combinations to be sampled by \code{optimize_gps()}. Use \code{print()} to explore
+the defined search space.
 }
 \description{
-Defining custom s3 class to create and validate opt_args input
+\code{make_opt_args()} creates an object of class \code{"opt_args"} that
+defines the parameter search space for \code{optimize_gps()}.
+
+The function accepts \strong{vectors of values} for each customizable argument
+involved in GPS estimation and matching. It computes the \strong{Cartesian
+product} of all parameter combinations, which serves as the input search
+space for the random search algorithm used by \code{optimize_gps()}.
+
+To ensure valid optimization, the \code{data} and \code{formula} arguments must exactly
+match those passed to \code{optimize_gps()}.
+}
+\details{
+The returned object is of class \code{"opt_args"} and is intended to be
+passed directly to \code{optimize_gps()}. Internally, the function calculates the
+full Cartesian product of all supplied parameter values and validates the
+structure of each.
+
+The \code{gps_method} argument must contain one or more of the following codes:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{| gps_method |      Method      |       Link Function         |
+|------------|------------------|-----------------------------|
+|    "m1"    |    multinom      |   generalized_logit         |
+|    "m2"    |     polr         |   logistic                  |
+|    "m3"    |     polr         |   probit                    |
+|    "m4"    |     polr         |   loglog                    |
+|    "m5"    |     polr         |   cloglog                   |
+|    "m6"    |     polr         |   cauchit                   |
+|    "m7"    |     vglm         |   multinomial_logit         |
+|    "m8"    |     vglm         |   reduced_rank_ml           |
+|    "m9"    |    brglm2        |   baseline_category_logit   |
+|   "m10"    |    mblogit       |   baseline_category_logit   |
+}\if{html}{\out{</div>}}
+
+The object includes a custom S3 \code{print()} method that displays:
+\itemize{
+\item A summary table of all allowed values for each optimization parameter,
+\item The total number of unique parameter combinations (i.e., the size of the search space).
+}
+}
+\examples{
+# Define formula and dataset
+formula_cancer <- formula(status ~ age * sex)
+
+# Create search space with multiple values for GPS and matching
+opt_args <- make_opt_args(
+  data = cancer,
+  formula = formula_cancer,
+  gps_method = c("m1", "m2", "m9"),
+  matching_method = c("nnm", "fullopt"),
+  caliper = c(0.1, 0.2),
+  order = c("desc", "random"),
+  reference = "control"
+)
+
+# Print summary of the search space
+print(opt_args)
+
+}
+\seealso{
+\code{\link[=optimize_gps]{optimize_gps()}}, \code{\link[=match_gps]{match_gps()}}, \code{\link[=estimate_gps]{estimate_gps()}}
 }

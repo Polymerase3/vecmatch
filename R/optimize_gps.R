@@ -360,24 +360,16 @@ optimize_gps <- function(data = NULL,
   # Assign values for "fullopt"
   n_fullopt <- sum(is_fullopt)
   withr::with_preserve_seed({
-<<<<<<< HEAD
     search_matching$min_controls[is_fullopt] <- sample(
       opt_args[["min_controls"]],
-=======
-    search_matching$min_controls[is_fullopt] <- sample(opt_args[["min_controls"]],
->>>>>>> feature-recovery
       n_fullopt,
       replace = TRUE
     )
   })
 
   withr::with_preserve_seed({
-<<<<<<< HEAD
     search_matching$max_controls[is_fullopt] <- sample(
       opt_args[["max_controls"]],
-=======
-    search_matching$max_controls[is_fullopt] <- sample(opt_args[["max_controls"]],
->>>>>>> feature-recovery
       n_fullopt,
       replace = TRUE
     )
@@ -454,11 +446,10 @@ optimize_gps <- function(data = NULL,
 
   # to avoid seed leaks
   withr::with_preserve_seed({
-<<<<<<< HEAD
+
     # printing out the progress bar
-=======
->>>>>>> feature-recovery
     progressr::with_progress({
+
       ## defining the loop length
       loop_seq <- seq_len(nrow(estimate_space))
       p <- progressr::progressor(along = loop_seq)
@@ -468,11 +459,8 @@ optimize_gps <- function(data = NULL,
         estimate_results <- foreach::foreach(
           i = loop_seq,
           .packages = c("vecmatch", "withr"), # add any other needed packages
-<<<<<<< HEAD
           # i needed to export all used objects to the workers in the parallel
           # setup
-=======
->>>>>>> feature-recovery
           .export = c(
             "data",
             "formula",
@@ -484,7 +472,7 @@ optimize_gps <- function(data = NULL,
           ),
           .errorhandling = "pass"
         ) %doparallel% {
-<<<<<<< HEAD
+
           # i know it may seems unnecessary to wrap it all inside a function and
           # call it at the end, but it has a purpose. During the debugging i
           # noticed that the workers somehow share a common environment and
@@ -496,13 +484,10 @@ optimize_gps <- function(data = NULL,
           # only within this environment, which is then deleted
 
           run_iteration <- function(i) {
+
             # no logging from the loop
             withr::local_options(list(foreach.quiet = TRUE))
 
-=======
-          run_iteration <- function(i) {
-            withr::local_options(list(foreach.quiet = TRUE))
->>>>>>> feature-recovery
             # defining the current argument list
             arglist_loop <- list(
               data = data,
@@ -514,11 +499,7 @@ optimize_gps <- function(data = NULL,
             )
 
             # estimating the gps
-<<<<<<< HEAD
-
             # double caution - better safe than sorry
-=======
->>>>>>> feature-recovery
             withr::with_preserve_seed({
               tryCatch(
                 {
@@ -538,7 +519,6 @@ optimize_gps <- function(data = NULL,
 
               # calculating csregion borders
               invisible(
-<<<<<<< HEAD
                 utils::capture.output(loop_estimate <- csregion(loop_estimate))
               )
             })
@@ -547,14 +527,6 @@ optimize_gps <- function(data = NULL,
             p(sprintf("Running %d/%d", i, max(loop_seq)))
 
             # defining the output
-=======
-                capture.output(loop_estimate <- csregion(loop_estimate))
-              )
-            })
-            # Update progress
-            p(sprintf("Running %d/%d", i, max(loop_seq)))
-
->>>>>>> feature-recovery
             loop_estimate <- list(loop_estimate)
             names(loop_estimate) <- estimate_space[i, "row_name"]
             return(loop_estimate)
@@ -625,15 +597,12 @@ optimize_gps <- function(data = NULL,
 
         opt_results <- foreach::foreach(
           i = loop_seq,
-<<<<<<< HEAD
           # i know it may seem weird but it actually works. It doesn't work with
           # the quick load from devtools, the package must be installed!
           # then all functions from the vecmatch are exported to the workers
           .packages = "vecmatch",
+
           # exporting all necessary objects
-=======
-          .packages = "vecmatch",
->>>>>>> feature-recovery
           .export = c(
             "search_matching", "estimate_results", "formula",
             "treatment_cols", "smd_colnames", "smd_template",
@@ -642,10 +611,6 @@ optimize_gps <- function(data = NULL,
           .errorhandling = "pass"
         ) %doparallel% {
           run_iteration <- function(i) {
-<<<<<<< HEAD
-=======
-            # withr::with_seed(random_seed, {
->>>>>>> feature-recovery
             ## define iter ID
             iter_ID <- paste0("ID", i)
 
@@ -669,7 +634,6 @@ optimize_gps <- function(data = NULL,
                 loop_estimate <- do.call(match_gps, args_loop)
 
                 # max SMD and %matched statistics
-<<<<<<< HEAD
                 utils::capture.output(
                   {
                     qual_out <- balqual(loop_estimate,
@@ -680,15 +644,6 @@ optimize_gps <- function(data = NULL,
                                         print_out = FALSE
                     )
                   }
-=======
-
-                qual_out <- balqual(loop_estimate,
-                  formula,
-                  type = "smd",
-                  statistic = "max",
-                  round = 8,
-                  print_out = TRUE
->>>>>>> feature-recovery
                 )
 
 
@@ -706,14 +661,11 @@ optimize_gps <- function(data = NULL,
                 ptab$p <- (ptab$After / ptab$Before) * 100
 
                 # Fill into correct named columns
-<<<<<<< HEAD
                 computed <- stats::setNames(as.list(ptab$p), paste0(
                   "p_",
                   ptab$Treatment
                 ))
-=======
-                computed <- setNames(as.list(ptab$p), paste0("p_", ptab$Treatment))
->>>>>>> feature-recovery
+
                 for (col in names(computed)) {
                   if (col %in% treatment_cols) {
                     perc[[col]] <- computed[[col]]
@@ -740,7 +692,6 @@ optimize_gps <- function(data = NULL,
               },
               silent = TRUE
             )
-<<<<<<< HEAD
 
             # Update progress
             if (i %% throttle == 0) {
@@ -752,12 +703,6 @@ optimize_gps <- function(data = NULL,
             }
 
             # setting up the resultin data frame
-=======
-            # })
-            # Update progress
-            if (i %% throttle == 0) p(sprintf("Running %d/%d", i, max(loop_seq)))
-
->>>>>>> feature-recovery
             result_row <- cbind(
               iter_ID = iter_ID,
               search_matching[i, ],
@@ -766,25 +711,17 @@ optimize_gps <- function(data = NULL,
               perc
             )
 
-<<<<<<< HEAD
             # corresponding smd data.frame
             smd_df <- cbind(iter_ID = iter_ID, smd_df)
 
             # returnig output from single iteration
-=======
-            smd_df <- cbind(iter_ID = iter_ID, smd_df)
-
->>>>>>> feature-recovery
             return(list(
               results = as.data.frame(result_row, stringsAsFactors = FALSE),
               smd_dfs = as.data.frame(smd_df, stringsAsFactors = FALSE)
             ))
           }
 
-<<<<<<< HEAD
           # running the function inside an isolated env
-=======
->>>>>>> feature-recovery
           run_iteration(i)
         }
       })
@@ -1075,10 +1012,7 @@ print.best_opt_result <- function(x, digits = 3, ...) {
 #' )
 #' }
 #' @export
-<<<<<<< HEAD
 
-=======
->>>>>>> feature-recovery
 select_opt <- function(x,
                        smd_groups = NULL,
                        smd_variables = NULL,
@@ -1099,10 +1033,7 @@ select_opt <- function(x,
   #   c("GroupA", "GroupC")
   # )
 
-<<<<<<< HEAD
-=======
   # for each pair
->>>>>>> feature-recovery
   if (!is.null(smd_groups)) {
     # ensure smd_groups is a list
     .chk_cond(
@@ -1156,19 +1087,12 @@ select_opt <- function(x,
     smd_key <- t(apply(combs, 1, function(x) sort(as.character(x))))
   }
 
-<<<<<<< HEAD
   # data frame with all/selected pairwise comparisons for further reference
-=======
->>>>>>> feature-recovery
   smd_key_df <- data.frame(
     group1 = smd_key[, 1],
     group2 = smd_key[, 2],
     stringsAsFactors = FALSE
   )
-<<<<<<< HEAD
-=======
-
->>>>>>> feature-recovery
 
   # validation function for smd_variables and perc_matched
   validate_arg <- function(x,
@@ -1236,12 +1160,8 @@ select_opt <- function(x,
     )
   }
 
-<<<<<<< HEAD
   ## it has to be done after and separately, cause the upper check can reassign
   ## the value to NULL
-=======
-  ## it has to be done after, cause the upper check can result in NULL
->>>>>>> feature-recovery
   if (is.null(smd_variables)) {
     # use global smd max
     smd_variables <- model_covs
@@ -1257,11 +1177,7 @@ select_opt <- function(x,
     )
   }
 
-<<<<<<< HEAD
   ## the same thing as up
-=======
-  ## it has to be done after, cause the upper check can result in NULL
->>>>>>> feature-recovery
   if (is.null(perc_matched)) {
     # use global smd max
     perc_colnames <- "perc_matched"
@@ -1278,19 +1194,11 @@ select_opt <- function(x,
 
   ## process smd ===============================================================
 
-<<<<<<< HEAD
   # extract and preprocess tha data
   smd_df <- attr(x, "smd_results")
 
   # take only complete cases (this mean cases where smd is defined)
   smd_df <- smd_df[stats::complete.cases(smd_df), ]
-=======
-  # preprocess tha data
-  smd_df <- attr(x, "smd_results")
-
-  # take only complete cases (this mean cases where smd is defined)
-  smd_df <- smd_df[complete.cases(smd_df), ]
->>>>>>> feature-recovery
 
   # select the columns based on smd_variables
   smd_df <- smd_df[, c("iter_ID", "group1", "group2", smd_variables)]
@@ -1312,24 +1220,15 @@ select_opt <- function(x,
   # get the numeric columns after iter_ID
   metric_cols <- setdiff(names(smd_df), c("group1", "group2", "iter_ID"))
 
-<<<<<<< HEAD
   # row-wise
   # Aggregate by group
   agg_fun <- if (smd_type == "mean") mean else max
   agg_df <- stats::aggregate(smd_df[metric_cols],
-=======
-  # Aggregate by group
-  agg_fun <- if (smd_type == "mean") mean else max
-  agg_df <- aggregate(smd_df[metric_cols],
->>>>>>> feature-recovery
     by = smd_df["iter_ID"],
     FUN = agg_fun
   )
 
-<<<<<<< HEAD
   # column-wise
-=======
->>>>>>> feature-recovery
   # Compute row-wise mean or max across metric columns
   metric_mat <- as.matrix(agg_df[metric_cols])
   row_stat <- if (smd_type == "mean") {
@@ -1345,30 +1244,19 @@ select_opt <- function(x,
   # Cut into SMD categories
   breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, Inf)
   labels <- c(
-<<<<<<< HEAD
+
     "0-0.05", "0.05-0.10", "0.10-0.15", "0.15-0.20",
     "0.20-0.25", "0.25-0.30", "0.30-0.35", "0.35-0.40",
     "0.40-0.45", "0.45-0.50", ">0.50"
   )
 
   # assembling the output
-=======
-    "0–0.05", "0.05–0.10", "0.10–0.15", "0.15–0.20",
-    "0.20–0.25", "0.25–0.30", "0.30–0.35", "0.35–0.40",
-    "0.40–0.45", "0.45–0.50", ">0.50"
-  )
-
->>>>>>> feature-recovery
   agg_df$smd_group <- cut(agg_df$overall_stat,
     breaks = breaks,
     labels = labels,
     right = FALSE
   )
 
-<<<<<<< HEAD
-=======
-
->>>>>>> feature-recovery
   ## process percent_matched =================================================
   ## now select the desired percent_matched from the data.frame
   perc_df <- attr(x, "opt_results")
@@ -1377,11 +1265,7 @@ select_opt <- function(x,
   perc_df <- perc_df[, c("iter_ID", perc_colnames)]
 
   ## filter out NAs
-<<<<<<< HEAD
   perc_df <- perc_df[stats::complete.cases(perc_df), ]
-=======
-  perc_df <- perc_df[complete.cases(perc_df), ]
->>>>>>> feature-recovery
 
   ## if single column after iter_ID, then no need to compute similarity/
   ## deviance metrics - we can merge the datasets directly and proceed with
@@ -1427,11 +1311,7 @@ select_opt <- function(x,
   # Initialize empty list to collect best rows
   best_rows_list <- list()
 
-<<<<<<< HEAD
   # Loop through each smd group and extract rows with min perc_matched
-=======
-  # Loop through each group and extract rows with max perc_matched
->>>>>>> feature-recovery
   for (g in groups) {
     group_rows <- final_df[final_df$smd_group == g, ]
 

@@ -38,7 +38,9 @@
 #'   `var_ratio`.
 #' @param round An integer specifying the number of decimal places to round the
 #'   output to.
-
+#'
+#' @param print_out Logical. If `TRUE` (default), a matching quality summary
+#'   will be printed to the console. Set to `FALSE` to suppress this output.
 #'
 #' @return If assigned to a name, returns a list of summary statistics of class
 #'   `quality` containing:
@@ -144,8 +146,10 @@ balqual <- function(matched_data = NULL,
   data_after <- .process_formula(formula, new_data)
 
   # define all posssible pairwise comaparisons of treatment var
-  pairwise_comb <- t(utils::combn(unique(as.character(data_before[["treat"]])),
-                                  2))
+  pairwise_comb <- t(utils::combn(
+    unique(as.character(data_before[["treat"]])),
+    2
+  ))
   pairwise_comb <- data.frame(pairwise_comb)
   pairwise_comb <- pairwise_comb[stats::complete.cases(pairwise_comb), ]
   colnames(pairwise_comb) <- c("group1", "group2")
@@ -195,8 +199,9 @@ balqual <- function(matched_data = NULL,
 
   # Create a data.frame with same number of rows as pairwise_comb
   na_columns <- data.frame(matrix(NA,
-                                  nrow = nrow(pairwise_comb),
-                                  ncol = length(new_colnames)))
+    nrow = nrow(pairwise_comb),
+    ncol = length(new_colnames)
+  ))
   colnames(na_columns) <- new_colnames
 
   # Combine column-wise
@@ -398,7 +403,10 @@ balqual <- function(matched_data = NULL,
     )
   )
 
-  count_table <- with(count_data, table(Treatment, Matching))
+  count_table <- table(
+    count_data$Treatment,
+    count_data$Matching
+  )
 
   count_table <- cbind(Treatment = rownames(count_table), count_table)
   count_table <- count_table[, c("Treatment", "Before", "After")]
@@ -422,7 +430,7 @@ balqual <- function(matched_data = NULL,
   )
 
   ## print custom output
-  if(print_out) show_quality(quality_list_print)
+  if (print_out) show_quality(quality_list_print)
 
   ## add attribute
   attr(quality_list_print, "smd_df_combo") <- smd_df

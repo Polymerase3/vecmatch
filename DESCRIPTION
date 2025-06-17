@@ -20,6 +20,8 @@ Imports:
     brglm2,
     chk,
     cli,
+    doRNG,
+    foreach,
     ggplot2,
     ggpp,
     ggpubr,
@@ -38,9 +40,6 @@ Imports:
     withr
 Suggests: 
     doFuture,
-    doParallel,
-    doRNG,
-    foreach,
     future,
     knitr,
     parallel,

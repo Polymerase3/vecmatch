@@ -9,7 +9,7 @@ vignette: >
 
 ```{r, include = FALSE}
 library(vecmatch)
-data(cancer)          # or data("cancer", package = "vecmatch")
+data(cancer) # or data("cancer", package = "vecmatch")
 formula_cancer <- formula(status ~ age * sex)
 
 knitr::opts_chunk$set(
@@ -18,10 +18,10 @@ knitr::opts_chunk$set(
   fig.width = 7,
   fig.asp = 0.8,
   echo = TRUE,
-  echo   = TRUE,
-  warning= FALSE,
-  message= FALSE,
-  cache  = TRUE      # so that estimate_gps doesn’t re-run on every knit
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = TRUE # so that estimate_gps doesn’t re-run on every knit
 )
 ```
 
@@ -130,10 +130,10 @@ We can achieve this by specifying arguments in `select_opt()`:
 
 ```{r}
 select_results <- select_opt(opt_results,
-                             perc_matched = c("adenoma", "crc_malignant"),
-                             smd_variables = "age",
-                             smd_type = "max")
-
+  perc_matched = c("adenoma", "crc_malignant"),
+  smd_variables = "age",
+  smd_type = "max"
+)
 ```
 The output shows the SMD bins and highlights the combination within each bin
 that best meets our criteria. Suppose the configuration in the `0.10–0.15` SMD
@@ -157,10 +157,11 @@ subset(param_df, smd_group == "0.10-0.15")
 ```{r estimate_gps}
 # estimating gps
 gps_mat <- estimate_gps(formula_cancer,
-                        cancer,
-                        method = "multinom",
-                        link = "generalized_logit",
-                        reference = "adenoma")
+  cancer,
+  method = "multinom",
+  link = "generalized_logit",
+  reference = "adenoma"
+)
 ```
 
 ```{r}
@@ -169,24 +170,26 @@ csr_mat <- csregion(gps_mat)
 
 # matching
 matched_df <- match_gps(csr_mat,
-                        method = "nnm",
-                        caliper = 4.29,
-                        reference = "adenoma",
-                        ratio = 2,
-                        order = "asc",
-                        replace = TRUE,
-                        ties = TRUE,
-                        kmeans_cluster = 1)
+  method = "nnm",
+  caliper = 4.29,
+  reference = "adenoma",
+  ratio = 2,
+  order = "asc",
+  replace = TRUE,
+  ties = TRUE,
+  kmeans_cluster = 1
+)
 ```
 
 3. Evaluate balance and verify reproducibility:
 ```{r}
 balqual(matched_df,
-        formula = formula_cancer,
-        type = "smd",
-        statistic = "max", 
-        round = 3,
-        cutoffs = 0.2)
+  formula = formula_cancer,
+  type = "smd",
+  statistic = "max",
+  round = 3,
+  cutoffs = 0.2
+)
 
 all.equal(seed_before, .Random.seed)
 ```

@@ -128,7 +128,8 @@
 #' # Run optimization with 2000 random parameter sets and a fixed seed
 #' \dontrun{
 #' withr::with_seed(
-#'   8252, {
+#'   8252,
+#'   {
 #'     optimize_gps(
 #'       data = cancer,
 #'       formula = formula_cancer,
@@ -137,7 +138,7 @@
 #'     )
 #'   }
 #' )
-#'}
+#' }
 #' @export
 
 optimize_gps <- function(data = NULL,
@@ -274,8 +275,9 @@ optimize_gps <- function(data = NULL,
 
   # Cartesian product of methods x reference levels
   estimate_space <- merge(estimate_methods,
-                          available_refs,
-                          by = NULL)
+    available_refs,
+    by = NULL
+  )
 
   # Adding unique names to each column
   estimate_space$row_name <- paste(rep("estimate", nrow(estimate_space)),
@@ -300,20 +302,25 @@ optimize_gps <- function(data = NULL,
   withr::with_preserve_seed({
     search_matching <- data.frame(
       gps_model = sample(unique(estimate_space$row_name),
-                         n_iter,
-                         replace = TRUE),
+        n_iter,
+        replace = TRUE
+      ),
       method = sample(opt_args[["matching_method"]],
-                      n_iter,
-                      replace = TRUE),
+        n_iter,
+        replace = TRUE
+      ),
       caliper = sample(opt_args[["caliper"]],
-                       n_iter,
-                       replace = TRUE),
+        n_iter,
+        replace = TRUE
+      ),
       order = sample(opt_args[["order"]],
-                     n_iter,
-                     replace = TRUE),
+        n_iter,
+        replace = TRUE
+      ),
       kmeans_cluster = sample(opt_args[["cluster"]],
-                              n_iter,
-                              replace = TRUE)
+        n_iter,
+        replace = TRUE
+      )
     )
   })
 
@@ -439,10 +446,8 @@ optimize_gps <- function(data = NULL,
 
   # to avoid seed leaks
   withr::with_preserve_seed({
-
     # printing out the progress bar
     progressr::with_progress({
-
       ## defining the loop length
       loop_seq <- seq_len(nrow(estimate_space))
       p <- progressr::progressor(along = loop_seq)
@@ -565,7 +570,6 @@ optimize_gps <- function(data = NULL,
   withr::with_preserve_seed({
     suppressMessages({
       progressr::with_progress({
-
         ## loop length and progress bar
         loop_seq <- seq_len(n_iter_final)
         throttle <- 100
@@ -602,7 +606,6 @@ optimize_gps <- function(data = NULL,
           ),
           .errorhandling = "pass"
         ) %doparallel% {
-
           run_iteration <- function(i) {
             ## define iter ID
             iter_ID <- paste0("ID", i)
@@ -649,8 +652,10 @@ optimize_gps <- function(data = NULL,
                 ptab$p <- (ptab$After / ptab$Before) * 100
 
                 # Fill into correct named columns
-                computed <- stats::setNames(as.list(ptab$p), paste0("p_",
-                                                             ptab$Treatment))
+                computed <- stats::setNames(as.list(ptab$p), paste0(
+                  "p_",
+                  ptab$Treatment
+                ))
                 for (col in names(computed)) {
                   if (col %in% treatment_cols) {
                     perc[[col]] <- computed[[col]]
@@ -679,9 +684,13 @@ optimize_gps <- function(data = NULL,
             )
 
             # Update progress
-            if (i %% throttle == 0) p(sprintf("Running %d/%d",
-                                              i,
-                                              max(loop_seq)))
+            if (i %% throttle == 0) {
+              p(sprintf(
+                "Running %d/%d",
+                i,
+                max(loop_seq)
+              ))
+            }
 
             # setting up the resultin data frame
             result_row <- cbind(
@@ -967,7 +976,7 @@ print.best_opt_result <- function(x, digits = 3, ...) {
 #' # Define formula and set up optimization
 #' formula_cancer <- formula(status ~ age * sex)
 #' opt_args <- make_opt_args(cancer, formula_cancer, gps_method = "m1")
-#'\dontrun{
+#' \dontrun{
 #' withr::with_seed(8252, {
 #'   opt_results <- optimize_gps(
 #'     data = cancer,
@@ -976,7 +985,7 @@ print.best_opt_result <- function(x, digits = 3, ...) {
 #'     n_iter = 2000
 #'   )
 #' })
-#'}
+#' }
 #' # Select optimal combinations prioritizing SMD balance and matching in key
 #' # groups
 #' \dontrun{
@@ -999,7 +1008,6 @@ select_opt <- function(x,
                        smd_variables = NULL,
                        smd_type = c("mean", "max"),
                        perc_matched = NULL) {
-
   # get valid treatments and their length
   treat_names <- attr(x, "treat_names")
   treat_length <- length(treat_names)
@@ -1018,9 +1026,11 @@ select_opt <- function(x,
   if (!is.null(smd_groups)) {
     # ensure smd_groups is a list
     .chk_cond(
-      !is.list(smd_groups) || !all(vapply(smd_groups,
-                                          is.character,
-                                          logical(1))),
+      !is.list(smd_groups) || !all(vapply(
+        smd_groups,
+        is.character,
+        logical(1)
+      )),
       "`smd_groups` must be a list of character vectors."
     )
 
@@ -1058,7 +1068,6 @@ select_opt <- function(x,
     # Normalize the smd_groups list --> sorting alphabetically
     smd_key <- lapply(smd_groups, function(g) sort(g))
     smd_key <- do.call(rbind, smd_key)
-
   } else {
     # smd_groups is NULL: create all unique pairwise combinations of treat_names
     combs <- t(utils::combn(unique(as.character(treat_names)), 2))
@@ -1080,7 +1089,6 @@ select_opt <- function(x,
                            available_values,
                            desired_length,
                            include_border = FALSE) {
-
     # Ensure it's a character vector (single or multiple)
     .chk_cond(
       !.check_vecl(x, NULL, FALSE),
@@ -1345,8 +1353,8 @@ print.select_result <- function(x, digits = 3, ...) {
 
   # Remove rows with NA in key columns
   x <- x[!is.na(x$smd_group) &
-           !is.na(x$overall_stat) &
-           !is.na(x$perc_matched), ]
+    !is.na(x$overall_stat) &
+    !is.na(x$perc_matched), ]
 
   # Split by group
   groups <- split(x, x$smd_group)
@@ -1533,7 +1541,6 @@ make_opt_args <- function(
     ratio = 1,
     min_controls = 1,
     max_controls = 1) {
-
   ############## PARAMETER CHECK ###############################################
   ## gps_method
   ### define allowed methods

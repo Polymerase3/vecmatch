@@ -145,7 +145,8 @@ opt_args <- make_opt_args(cancer, formula_cancer, gps_method = "m1")
 # Run optimization with 2000 random parameter sets and a fixed seed
 \dontrun{
 withr::with_seed(
-  8252, {
+  8252,
+  {
     optimize_gps(
       data = cancer,
       formula = formula_cancer,

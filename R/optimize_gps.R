@@ -630,13 +630,18 @@ optimize_gps <- function(data = NULL,
                 loop_estimate <- do.call(match_gps, args_loop)
 
                 # max SMD and %matched statistics
-                qual_out <- balqual(loop_estimate,
-                  formula,
-                  type = "smd",
-                  statistic = "max",
-                  round = 8,
-                  print_out = FALSE
+                utils::capture.output(
+                  {
+                    qual_out <- balqual(loop_estimate,
+                                        formula,
+                                        type = "smd",
+                                        statistic = "max",
+                                        round = 8,
+                                        print_out = FALSE
+                    )
+                  }
                 )
+
 
                 # Take the smd_df from balqual
                 smd_extracted <- attr(qual_out, "smd_df_combo")

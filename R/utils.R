@@ -772,3 +772,9 @@ create_balqual_output <- function(coeflist,
     withr::with_preserve_seed(sample(gps_vec))
   }
 }
+
+# declare global variables to hanlde data-mask notes
+.onLoad <- function(libname, pkgname) {
+  # suppress spurious no-visible-binding notes for data-mask vars
+  utils::globalVariables(c("gps_method", "min_controls", "max_controls", "i"))
+}

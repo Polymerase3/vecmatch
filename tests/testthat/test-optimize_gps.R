@@ -182,7 +182,7 @@ test_that("Testing make_opt_args S3 class", {
   expect_equal(as.numeric(attr(fullopt, "total_combinations")), expected_comb)
 })
 
-test_that("xxx", {
+test_that("Optimize GPS check", {
   ## optimization code takes long to run so skip on CRAN servers
   skip_on_cran()
 
@@ -198,25 +198,29 @@ test_that("xxx", {
 
   ## clean run
   suppressMessages(
-  suppressWarnings(
-  withr::with_seed(8252,
-                   expect_no_error(optimize_gps(data,
-                                                formula,
-                                                opt_args = opt_args,
-                                                n_iter = 500))
-                   )
-  )
+    suppressWarnings(
+      withr::with_seed(
+        8252,
+        expect_no_error(optimize_gps(data,
+          formula,
+          opt_args = opt_args,
+          n_iter = 500
+        ))
+      )
+    )
   )
 
   ## clean multicore
   suppressMessages(
     suppressWarnings(
-      withr::with_seed(8252,
-                       expect_no_error(optimize_gps(data,
-                                                    formula,
-                                                    opt_args = opt_args,
-                                                    n_iter = 500,
-                                                    n_cores = 5))
+      withr::with_seed(
+        8252,
+        expect_no_error(optimize_gps(data,
+          formula,
+          opt_args = opt_args,
+          n_iter = 500,
+          n_cores = 5
+        ))
       )
     )
   )
@@ -224,10 +228,12 @@ test_that("xxx", {
   ## clean no opt_args
   suppressMessages(
     suppressWarnings(
-      withr::with_seed(8252,
-                       expect_no_error(optimize_gps(data,
-                                                    formula,
-                                                    n_iter = 500))
+      withr::with_seed(
+        8252,
+        expect_no_error(optimize_gps(data,
+          formula,
+          n_iter = 500
+        ))
       )
     )
   )

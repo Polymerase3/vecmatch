@@ -150,6 +150,16 @@ optimize_gps <- function(data = NULL,
   ####################### INPUT CHECKING #######################################
   ########################### AND ##############################################
   ####################### DATA PROCESSING ######################################
+  # defining a placeholder func for callr (function() inside callr::r throws
+  # an error)
+  placeholder_func <- function() {
+
+  }
+
+  # isolating the execution of the optimize_gps inside a separate R session -->
+  # after closing it, the memory is freed completely. Small RSS may remain but
+  # it frees after closing the parent process or restarting R
+  callr::r(placeholder_func, {
 
   # check that the n_iter is integer and greater than 1
   .check_integer(n_iter)
@@ -165,6 +175,7 @@ optimize_gps <- function(data = NULL,
     "You must assign at least one core to the process."
   )
 
+  # -------- parallel backend ---------------------------------------------
   ## process the number of cores (register backend)
   if (n_cores > 1) {
     # ensure required packages for parallel backend are installed
@@ -196,9 +207,8 @@ optimize_gps <- function(data = NULL,
     ## define startup and close function for the parallel backend
     startup_par <- function(n_cores) {
       # set up parallel backend using `doFuture`
-      future::plan(future::multisession,
-        workers = n_cores
-      ) # works for every platform
+      future::plan(future::multisession, workers = n_cores, gc = TRUE)
+      # works for every platform
 
       # register foreach to use `future`
       doFuture::registerDoFuture()
@@ -206,9 +216,17 @@ optimize_gps <- function(data = NULL,
 
     ## close function --> closes parallel backend and frees RAM
     shutdown_par <- function() {
+      ## has to free the RAM completely --> no remaining allocs after run
+      ## 1 – switch to sequential so new futures stay local
       future::plan(future::sequential)
 
-      invisible(gc())
+      ## 2 – collect zombie forks on Unix
+      if (.Platform$OS.type == "unix")
+        parallel::mccollect(wait = FALSE)
+
+      ## 3 – two explicit garbage collections:
+      invisible(gc(full = TRUE, reset = TRUE))
+      invisible(gc(full = TRUE))
     }
   } else {
     # only the foreach and progressr packages necessary
@@ -375,7 +393,7 @@ optimize_gps <- function(data = NULL,
     )
   })
 
-  # note: all sample() calls are wraped inside with_preserve_seed --> withouth
+  # note: all sample() calls are wraped inside with_preserve_seed --> without
   # it they somehow managed to change the global user seed
 
   # add reference from estimate_space
@@ -434,7 +452,7 @@ optimize_gps <- function(data = NULL,
     rlang::inform("Registering parallel backend...\n")
     startup_par(n_cores)
   } else if (n_cores > 5) {
-    # adding moe than 5 cores would become inefficient, especially with larger
+    # adding more than 5 cores would become inefficient, especially with larger
     # datasets
     n_cores_aux <- 5
     rlang::inform("Registering parallel backend...\n")
@@ -525,6 +543,9 @@ optimize_gps <- function(data = NULL,
 
             # Update progress
             p(sprintf("Running %d/%d", i, max(loop_seq)))
+
+            # remove objects
+            rm(list = setdiff(ls(), "loop_estimate"))
 
             # defining the output
             loop_estimate <- list(loop_estimate)
@@ -714,11 +735,20 @@ optimize_gps <- function(data = NULL,
             # corresponding smd data.frame
             smd_df <- cbind(iter_ID = iter_ID, smd_df)
 
-            # returnig output from single iteration
-            return(list(
+            # returning output from single iteration
+            res <- list(
               results = as.data.frame(result_row, stringsAsFactors = FALSE),
               smd_dfs = as.data.frame(smd_df, stringsAsFactors = FALSE)
-            ))
+            )
+
+            ## --- tidy-up: remove *everything* except 'result' ----------------
+            rm(list = setdiff(ls(), "res"))
+
+            ## optional: a *light* sweep every 256th iteration
+            #if (i %% 1024 == 0L) gc(FALSE)
+
+            # returnig the results
+            return(res)
           }
 
           # running the function inside an isolated env
@@ -820,6 +850,8 @@ optimize_gps <- function(data = NULL,
 
   print(best_rows_final)
   return(invisible(best_rows_final))
+
+  }, spinner = TRUE)
 }
 
 #' @export

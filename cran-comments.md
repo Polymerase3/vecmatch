@@ -1,11 +1,14 @@
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+0 errors | 0 warnings | 1 note
+
 
 ## Minor release
 In this version, I have:
 
-* Added `borders` argument to `csregion()` to control the behavior of the function at the borders of the CSR.
-* Updated `match_gps()` to handle databases with only two unique treatments.
+* Added `optimize_gps()`, `make_opt_args()`, and `select_opt()` to support a new GPS-optimization workflow.
+* Modified `csregion()` to allow reestimating the GPS after excluding observations.
+* Fixed factor handling in `raincloud()` and `mosaic()`, now allowing custom facet ordering via releveling.
+* Added SMD and p-value labels to `raincloud()`.
+* Updated the `raincloud()` legend to explicitly include group names and the number of observations.
 * Added a vignette.
-* Added a `NEWS.md` file to track changes in the package.

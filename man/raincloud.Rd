@@ -14,6 +14,7 @@ raincloud(
   sig_label_size = 2L,
   sig_label_color = FALSE,
   smd_type = "mean",
+  density_scale = "area",
   limits = NULL,
   jitter = 0.1,
   alpha = 0.4,
@@ -73,6 +74,14 @@ calculate and display on the left side of the jittered point plots:
 \item \code{mean} - Cohen's d is calculated,
 \item \code{median} - the Wilcoxon effect size (r) is calculated based on the Z
 statistic extracted from the Wilcoxon test.
+}}
+
+\item{density_scale}{Character(1). Scaling method for the violin density.
+\itemize{
+\item \code{"area"}: all violins have the same total area (default).
+\item \code{"count"}: violin areas are proportional to the number of observations.
+\item \code{"width"}: all violins have the same maximum height (width when they are
+placed horizontally), regardless of sample size.
 }}
 
 \item{limits}{A numeric atomic vector of length two, specifying the \code{y} axis

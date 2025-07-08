@@ -464,10 +464,8 @@ optimize_gps <- function(data = NULL,
 
   # to avoid seed leaks
   withr::with_preserve_seed({
-
     # printing out the progress bar
     progressr::with_progress({
-
       ## defining the loop length
       loop_seq <- seq_len(nrow(estimate_space))
       p <- progressr::progressor(along = loop_seq)
@@ -490,7 +488,6 @@ optimize_gps <- function(data = NULL,
           ),
           .errorhandling = "pass"
         ) %doparallel% {
-
           # i know it may seems unnecessary to wrap it all inside a function and
           # call it at the end, but it has a purpose. During the debugging i
           # noticed that the workers somehow share a common environment and
@@ -502,7 +499,6 @@ optimize_gps <- function(data = NULL,
           # only within this environment, which is then deleted
 
           run_iteration <- function(i) {
-
             # no logging from the loop
             withr::local_options(list(foreach.quiet = TRUE))
 
@@ -655,17 +651,15 @@ optimize_gps <- function(data = NULL,
                 loop_estimate <- do.call(match_gps, args_loop)
 
                 # max SMD and %matched statistics
-                utils::capture.output(
-                  {
-                    qual_out <- balqual(loop_estimate,
-                                        formula,
-                                        type = "smd",
-                                        statistic = "max",
-                                        round = 8,
-                                        print_out = FALSE
-                    )
-                  }
-                )
+                utils::capture.output({
+                  qual_out <- balqual(loop_estimate,
+                    formula,
+                    type = "smd",
+                    statistic = "max",
+                    round = 8,
+                    print_out = FALSE
+                  )
+                })
 
 
                 # Take the smd_df from balqual
@@ -1276,7 +1270,6 @@ select_opt <- function(x,
   # Cut into SMD categories
   breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, Inf)
   labels <- c(
-
     "0-0.05", "0.05-0.10", "0.10-0.15", "0.15-0.20",
     "0.20-0.25", "0.25-0.30", "0.30-0.35", "0.35-0.40",
     "0.40-0.45", "0.45-0.50", ">0.50"

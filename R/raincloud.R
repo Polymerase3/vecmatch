@@ -436,9 +436,10 @@ raincloud <- function(data = NULL,
       test_results <- do.call(rbind, test_results)
 
       ## change facet to factor with original levels
-      fac_levels <- levels(data[, symlist[['facet']]])
+      fac_levels <- levels(data[, symlist[["facet"]]])
       test_results[, "facet"] <- factor(test_results[, "facet"],
-                                        levels = fac_levels)
+        levels = fac_levels
+      )
     }
 
     # add color to the plot
@@ -511,15 +512,15 @@ raincloud <- function(data = NULL,
       )
 
       make_group_label <- function(freq_row,
-                                   var_col   = "Var2",
-                                   prefix    = "Freq\\.",
+                                   var_col = "Var2",
+                                   prefix = "Freq\\.",
                                    minlength = 4) {
         # 1) identify the count-columns
-        all_cols  <- base::names(freq_row)
+        all_cols <- base::names(freq_row)
         freq_cols <- base::grep(paste0("^", prefix), all_cols, value = TRUE)
 
         # 2) strip off the prefix to get category names, pull counts
-        cats   <- base::sub(prefix, "", freq_cols)
+        cats <- base::sub(prefix, "", freq_cols)
         counts <- base::as.integer(freq_row[1, freq_cols])
 
         # 3) abbreviate categories (e.g. “Female” → “Fem”)
@@ -527,7 +528,7 @@ raincloud <- function(data = NULL,
 
         # 4) build “Short: n=NN” entries and collapse
         entries <- base::paste0(shorts, ": n=", counts)
-        inside  <- base::paste(entries, collapse = ", ")
+        inside <- base::paste(entries, collapse = ", ")
 
         # 5) full label: “GroupName (inside)”
         grp <- as.character(freq_row[[var_col]])
@@ -538,11 +539,11 @@ raincloud <- function(data = NULL,
       }
 
       for (i in seq_len(nrow(freq_table))) {
-        row    <- freq_table[i, , drop = FALSE]
+        row <- freq_table[i, , drop = FALSE]
         message <- make_group_label(
           freq_row = row,
-          var_col   = "Var2",
-          prefix    = "Freq\\."
+          var_col = "Var2",
+          prefix = "Freq\\."
         )
 
         levels(data[, symlist[["group"]]])[
@@ -637,7 +638,6 @@ raincloud <- function(data = NULL,
 
       scale_color_vecmatch(n = pal_len, type = "discrete") +
       scale_fill_vecmatch(n = pal_len, type = "discrete")
-
   }
 
   #--defining the ggplot object-------------------------------------------------
@@ -745,12 +745,13 @@ raincloud <- function(data = NULL,
         size = sig_label_size,
         color = rep(test_results[, "color.pval"], each = 3)
       ) +
-      ggplot2::annotate('text',
-                        x = max(test_results$xmax_box) + 0.022,
-                        y = mean(test_results$y.position),
-                        label = "p-value",
-                        size = sig_label_size,
-                        fontface = "bold") +
+      ggplot2::annotate("text",
+        x = max(test_results$xmax_box) + 0.022,
+        y = mean(test_results$y.position),
+        label = "p-value",
+        size = sig_label_size,
+        fontface = "bold"
+      ) +
       ## adding smds
       ggpubr::stat_pvalue_manual(test_results,
         y.position = "y.position",
@@ -762,12 +763,13 @@ raincloud <- function(data = NULL,
         size = sig_label_size,
         color = rep(test_results[, "color.smd"], each = 3)
       ) +
-      ggplot2::annotate('text',
-                        x = max(test_results$xmax_jit) + 0.022,
-                        y = mean(test_results$y.position),
-                        label = "SMD",
-                        size = sig_label_size,
-                        fontface = "bold")
+      ggplot2::annotate("text",
+        x = max(test_results$xmax_jit) + 0.022,
+        y = mean(test_results$y.position),
+        label = "SMD",
+        size = sig_label_size,
+        fontface = "bold"
+      )
   }
 
   ## add theme

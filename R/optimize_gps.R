@@ -159,693 +159,695 @@ optimize_gps <- function(data = NULL,
   # isolating the execution of the optimize_gps inside a separate R session -->
   # after closing it, the memory is freed completely. Small RSS may remain but
   # it frees after closing the parent process or restarting R
-  callr::r(placeholder_func, {
-
-  # check that the n_iter is integer and greater than 1
-  .check_integer(n_iter)
-  .chk_cond(
-    n_iter < 1,
-    "The number of iterations (`n_iter`) has to be at least 1."
-  )
-
-  # check that n_cores is numeric and at least 1
-  .check_integer(n_cores)
-  .chk_cond(
-    n_cores < 1,
-    "You must assign at least one core to the process."
-  )
-
-  # -------- parallel backend ---------------------------------------------
-  ## process the number of cores (register backend)
-  if (n_cores > 1) {
-    # ensure required packages for parallel backend are installed
-    rlang::check_installed(
-      c(
-        "future", "foreach", "doFuture",
-        "parallel", "progressr", "doRNG"
-      ),
-      reason = "to register parallel backend"
-    )
-
-    # explicitly import dorng
-    #' @importFrom doRNG %dorng%
-
-    # detect the number of available CPU cores
-    all_cores <- parallel::detectCores()
-
-    # if requested cores exceed available cores, reduce n_cores
-    if (n_cores > all_cores) {
-      new_cores <- max(all_cores - 2, 1)
-      warning(sprintf(
-        "Requested number of cores (%d) exceeds available cores (%d).
-        Setting n_cores to %d.",
-        n_cores, all_cores, new_cores
-      ))
-      n_cores <- new_cores
-    }
-
-    ## define startup and close function for the parallel backend
-    startup_par <- function(n_cores) {
-      # set up parallel backend using `doFuture`
-      future::plan(future::multisession, workers = n_cores, gc = TRUE)
-      # works for every platform
-
-      # register foreach to use `future`
-      doFuture::registerDoFuture()
-    }
-
-    ## close function --> closes parallel backend and frees RAM
-    shutdown_par <- function() {
-      ## has to free the RAM completely --> no remaining allocs after run
-      ## 1 – switch to sequential so new futures stay local
-      future::plan(future::sequential)
-
-      ## 2 – collect zombie forks on Unix
-      if (.Platform$OS.type == "unix")
-        parallel::mccollect(wait = FALSE)
-
-      ## 3 – two explicit garbage collections:
-      invisible(gc(full = TRUE, reset = TRUE))
-      invisible(gc(full = TRUE))
-    }
-  } else {
-    # only the foreach and progressr packages necessary
-    rlang::check_installed(c("foreach", "progressr"),
-      reason = "to execute for loops"
-    )
-
-    #' @importFrom foreach %do%
-  }
-
-  # define the infix operator for the forloops
-  `%doparallel%` <- if (n_cores == 1) {
-    `%do%`
-  } else {
-    `%dorng%`
-  }
-
-  ## adding default optimization parameters if not specified
-  if (is.null(opt_args)) {
-    opt_args <- make_opt_args(
-      data = data,
-      formula = formula
-    )
-  }
-
-  # validate class of opt_args if provided
-  .chk_cond(
-    !inherits(opt_args, "opt_args"),
-    "`opt_args` must be of class 'opt_args'.
-            Use `make_opt_args()` to create it."
-  )
-
-  ###################### DEFINING SEARCH SPACE #################################
-  ###### ESTIMATE GPS
-  ## define the estimate_space for the function estimate_gps
-
-  # defining available gps methods from the .gps_methods object
-  available_methods <- names(.gps_methods)
-
-  # create method-link combinations using lapply + do.call
-  # (multiple links for one method available)
-  estimate_methods <- do.call(
-    rbind,
-    lapply(
-      available_methods,
-      function(method) {
-        links <- .gps_methods[[method]]$link_fun
-        data.frame(method = method, link = links)
-      }
-    )
-  )
-
-  # define the short name for the method
-  estimate_methods$gps_method <- paste0("m", 1:10)
-  ## --> see the documentation of make_opt_args()!
-
-  # subset for gps_method specified in the opt_args
-  estimate_methods <- estimate_methods[
-    estimate_methods$gps_method %in% opt_args[["gps_method"]],
-  ]
-
-  # Create reference levels from unique treatment values
-  available_refs <- data.frame(refs = opt_args[["reference"]])
-
-  # Cartesian product of methods x reference levels
-  estimate_space <- merge(estimate_methods,
-    available_refs,
-    by = NULL
-  )
-
-  # Adding unique names to each column
-  estimate_space$row_name <- paste(rep("estimate", nrow(estimate_space)),
-    seq_len(nrow(estimate_space)),
-    sep = "_"
-  )
-
-  # remove "polr" from the extimate space if ordinal treat is null
-  if (is.null(ordinal_treat)) {
-    estimate_space <- estimate_space[estimate_space$method != "polr", ]
-  }
-
-  ##############################################################################
-  ###### MATCH GPS
-
-  ## defining number of iterations and searches
-  n_iter_final <- n_iter # final number of iterations used for looping
-  n_iter <- n_iter * 10 # number of iterations using for grid search
-  # many are duplicates --> remove --> less samples
-
-  # generate base parameter grid using random sampling
-  withr::with_preserve_seed({
-    search_matching <- data.frame(
-      gps_model = sample(unique(estimate_space$row_name),
-        n_iter,
-        replace = TRUE
-      ),
-      method = sample(opt_args[["matching_method"]],
-        n_iter,
-        replace = TRUE
-      ),
-      caliper = sample(opt_args[["caliper"]],
-        n_iter,
-        replace = TRUE
-      ),
-      order = sample(opt_args[["order"]],
-        n_iter,
-        replace = TRUE
-      ),
-      kmeans_cluster = sample(opt_args[["cluster"]],
-        n_iter,
-        replace = TRUE
-      )
-    )
-  })
-
-
-  # Preallocate new columns to avoid growing the dataframe in a loop and
-  # dimension mismatch
-  cols_to_add <- c("replace", "ties", "ratio", "min_controls", "max_controls")
-  search_matching[cols_to_add] <- lapply(cols_to_add, function(x) NA)
-
-  # Logical index for method-specific assignments
-  is_nnm <- search_matching$method == "nnm"
-  is_fullopt <- search_matching$method == "fullopt"
-
-  # Assign values for "nnm" method
-  n_nnm <- sum(is_nnm)
-  withr::with_preserve_seed({
-    search_matching$replace[is_nnm] <- sample(opt_args[["replace"]],
-      n_nnm,
-      replace = TRUE
-    )
-  })
-
-  withr::with_preserve_seed({
-    search_matching$ties[is_nnm] <- sample(opt_args[["ties"]],
-      n_nnm,
-      replace = TRUE
-    )
-  })
-
-  withr::with_preserve_seed({
-    search_matching$ratio[is_nnm] <- sample(opt_args[["ratio"]],
-      n_nnm,
-      replace = TRUE
-    )
-  })
-
-  # Assign values for "fullopt"
-  n_fullopt <- sum(is_fullopt)
-  withr::with_preserve_seed({
-    search_matching$min_controls[is_fullopt] <- sample(
-      opt_args[["min_controls"]],
-      n_fullopt,
-      replace = TRUE
-    )
-  })
-
-  withr::with_preserve_seed({
-    search_matching$max_controls[is_fullopt] <- sample(
-      opt_args[["max_controls"]],
-      n_fullopt,
-      replace = TRUE
-    )
-  })
-
-  # note: all sample() calls are wraped inside with_preserve_seed --> without
-  # it they somehow managed to change the global user seed
-
-  # add reference from estimate_space
-  search_matching <- merge(
-    search_matching,
-    estimate_space[, c("refs", "row_name")],
-    by.x = "gps_model",
-    by.y = "row_name",
-    all.x = TRUE
-  )
-
-  # Changing refs to reference
-  names(search_matching)[which(names(search_matching) == "refs")] <- "reference"
-  search_matching$reference <- as.character(search_matching$reference)
-
-  # quality control
-  ## remove duplicates
-  search_matching <- search_matching[!duplicated(search_matching), ]
-
-  ## ensure that max_controls >= min_controls
-  if ("fullopt" %in% opt_args[["matching_method"]]) {
-    valid <- search_matching$min_controls <= search_matching$max_controls
-
-    valid[is.na(valid)] <- TRUE
-
-    search_matching <- search_matching[valid, ]
-  }
-
-  ## pick final number of samples
-  search_matching <- tryCatch(
+  callr::r(placeholder_func,
     {
-      withr::with_preserve_seed({
-        search_matching[sample(nrow(search_matching),
-          n_iter_final,
-          replace = FALSE
-        ), ]
-      })
-    },
-    error = function(e) {
-      warning("Sampling the final number of rows without replacement failed.
-      Consider expanding the parameter range.
-      Falling back to sampling with replacement.")
-      search_matching[sample(nrow(search_matching),
-        n_iter_final,
-        replace = TRUE
-      ), ]
-    }
-  )
+      # check that the n_iter is integer and greater than 1
+      .check_integer(n_iter)
+      .chk_cond(
+        n_iter < 1,
+        "The number of iterations (`n_iter`) has to be at least 1."
+      )
 
-  ###################### FITTING ESTIMATE GPS #################################
-  # logging
-  rlang::inform("Initiating estimation of the GPS...\n")
+      # check that n_cores is numeric and at least 1
+      .check_integer(n_cores)
+      .chk_cond(
+        n_cores < 1,
+        "You must assign at least one core to the process."
+      )
 
-  # starting parallel backend if n_cores > 1
-  if (n_cores > 1 && n_cores <= 5) {
-    rlang::inform("Registering parallel backend...\n")
-    startup_par(n_cores)
-  } else if (n_cores > 5) {
-    # adding more than 5 cores would become inefficient, especially with larger
-    # datasets
-    n_cores_aux <- 5
-    rlang::inform("Registering parallel backend...\n")
-    startup_par(n_cores_aux)
-  }
-
-  # Enable global handler for the progress (once is enough)
-  progressr::handlers("txtprogressbar")
-
-  # to avoid seed leaks
-  withr::with_preserve_seed({
-    # printing out the progress bar
-    progressr::with_progress({
-      ## defining the loop length
-      loop_seq <- seq_len(nrow(estimate_space))
-      p <- progressr::progressor(along = loop_seq)
-
-      ## looping through all estimate space combinations
-      suppressMessages({
-        estimate_results <- foreach::foreach(
-          i = loop_seq,
-          .packages = c("vecmatch", "withr"), # add any other needed packages
-          # i needed to export all used objects to the workers in the parallel
-          # setup
-          .export = c(
-            "data",
-            "formula",
-            "estimate_space",
-            "ordinal_treat",
-            "estimate_gps",
-            "csregion",
-            "p"
+      # -------- parallel backend ---------------------------------------------
+      ## process the number of cores (register backend)
+      if (n_cores > 1) {
+        # ensure required packages for parallel backend are installed
+        rlang::check_installed(
+          c(
+            "future", "foreach", "doFuture",
+            "parallel", "progressr", "doRNG"
           ),
-          .errorhandling = "pass"
-        ) %doparallel% {
-          # i know it may seems unnecessary to wrap it all inside a function and
-          # call it at the end, but it has a purpose. During the debugging i
-          # noticed that the workers somehow share a common environment and
-          # managed to change the values of some variables during the run. It
-          # was a total mess.
-          # so the solution was to wrap the whole loop inside a function and
-          # call it at the end. Firstly, it creates an isolated environment for
-          # each iteration (function env), and the whole iteration is executed
-          # only within this environment, which is then deleted
+          reason = "to register parallel backend"
+        )
 
-          run_iteration <- function(i) {
-            # no logging from the loop
-            withr::local_options(list(foreach.quiet = TRUE))
+        # explicitly import dorng
+        #' @importFrom doRNG %dorng%
 
-            # defining the current argument list
-            arglist_loop <- list(
-              data = data,
-              formula = formula,
-              method = estimate_space[i, "method"],
-              link = estimate_space[i, "link"],
-              reference = as.character(estimate_space[i, "refs"]),
-              ordinal_treat = ordinal_treat
-            )
+        # detect the number of available CPU cores
+        all_cores <- parallel::detectCores()
 
-            # estimating the gps
-            # double caution - better safe than sorry
-            withr::with_preserve_seed({
-              tryCatch(
-                {
-                  loop_estimate <- do.call(estimate_gps, arglist_loop)
-                },
-                error = function(e) {
-                  list(
-                    error = TRUE,
-                    message = sprintf(
-                      "Error with method `%s`: %s",
-                      arglist_loop$method,
-                      conditionMessage(e)
-                    )
-                  )
-                }
-              )
+        # if requested cores exceed available cores, reduce n_cores
+        if (n_cores > all_cores) {
+          new_cores <- max(all_cores - 2, 1)
+          warning(sprintf(
+            "Requested number of cores (%d) exceeds available cores (%d).
+        Setting n_cores to %d.",
+            n_cores, all_cores, new_cores
+          ))
+          n_cores <- new_cores
+        }
 
-              # calculating csregion borders
-              invisible(
-                utils::capture.output(loop_estimate <- csregion(loop_estimate))
-              )
-            })
+        ## define startup and close function for the parallel backend
+        startup_par <- function(n_cores) {
+          # set up parallel backend using `doFuture`
+          future::plan(future::multisession, workers = n_cores, gc = TRUE)
+          # works for every platform
 
-            # Update progress
-            p(sprintf("Running %d/%d", i, max(loop_seq)))
+          # register foreach to use `future`
+          doFuture::registerDoFuture()
+        }
 
-            # remove objects
-            rm(list = setdiff(ls(), "loop_estimate"))
+        ## close function --> closes parallel backend and frees RAM
+        shutdown_par <- function() {
+          ## has to free the RAM completely --> no remaining allocs after run
+          ## 1 – switch to sequential so new futures stay local
+          future::plan(future::sequential)
 
-            # defining the output
-            loop_estimate <- list(loop_estimate)
-            names(loop_estimate) <- estimate_space[i, "row_name"]
-            return(loop_estimate)
+          ## 2 – collect zombie forks on Unix
+          if (.Platform$OS.type == "unix") {
+            parallel::mccollect(wait = FALSE)
           }
 
-          # call the function within isolated env (function env)
-          run_iteration(i)
+          ## 3 – two explicit garbage collections:
+          invisible(gc(full = TRUE, reset = TRUE))
+          invisible(gc(full = TRUE))
         }
-      })
-    })
-  })
-
-  ## unnesting the estimate_results list
-  list_names <- vapply(estimate_results, function(x) names(x[1]), character(1))
-  estimate_results <- lapply(estimate_results, function(x) x[[1]])
-
-  # assigning unique row_names for the estimates
-  names(estimate_results) <- list_names
-
-  # shutting down parallel backend if n_cores > 1
-  if (n_cores > 1) {
-    rlang::inform("Freeing RAM...\n")
-    shutdown_par()
-  }
-
-  ###################### MATCHING OPTIMIZER ####################################
-  # The search grid is already genereated
-  # logging
-  rlang::inform("Initiating matching optimization...\n")
-
-  # starting parallel backend if n_cores > 1
-  if (n_cores > 1) {
-    rlang::inform("Registering parallel backend...\n")
-    startup_par(n_cores)
-  }
-
-  # logging
-  rlang::inform("Optimizing matching...\n")
-
-  ## starting time
-  time_start <- Sys.time()
-
-  ## preserving the seed (avoiding seed leaks)
-  withr::with_preserve_seed({
-    suppressMessages({
-      progressr::with_progress({
-        ## loop length and progress bar
-        loop_seq <- seq_len(n_iter_final)
-        throttle <- 100
-        p <- progressr::progressor(along = seq_len(n_iter_final / throttle))
-
-        # Precompute unique treatment names outside the foreach loop
-        all_treatments <- unique(estimate_results[[1]]$treatment)
-        treatment_cols <- paste0("p_", all_treatments)
-
-        # Get the structure of smd_df beforehand
-        smd_colnames <- c(c("group1", "group2"), attr(opt_args, "model_covs"))
-
-        # Predefine fallback
-        smd_template <- as.data.frame(
-          matrix(NA,
-            nrow = 1,
-            ncol = length(smd_colnames)
-          ),
-          stringsAsFactors = FALSE
+      } else {
+        # only the foreach and progressr packages necessary
+        rlang::check_installed(c("foreach", "progressr"),
+          reason = "to execute for loops"
         )
-        colnames(smd_template) <- smd_colnames
 
-        opt_results <- foreach::foreach(
-          i = loop_seq,
-          # i know it may seem weird but it actually works. It doesn't work with
-          # the quick load from devtools, the package must be installed!
-          # then all functions from the vecmatch are exported to the workers
-          .packages = "vecmatch",
+        #' @importFrom foreach %do%
+      }
 
-          # exporting all necessary objects
-          .export = c(
-            "search_matching", "estimate_results", "formula",
-            "treatment_cols", "smd_colnames", "smd_template",
-            "match_gps", "balqual"
+      # define the infix operator for the forloops
+      `%doparallel%` <- if (n_cores == 1) {
+        `%do%`
+      } else {
+        `%dorng%`
+      }
+
+      ## adding default optimization parameters if not specified
+      if (is.null(opt_args)) {
+        opt_args <- make_opt_args(
+          data = data,
+          formula = formula
+        )
+      }
+
+      # validate class of opt_args if provided
+      .chk_cond(
+        !inherits(opt_args, "opt_args"),
+        "`opt_args` must be of class 'opt_args'.
+            Use `make_opt_args()` to create it."
+      )
+
+      ###################### DEFINING SEARCH SPACE #################################
+      ###### ESTIMATE GPS
+      ## define the estimate_space for the function estimate_gps
+
+      # defining available gps methods from the .gps_methods object
+      available_methods <- names(.gps_methods)
+
+      # create method-link combinations using lapply + do.call
+      # (multiple links for one method available)
+      estimate_methods <- do.call(
+        rbind,
+        lapply(
+          available_methods,
+          function(method) {
+            links <- .gps_methods[[method]]$link_fun
+            data.frame(method = method, link = links)
+          }
+        )
+      )
+
+      # define the short name for the method
+      estimate_methods$gps_method <- paste0("m", 1:10)
+      ## --> see the documentation of make_opt_args()!
+
+      # subset for gps_method specified in the opt_args
+      estimate_methods <- estimate_methods[
+        estimate_methods$gps_method %in% opt_args[["gps_method"]],
+      ]
+
+      # Create reference levels from unique treatment values
+      available_refs <- data.frame(refs = opt_args[["reference"]])
+
+      # Cartesian product of methods x reference levels
+      estimate_space <- merge(estimate_methods,
+        available_refs,
+        by = NULL
+      )
+
+      # Adding unique names to each column
+      estimate_space$row_name <- paste(rep("estimate", nrow(estimate_space)),
+        seq_len(nrow(estimate_space)),
+        sep = "_"
+      )
+
+      # remove "polr" from the extimate space if ordinal treat is null
+      if (is.null(ordinal_treat)) {
+        estimate_space <- estimate_space[estimate_space$method != "polr", ]
+      }
+
+      ##############################################################################
+      ###### MATCH GPS
+
+      ## defining number of iterations and searches
+      n_iter_final <- n_iter # final number of iterations used for looping
+      n_iter <- n_iter * 10 # number of iterations using for grid search
+      # many are duplicates --> remove --> less samples
+
+      # generate base parameter grid using random sampling
+      withr::with_preserve_seed({
+        search_matching <- data.frame(
+          gps_model = sample(unique(estimate_space$row_name),
+            n_iter,
+            replace = TRUE
           ),
-          .errorhandling = "pass"
-        ) %doparallel% {
-          run_iteration <- function(i) {
-            ## define iter ID
-            iter_ID <- paste0("ID", i)
+          method = sample(opt_args[["matching_method"]],
+            n_iter,
+            replace = TRUE
+          ),
+          caliper = sample(opt_args[["caliper"]],
+            n_iter,
+            replace = TRUE
+          ),
+          order = sample(opt_args[["order"]],
+            n_iter,
+            replace = TRUE
+          ),
+          kmeans_cluster = sample(opt_args[["cluster"]],
+            n_iter,
+            replace = TRUE
+          )
+        )
+      })
 
-            ## processing the argument list
-            args_loop <- as.list(search_matching[i, , drop = FALSE])
-            args_loop <- args_loop[!is.na(args_loop)]
-            args_loop[["csmatrix"]] <- estimate_results[[args_loop$gps_model]]
-            args_loop <- args_loop[-1]
 
-            # Defaults in case of error
-            perc_matched <- NA_real_
-            smd <- NA_real_
-            perc <- as.data.frame(t(rep(NA_real_, length(treatment_cols))))
-            colnames(perc) <- treatment_cols
+      # Preallocate new columns to avoid growing the dataframe in a loop and
+      # dimension mismatch
+      cols_to_add <- c("replace", "ties", "ratio", "min_controls", "max_controls")
+      search_matching[cols_to_add] <- lapply(cols_to_add, function(x) NA)
 
-            smd_df <- smd_template # predefine smd_df with correct structure
+      # Logical index for method-specific assignments
+      is_nnm <- search_matching$method == "nnm"
+      is_fullopt <- search_matching$method == "fullopt"
 
-            try(
-              {
-                # matching
-                loop_estimate <- do.call(match_gps, args_loop)
+      # Assign values for "nnm" method
+      n_nnm <- sum(is_nnm)
+      withr::with_preserve_seed({
+        search_matching$replace[is_nnm] <- sample(opt_args[["replace"]],
+          n_nnm,
+          replace = TRUE
+        )
+      })
 
-                # max SMD and %matched statistics
-                utils::capture.output({
-                  qual_out <- balqual(loop_estimate,
-                    formula,
-                    type = "smd",
-                    statistic = "max",
-                    round = 8,
-                    print_out = FALSE
+      withr::with_preserve_seed({
+        search_matching$ties[is_nnm] <- sample(opt_args[["ties"]],
+          n_nnm,
+          replace = TRUE
+        )
+      })
+
+      withr::with_preserve_seed({
+        search_matching$ratio[is_nnm] <- sample(opt_args[["ratio"]],
+          n_nnm,
+          replace = TRUE
+        )
+      })
+
+      # Assign values for "fullopt"
+      n_fullopt <- sum(is_fullopt)
+      withr::with_preserve_seed({
+        search_matching$min_controls[is_fullopt] <- sample(
+          opt_args[["min_controls"]],
+          n_fullopt,
+          replace = TRUE
+        )
+      })
+
+      withr::with_preserve_seed({
+        search_matching$max_controls[is_fullopt] <- sample(
+          opt_args[["max_controls"]],
+          n_fullopt,
+          replace = TRUE
+        )
+      })
+
+      # note: all sample() calls are wraped inside with_preserve_seed --> without
+      # it they somehow managed to change the global user seed
+
+      # add reference from estimate_space
+      search_matching <- merge(
+        search_matching,
+        estimate_space[, c("refs", "row_name")],
+        by.x = "gps_model",
+        by.y = "row_name",
+        all.x = TRUE
+      )
+
+      # Changing refs to reference
+      names(search_matching)[which(names(search_matching) == "refs")] <- "reference"
+      search_matching$reference <- as.character(search_matching$reference)
+
+      # quality control
+      ## remove duplicates
+      search_matching <- search_matching[!duplicated(search_matching), ]
+
+      ## ensure that max_controls >= min_controls
+      if ("fullopt" %in% opt_args[["matching_method"]]) {
+        valid <- search_matching$min_controls <= search_matching$max_controls
+
+        valid[is.na(valid)] <- TRUE
+
+        search_matching <- search_matching[valid, ]
+      }
+
+      ## pick final number of samples
+      search_matching <- tryCatch(
+        {
+          withr::with_preserve_seed({
+            search_matching[sample(nrow(search_matching),
+              n_iter_final,
+              replace = FALSE
+            ), ]
+          })
+        },
+        error = function(e) {
+          warning("Sampling the final number of rows without replacement failed.
+      Consider expanding the parameter range.
+      Falling back to sampling with replacement.")
+          search_matching[sample(nrow(search_matching),
+            n_iter_final,
+            replace = TRUE
+          ), ]
+        }
+      )
+
+      ###################### FITTING ESTIMATE GPS #################################
+      # logging
+      rlang::inform("Initiating estimation of the GPS...\n")
+
+      # starting parallel backend if n_cores > 1
+      if (n_cores > 1 && n_cores <= 5) {
+        rlang::inform("Registering parallel backend...\n")
+        startup_par(n_cores)
+      } else if (n_cores > 5) {
+        # adding more than 5 cores would become inefficient, especially with larger
+        # datasets
+        n_cores_aux <- 5
+        rlang::inform("Registering parallel backend...\n")
+        startup_par(n_cores_aux)
+      }
+
+      # Enable global handler for the progress (once is enough)
+      progressr::handlers("txtprogressbar")
+
+      # to avoid seed leaks
+      withr::with_preserve_seed({
+        # printing out the progress bar
+        progressr::with_progress({
+          ## defining the loop length
+          loop_seq <- seq_len(nrow(estimate_space))
+          p <- progressr::progressor(along = loop_seq)
+
+          ## looping through all estimate space combinations
+          suppressMessages({
+            estimate_results <- foreach::foreach(
+              i = loop_seq,
+              .packages = c("vecmatch", "withr"), # add any other needed packages
+              # i needed to export all used objects to the workers in the parallel
+              # setup
+              .export = c(
+                "data",
+                "formula",
+                "estimate_space",
+                "ordinal_treat",
+                "estimate_gps",
+                "csregion",
+                "p"
+              ),
+              .errorhandling = "pass"
+            ) %doparallel% {
+              # i know it may seems unnecessary to wrap it all inside a function and
+              # call it at the end, but it has a purpose. During the debugging i
+              # noticed that the workers somehow share a common environment and
+              # managed to change the values of some variables during the run. It
+              # was a total mess.
+              # so the solution was to wrap the whole loop inside a function and
+              # call it at the end. Firstly, it creates an isolated environment for
+              # each iteration (function env), and the whole iteration is executed
+              # only within this environment, which is then deleted
+
+              run_iteration <- function(i) {
+                # no logging from the loop
+                withr::local_options(list(foreach.quiet = TRUE))
+
+                # defining the current argument list
+                arglist_loop <- list(
+                  data = data,
+                  formula = formula,
+                  method = estimate_space[i, "method"],
+                  link = estimate_space[i, "link"],
+                  reference = as.character(estimate_space[i, "refs"]),
+                  ordinal_treat = ordinal_treat
+                )
+
+                # estimating the gps
+                # double caution - better safe than sorry
+                withr::with_preserve_seed({
+                  tryCatch(
+                    {
+                      loop_estimate <- do.call(estimate_gps, arglist_loop)
+                    },
+                    error = function(e) {
+                      list(
+                        error = TRUE,
+                        message = sprintf(
+                          "Error with method `%s`: %s",
+                          arglist_loop$method,
+                          conditionMessage(e)
+                        )
+                      )
+                    }
+                  )
+
+                  # calculating csregion borders
+                  invisible(
+                    utils::capture.output(loop_estimate <- csregion(loop_estimate))
                   )
                 })
 
+                # Update progress
+                p(sprintf("Running %d/%d", i, max(loop_seq)))
 
-                # Take the smd_df from balqual
-                smd_extracted <- attr(qual_out, "smd_df_combo")
+                # remove objects
+                rm(list = setdiff(ls(), "loop_estimate"))
 
-                ## baseline stats
-                perc_matched <- qual_out$perc_matched
-                smd <- qual_out$summary_head
+                # defining the output
+                loop_estimate <- list(loop_estimate)
+                names(loop_estimate) <- estimate_space[i, "row_name"]
+                return(loop_estimate)
+              }
 
-                # Calculate percentages
-                ptab <- as.data.frame(qual_out$count_table)
-                ptab$Before <- as.numeric(ptab$Before)
-                ptab$After <- as.numeric(ptab$After)
-                ptab$p <- (ptab$After / ptab$Before) * 100
+              # call the function within isolated env (function env)
+              run_iteration(i)
+            }
+          })
+        })
+      })
 
-                # Fill into correct named columns
-                computed <- stats::setNames(as.list(ptab$p), paste0(
-                  "p_",
-                  ptab$Treatment
-                ))
+      ## unnesting the estimate_results list
+      list_names <- vapply(estimate_results, function(x) names(x[1]), character(1))
+      estimate_results <- lapply(estimate_results, function(x) x[[1]])
 
-                for (col in names(computed)) {
-                  if (col %in% treatment_cols) {
-                    perc[[col]] <- computed[[col]]
-                  }
-                }
+      # assigning unique row_names for the estimates
+      names(estimate_results) <- list_names
 
-                # update template with correct number of rows
-                smd_df <- as.data.frame(
-                  matrix(NA,
-                    nrow = nrow(smd_extracted),
-                    ncol = length(smd_colnames)
-                  ),
-                  stringsAsFactors = FALSE
+      # shutting down parallel backend if n_cores > 1
+      if (n_cores > 1) {
+        rlang::inform("Freeing RAM...\n")
+        shutdown_par()
+      }
+
+      ###################### MATCHING OPTIMIZER ####################################
+      # The search grid is already genereated
+      # logging
+      rlang::inform("Initiating matching optimization...\n")
+
+      # starting parallel backend if n_cores > 1
+      if (n_cores > 1) {
+        rlang::inform("Registering parallel backend...\n")
+        startup_par(n_cores)
+      }
+
+      # logging
+      rlang::inform("Optimizing matching...\n")
+
+      ## starting time
+      time_start <- Sys.time()
+
+      ## preserving the seed (avoiding seed leaks)
+      withr::with_preserve_seed({
+        suppressMessages({
+          progressr::with_progress({
+            ## loop length and progress bar
+            loop_seq <- seq_len(n_iter_final)
+            throttle <- 100
+            p <- progressr::progressor(along = seq_len(n_iter_final / throttle))
+
+            # Precompute unique treatment names outside the foreach loop
+            all_treatments <- unique(estimate_results[[1]]$treatment)
+            treatment_cols <- paste0("p_", all_treatments)
+
+            # Get the structure of smd_df beforehand
+            smd_colnames <- c(c("group1", "group2"), attr(opt_args, "model_covs"))
+
+            # Predefine fallback
+            smd_template <- as.data.frame(
+              matrix(NA,
+                nrow = 1,
+                ncol = length(smd_colnames)
+              ),
+              stringsAsFactors = FALSE
+            )
+            colnames(smd_template) <- smd_colnames
+
+            opt_results <- foreach::foreach(
+              i = loop_seq,
+              # i know it may seem weird but it actually works. It doesn't work with
+              # the quick load from devtools, the package must be installed!
+              # then all functions from the vecmatch are exported to the workers
+              .packages = "vecmatch",
+
+              # exporting all necessary objects
+              .export = c(
+                "search_matching", "estimate_results", "formula",
+                "treatment_cols", "smd_colnames", "smd_template",
+                "match_gps", "balqual"
+              ),
+              .errorhandling = "pass"
+            ) %doparallel% {
+              run_iteration <- function(i) {
+                ## define iter ID
+                iter_ID <- paste0("ID", i)
+
+                ## processing the argument list
+                args_loop <- as.list(search_matching[i, , drop = FALSE])
+                args_loop <- args_loop[!is.na(args_loop)]
+                args_loop[["csmatrix"]] <- estimate_results[[args_loop$gps_model]]
+                args_loop <- args_loop[-1]
+
+                # Defaults in case of error
+                perc_matched <- NA_real_
+                smd <- NA_real_
+                perc <- as.data.frame(t(rep(NA_real_, length(treatment_cols))))
+                colnames(perc) <- treatment_cols
+
+                smd_df <- smd_template # predefine smd_df with correct structure
+
+                try(
+                  {
+                    # matching
+                    loop_estimate <- do.call(match_gps, args_loop)
+
+                    # max SMD and %matched statistics
+                    utils::capture.output({
+                      qual_out <- balqual(loop_estimate,
+                        formula,
+                        type = "smd",
+                        statistic = "max",
+                        round = 8,
+                        print_out = FALSE
+                      )
+                    })
+
+
+                    # Take the smd_df from balqual
+                    smd_extracted <- attr(qual_out, "smd_df_combo")
+
+                    ## baseline stats
+                    perc_matched <- qual_out$perc_matched
+                    smd <- qual_out$summary_head
+
+                    # Calculate percentages
+                    ptab <- as.data.frame(qual_out$count_table)
+                    ptab$Before <- as.numeric(ptab$Before)
+                    ptab$After <- as.numeric(ptab$After)
+                    ptab$p <- (ptab$After / ptab$Before) * 100
+
+                    # Fill into correct named columns
+                    computed <- stats::setNames(as.list(ptab$p), paste0(
+                      "p_",
+                      ptab$Treatment
+                    ))
+
+                    for (col in names(computed)) {
+                      if (col %in% treatment_cols) {
+                        perc[[col]] <- computed[[col]]
+                      }
+                    }
+
+                    # update template with correct number of rows
+                    smd_df <- as.data.frame(
+                      matrix(NA,
+                        nrow = nrow(smd_extracted),
+                        ncol = length(smd_colnames)
+                      ),
+                      stringsAsFactors = FALSE
+                    )
+
+                    colnames(smd_df) <- smd_colnames
+
+                    # fill only matching columns
+                    for (col in colnames(smd_extracted)) {
+                      if (col %in% smd_colnames) {
+                        smd_df[[col]] <- smd_extracted[[col]]
+                      }
+                    }
+                  },
+                  silent = TRUE
                 )
 
-                colnames(smd_df) <- smd_colnames
-
-                # fill only matching columns
-                for (col in colnames(smd_extracted)) {
-                  if (col %in% smd_colnames) {
-                    smd_df[[col]] <- smd_extracted[[col]]
-                  }
+                # Update progress
+                if (i %% throttle == 0) {
+                  p(sprintf(
+                    "Running %d/%d",
+                    i,
+                    max(loop_seq)
+                  ))
                 }
-              },
-              silent = TRUE
-            )
 
-            # Update progress
-            if (i %% throttle == 0) {
-              p(sprintf(
-                "Running %d/%d",
-                i,
-                max(loop_seq)
-              ))
+                # setting up the resultin data frame
+                result_row <- cbind(
+                  iter_ID = iter_ID,
+                  search_matching[i, ],
+                  perc_matched = perc_matched,
+                  smd = smd,
+                  perc
+                )
+
+                # corresponding smd data.frame
+                smd_df <- cbind(iter_ID = iter_ID, smd_df)
+
+                # returning output from single iteration
+                res <- list(
+                  results = as.data.frame(result_row, stringsAsFactors = FALSE),
+                  smd_dfs = as.data.frame(smd_df, stringsAsFactors = FALSE)
+                )
+
+                ## --- tidy-up: remove *everything* except 'result' ----------------
+                rm(list = setdiff(ls(), "res"))
+
+                ## optional: a *light* sweep every 256th iteration
+                # if (i %% 1024 == 0L) gc(FALSE)
+
+                # returnig the results
+                return(res)
+              }
+
+              # running the function inside an isolated env
+              run_iteration(i)
             }
-
-            # setting up the resultin data frame
-            result_row <- cbind(
-              iter_ID = iter_ID,
-              search_matching[i, ],
-              perc_matched = perc_matched,
-              smd = smd,
-              perc
-            )
-
-            # corresponding smd data.frame
-            smd_df <- cbind(iter_ID = iter_ID, smd_df)
-
-            # returning output from single iteration
-            res <- list(
-              results = as.data.frame(result_row, stringsAsFactors = FALSE),
-              smd_dfs = as.data.frame(smd_df, stringsAsFactors = FALSE)
-            )
-
-            ## --- tidy-up: remove *everything* except 'result' ----------------
-            rm(list = setdiff(ls(), "res"))
-
-            ## optional: a *light* sweep every 256th iteration
-            #if (i %% 1024 == 0L) gc(FALSE)
-
-            # returnig the results
-            return(res)
-          }
-
-          # running the function inside an isolated env
-          run_iteration(i)
-        }
+          })
+        })
       })
-    })
-  })
 
-  # defining the stop time and running time
-  time_stop <- Sys.time()
-  time_diff <- round(as.numeric(time_stop - time_start, units = "secs"), 2)
+      # defining the stop time and running time
+      time_stop <- Sys.time()
+      time_diff <- round(as.numeric(time_stop - time_start, units = "secs"), 2)
 
-  # shutting down parallel backend if n_cores > 1
-  if (n_cores > 1) {
-    rlang::inform("Freeing RAM...\n")
-    shutdown_par()
-  }
+      # shutting down parallel backend if n_cores > 1
+      if (n_cores > 1) {
+        rlang::inform("Freeing RAM...\n")
+        shutdown_par()
+      }
 
-  ## extract looping results
-  opt_results_df <- do.call(rbind, lapply(opt_results, `[[`, "results"))
-  smd_df_all <- do.call(rbind, lapply(opt_results, `[[`, "smd_dfs"))
+      ## extract looping results
+      opt_results_df <- do.call(rbind, lapply(opt_results, `[[`, "results"))
+      smd_df_all <- do.call(rbind, lapply(opt_results, `[[`, "smd_dfs"))
 
-  # processing the results
-  ## merge the gps_model
-  opt_results_df <- merge(opt_results_df,
-    estimate_space[, c("method", "link", "row_name")],
-    by.x = "gps_model",
-    by.y = "row_name"
+      # processing the results
+      ## merge the gps_model
+      opt_results_df <- merge(opt_results_df,
+        estimate_space[, c("method", "link", "row_name")],
+        by.x = "gps_model",
+        by.y = "row_name"
+      )
+
+      ## rename method.y anx x
+      names(opt_results_df)[
+        which(names(opt_results_df) == "method.y")
+      ] <- "method_gps"
+      names(opt_results_df)[
+        which(names(opt_results_df) == "method.x")
+      ] <- "method_match"
+
+      # Define SMD intervals
+      breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, Inf)
+      labels <- c(
+        "0-0.05", "0.05-0.10", "0.10-0.15", "0.15-0.20",
+        "0.20-0.25", "0.25-0.30", ">0.30"
+      )
+
+      # Cut SMD into intervals
+      opt_results_df$smd_group <- cut(opt_results_df$smd,
+        breaks = breaks,
+        labels = labels,
+        right = FALSE
+      )
+
+      ### BEST RESULTS OUTPUT FILTERING SECTION ####################################
+
+      # Remove rows with missing perc_matched or smd_group
+      filtered <- opt_results_df[
+        !is.na(opt_results_df$perc_matched) & !is.na(opt_results_df$smd_group),
+      ]
+
+      # Get unique SMD groups
+      groups <- unique(filtered$smd_group)
+
+      # Initialize empty list to collect best rows
+      best_rows_list <- list()
+
+      # Loop through each group and extract rows with max perc_matched
+      for (g in groups) {
+        group_rows <- filtered[filtered$smd_group == g, ]
+        max_value <- max(group_rows$perc_matched, na.rm = TRUE)
+        best_rows <- group_rows[group_rows$perc_matched == max_value, ]
+        best_rows_list[[as.character(g)]] <- best_rows
+      }
+
+      # Combine all best rows into one data.frame
+      best_rows_final <- do.call(rbind, best_rows_list)
+
+      ## reset row_names and remove gps_model + ID
+      rownames(best_rows_final) <- NULL
+      best_rows_final <- best_rows_final[, -1]
+
+      # define custom s3 class
+      class(best_rows_final) <- c("best_opt_result", class(best_rows_final))
+
+      # add time_elapsed and total number of combinations tested
+      attr(best_rows_final, "optimization_time") <- time_diff
+      attr(best_rows_final, "combinations_tested") <- format(n_iter_final,
+        scientific = FALSE
+      )
+      attr(best_rows_final, "opt_results") <- opt_results_df
+      attr(best_rows_final, "smd_results") <- smd_df_all
+      attr(best_rows_final, "treat_names") <- unique(
+        estimate_results[[1]]$treatment
+      )
+      attr(best_rows_final, "model_covs") <- attr(opt_args, "model_covs")
+
+      # printing out to the console
+      rlang::inform("=========================================================\n\n")
+
+      print(best_rows_final)
+      return(invisible(best_rows_final))
+    },
+    spinner = TRUE
   )
-
-  ## rename method.y anx x
-  names(opt_results_df)[
-    which(names(opt_results_df) == "method.y")
-  ] <- "method_gps"
-  names(opt_results_df)[
-    which(names(opt_results_df) == "method.x")
-  ] <- "method_match"
-
-  # Define SMD intervals
-  breaks <- c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, Inf)
-  labels <- c(
-    "0-0.05", "0.05-0.10", "0.10-0.15", "0.15-0.20",
-    "0.20-0.25", "0.25-0.30", ">0.30"
-  )
-
-  # Cut SMD into intervals
-  opt_results_df$smd_group <- cut(opt_results_df$smd,
-    breaks = breaks,
-    labels = labels,
-    right = FALSE
-  )
-
-  ### BEST RESULTS OUTPUT FILTERING SECTION ####################################
-
-  # Remove rows with missing perc_matched or smd_group
-  filtered <- opt_results_df[
-    !is.na(opt_results_df$perc_matched) & !is.na(opt_results_df$smd_group),
-  ]
-
-  # Get unique SMD groups
-  groups <- unique(filtered$smd_group)
-
-  # Initialize empty list to collect best rows
-  best_rows_list <- list()
-
-  # Loop through each group and extract rows with max perc_matched
-  for (g in groups) {
-    group_rows <- filtered[filtered$smd_group == g, ]
-    max_value <- max(group_rows$perc_matched, na.rm = TRUE)
-    best_rows <- group_rows[group_rows$perc_matched == max_value, ]
-    best_rows_list[[as.character(g)]] <- best_rows
-  }
-
-  # Combine all best rows into one data.frame
-  best_rows_final <- do.call(rbind, best_rows_list)
-
-  ## reset row_names and remove gps_model + ID
-  rownames(best_rows_final) <- NULL
-  best_rows_final <- best_rows_final[, -1]
-
-  # define custom s3 class
-  class(best_rows_final) <- c("best_opt_result", class(best_rows_final))
-
-  # add time_elapsed and total number of combinations tested
-  attr(best_rows_final, "optimization_time") <- time_diff
-  attr(best_rows_final, "combinations_tested") <- format(n_iter_final,
-    scientific = FALSE
-  )
-  attr(best_rows_final, "opt_results") <- opt_results_df
-  attr(best_rows_final, "smd_results") <- smd_df_all
-  attr(best_rows_final, "treat_names") <- unique(
-    estimate_results[[1]]$treatment
-  )
-  attr(best_rows_final, "model_covs") <- attr(opt_args, "model_covs")
-
-  # printing out to the console
-  rlang::inform("=========================================================\n\n")
-
-  print(best_rows_final)
-  return(invisible(best_rows_final))
-
-  }, spinner = TRUE)
 }
 
 #' @export

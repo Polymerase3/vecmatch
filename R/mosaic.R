@@ -304,9 +304,10 @@ mosaic <- function(data = NULL,
   ## filter out base levels if group defined
   prodcoords <- prodcoords[stats::complete.cases(prodcoords), ]
 
-  if(use_facet) {
+  if (use_facet) {
     prodcoords$facet <- factor(prodcoords$facet,
-                               levels = levels(data[, symlist[["facet"]]]))
+      levels = levels(data[, symlist[["facet"]]])
+    )
   }
   ## if group sizes, then calculate label coords
   if (group_counts) {

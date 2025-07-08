@@ -53,6 +53,11 @@
 #' * `mean` - Cohen's d is calculated,
 #' * `median` - the Wilcoxon effect size (r) is calculated based on the Z
 #'   statistic extracted from the Wilcoxon test.
+#' @param density_scale Character(1). Scaling method for the violin density.
+#' * `"area"`: all violins have the same total area (default).
+#' * `"count"`: violin areas are proportional to the number of observations.
+#' * `"width"`: all violins have the same maximum height (width when they are
+#'   placed horizontally), regardless of sample size.
 #' @param limits A numeric atomic vector of length two, specifying the `y` axis
 #'   limits in the distribution plots. The first element sets the minimum value,
 #'   and the second sets the maximum. This vector is passed to the
@@ -152,6 +157,7 @@ raincloud <- function(data = NULL,
                       sig_label_size = 2L,
                       sig_label_color = FALSE,
                       smd_type = "mean",
+                      density_scale = "area",
                       limits = NULL,
                       jitter = 0.1,
                       alpha = 0.4,
@@ -204,6 +210,13 @@ raincloud <- function(data = NULL,
     !is.null(limits) && !.check_vecl(limits, leng = 2),
     "The `limits` argument should be a numeric vector of
             length 2: c(min, max)"
+  )
+
+  ## check if density scale allowed
+  chk::chk_character(density_scale)
+  .chk_cond(
+    density_scale %nin% c("area", "count", "width"),
+    'The `density_scale` argument should be a single character. The allowed values are: "area", "count" and "width".'
   )
 
   ## check range for jitter
@@ -421,6 +434,11 @@ raincloud <- function(data = NULL,
       test_results <- as.data.frame(test_results)
     } else {
       test_results <- do.call(rbind, test_results)
+
+      ## change facet to factor with original levels
+      fac_levels <- levels(data[, symlist[['facet']]])
+      test_results[, "facet"] <- factor(test_results[, "facet"],
+                                        levels = fac_levels)
     }
 
     # add color to the plot
@@ -492,13 +510,39 @@ raincloud <- function(data = NULL,
         }
       )
 
+      make_group_label <- function(freq_row,
+                                   var_col   = "Var2",
+                                   prefix    = "Freq\\.",
+                                   minlength = 4) {
+        # 1) identify the count-columns
+        all_cols  <- base::names(freq_row)
+        freq_cols <- base::grep(paste0("^", prefix), all_cols, value = TRUE)
+
+        # 2) strip off the prefix to get category names, pull counts
+        cats   <- base::sub(prefix, "", freq_cols)
+        counts <- base::as.integer(freq_row[1, freq_cols])
+
+        # 3) abbreviate categories (e.g. “Female” → “Fem”)
+        shorts <- base::abbreviate(cats, minlength = minlength)
+
+        # 4) build “Short: n=NN” entries and collapse
+        entries <- base::paste0(shorts, ": n=", counts)
+        inside  <- base::paste(entries, collapse = ", ")
+
+        # 5) full label: “GroupName (inside)”
+        grp <- as.character(freq_row[[var_col]])
+        label <- paste0(grp, " (", inside, ")")
+
+        # 6) return named vector so e.g. scale_*_discrete(labels = ...) works
+        rlang::set_names(label, grp)
+      }
 
       for (i in seq_len(nrow(freq_table))) {
-        message <- sprintf(
-          "%s (n = %s, %s)",
-          freq_table[i, 1],
-          freq_table[i, 2],
-          freq_table[i, 3]
+        row    <- freq_table[i, , drop = FALSE]
+        message <- make_group_label(
+          freq_row = row,
+          var_col   = "Var2",
+          prefix    = "Freq\\."
         )
 
         levels(data[, symlist[["group"]]])[
@@ -526,7 +570,10 @@ raincloud <- function(data = NULL,
       axis.line.y = ggplot2::element_blank(),
       axis.text.y = ggplot2::element_blank(),
       axis.title.y = ggplot2::element_blank(),
-      legend.title = ggplot2::element_text(face = "bold")
+      axis.ticks.y = ggplot2::element_blank(),
+      legend.title = ggplot2::element_text(face = "bold"),
+      legend.position = "top",
+      legend.direction = "vertical"
     )
 
   ## --defining the geom_jitter
@@ -546,7 +593,7 @@ raincloud <- function(data = NULL,
       ## halfs of the violin plots
       geom_flat_violin(
         fill = "#005b99",
-        trim = FALSE, alpha = alpha,
+        trim = FALSE, alpha = alpha, scale = density_scale,
         position = ggplot2::position_nudge(x = rain_height + 0.05)
       ) +
       ## --defining the stat_summary
@@ -577,7 +624,7 @@ raincloud <- function(data = NULL,
       ) +
       ## halfs of the violin plots
       geom_flat_violin(ggplot2::aes(fill = data[, symlist[["group"]]]),
-        trim = FALSE, alpha = alpha,
+        trim = FALSE, alpha = alpha, scale = density_scale,
         position = ggplot2::position_nudge(x = rain_height + 0.05)
       ) +
       ## --defining the stat_summary
@@ -590,6 +637,7 @@ raincloud <- function(data = NULL,
 
       scale_color_vecmatch(n = pal_len, type = "discrete") +
       scale_fill_vecmatch(n = pal_len, type = "discrete")
+
   }
 
   #--defining the ggplot object-------------------------------------------------
@@ -620,7 +668,8 @@ raincloud <- function(data = NULL,
       y = data[, symlist[["y"]]]
     )) +
       geom_flat_violin(
-        trim = FALSE, position = ggplot2::position_nudge(x = -0.5)
+        trim = FALSE, position = ggplot2::position_nudge(x = -0.5),
+        scale = density_scale
       )
 
     # getting the xlim out of the violin plot
@@ -692,10 +741,16 @@ raincloud <- function(data = NULL,
         xmax = "xmax_box",
         label = "p.adj.signif",
         coord.flip = TRUE,
-        tip.length = 0.01,
+        tip.length = 0.006,
         size = sig_label_size,
         color = rep(test_results[, "color.pval"], each = 3)
       ) +
+      ggplot2::annotate('text',
+                        x = max(test_results$xmax_box) + 0.022,
+                        y = mean(test_results$y.position),
+                        label = "p-value",
+                        size = sig_label_size,
+                        fontface = "bold") +
       ## adding smds
       ggpubr::stat_pvalue_manual(test_results,
         y.position = "y.position",
@@ -703,10 +758,16 @@ raincloud <- function(data = NULL,
         xmax = "xmax_jit",
         label = "smd",
         coord.flip = TRUE,
-        tip.length = 0.01,
+        tip.length = 0.006,
         size = sig_label_size,
         color = rep(test_results[, "color.smd"], each = 3)
-      )
+      ) +
+      ggplot2::annotate('text',
+                        x = max(test_results$xmax_jit) + 0.022,
+                        y = mean(test_results$y.position),
+                        label = "SMD",
+                        size = sig_label_size,
+                        fontface = "bold")
   }
 
   ## add theme

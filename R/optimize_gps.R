@@ -485,13 +485,16 @@ optimize_gps <- function(data = NULL,
         }
 
         assign(".Random.seed", seed_state, envir = .GlobalEnv)
-        on.exit({
-          if (is.null(old_state)) {
-            rm(".Random.seed", envir = .GlobalEnv)
-          } else {
-            assign(".Random.seed", old_state, envir = .GlobalEnv)
-          }
-        }, add = TRUE)
+        on.exit(
+          {
+            if (is.null(old_state)) {
+              rm(".Random.seed", envir = .GlobalEnv)
+            } else {
+              assign(".Random.seed", old_state, envir = .GlobalEnv)
+            }
+          },
+          add = TRUE
+        )
 
         force(code)
       }

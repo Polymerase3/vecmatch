@@ -152,8 +152,16 @@ optimize_gps <- function(data = NULL,
   ####################### DATA PROCESSING ######################################
   # defining a placeholder func for callr (function() inside callr::r throws
   # an error)
-  placeholder_func <- function() {
+  user_seed <- if (exists(".Random.seed", envir = .GlobalEnv)) {
+    get(".Random.seed", envir = .GlobalEnv)
+  } else {
+    NULL
+  }
 
+  placeholder_func <- function(user_seed = user_seed) {
+    if (!is.null(user_seed)) {
+      assign(".Random.seed", user_seed, envir = .GlobalEnv)
+    }
   }
 
   # isolating the execution of the optimize_gps inside a separate R session -->
@@ -212,6 +220,7 @@ optimize_gps <- function(data = NULL,
 
           # register foreach to use `future`
           doFuture::registerDoFuture()
+          doRNG::registerDoRNG(once = FALSE)
         }
 
         ## close function --> closes parallel backend and frees RAM
@@ -236,6 +245,7 @@ optimize_gps <- function(data = NULL,
         )
 
         #' @importFrom foreach %do%
+        doRNG::registerDoRNG(once = FALSE)
       }
 
       # define the infix operator for the forloops
@@ -460,6 +470,32 @@ optimize_gps <- function(data = NULL,
         startup_par(n_cores_aux)
       }
 
+      ## the problem with seeds in the optimization function is, that we
+      ## need EACH ITERATION to run with the EXACT SAME SEED. I think the
+      ## easiest way to achieve this is save the current .Random.seed,
+      ## then export it and use withr::with_seed() to make sure, that
+      ## the seed remains exactly the same for each i
+      export_seed <- .Random.seed
+
+      with_rng_state <- function(seed_state, code) {
+        old_state <- if (exists(".Random.seed", envir = .GlobalEnv)) {
+          get(".Random.seed", envir = .GlobalEnv)
+        } else {
+          NULL
+        }
+
+        assign(".Random.seed", seed_state, envir = .GlobalEnv)
+        on.exit({
+          if (is.null(old_state)) {
+            rm(".Random.seed", envir = .GlobalEnv)
+          } else {
+            assign(".Random.seed", old_state, envir = .GlobalEnv)
+          }
+        }, add = TRUE)
+
+        force(code)
+      }
+
       # Enable global handler for the progress (once is enough)
       progressr::handlers("txtprogressbar")
 
@@ -485,7 +521,8 @@ optimize_gps <- function(data = NULL,
                 "ordinal_treat",
                 "estimate_gps",
                 "csregion",
-                "p"
+                "p",
+                "export_seed"
               ),
               .errorhandling = "pass"
             ) %doparallel% {
@@ -551,7 +588,9 @@ optimize_gps <- function(data = NULL,
               }
 
               # call the function within isolated env (function env)
-              run_iteration(i)
+              with_rng_state(export_seed, {
+                run_iteration(i)
+              })
             }
           })
         })
@@ -624,7 +663,7 @@ optimize_gps <- function(data = NULL,
               .export = c(
                 "search_matching", "estimate_results", "formula",
                 "treatment_cols", "smd_colnames", "smd_template",
-                "match_gps", "balqual"
+                "match_gps", "balqual", "export_seed"
               ),
               .errorhandling = "pass"
             ) %doparallel% {
@@ -747,7 +786,9 @@ optimize_gps <- function(data = NULL,
               }
 
               # running the function inside an isolated env
-              run_iteration(i)
+              with_rng_state(export_seed, {
+                run_iteration(i)
+              })
             }
           })
         })

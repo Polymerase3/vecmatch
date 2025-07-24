@@ -900,8 +900,8 @@ print.best_opt_result <- function(x, digits = 3, ...) {
   cat("======================================\n\n")
 
   # Filter and sort
-  #if(is.numeric(x$smd) && length(x$smd) == 0L) x$smd <- NA
-  #if(is.numeric(x$perc_matched) && length(x$perc_matched) == 0L) x$perc_matched <- NA
+  # if(is.numeric(x$smd) && length(x$smd) == 0L) x$smd <- NA
+  # if(is.numeric(x$perc_matched) && length(x$perc_matched) == 0L) x$perc_matched <- NA
   View(as.data.frame(x))
   x <- x[!is.na(x$smd) & !is.na(x$perc_matched) & !is.na(x$smd_group), ]
   groups <- split(x, x$smd_group)
@@ -915,7 +915,7 @@ print.best_opt_result <- function(x, digits = 3, ...) {
         min(g$smd, na.rm = TRUE)
       }
     },
-    numeric(1L)   # expected length‑1 numeric vector
+    numeric(1L) # expected length‑1 numeric vector
   )
 
   sorted_groups <- names(sort(smd_order))

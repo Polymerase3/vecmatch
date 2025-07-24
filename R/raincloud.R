@@ -560,9 +560,10 @@ raincloud <- function(data = NULL,
 
   ## --defining the main ggplot formula-----------------------------------------
   colnames(data)[which(colnames(data) == symlist["facet"])] <- "facet"
+  y_col <- symlist[["y"]]
   main <- ggplot2::ggplot(data, ggplot2::aes(
     x = "",
-    y = data[, symlist[["y"]]]
+    y = .data[[y_col]]
   ))
 
   # defining theme for the subplots
@@ -609,33 +610,39 @@ raincloud <- function(data = NULL,
       )
   } else {
     #### CASE 2 - y + group, no facet===========================================
+    group_col <- symlist[["group"]]
+
     main +
-      ## --defining the geom_boxplot
-      ggplot2::geom_boxplot(ggplot2::aes(fill = data[, symlist[["group"]]]),
+      ## boxplot
+      ggplot2::geom_boxplot(
+        ggplot2::aes(fill = .data[[group_col]]),
         width = 0.1, alpha = alpha, show.legend = FALSE,
         position = ggpp::position_dodgenudge(width = 0.2, x = -0.22)
       ) +
-      ## --defining the datapoints
-      ggplot2::geom_jitter(ggplot2::aes(color = data[, symlist[["group"]]]),
+
+      ## jittered points
+      ggplot2::geom_jitter(
+        ggplot2::aes(color = .data[[group_col]]),
         size = 2, alpha = alpha, show.legend = FALSE,
-        position = ggplot2::position_jitterdodge(
-          jitter.width = jitter,
-          dodge.width = 0.25
-        )
+        position = ggplot2::position_jitterdodge(jitter.width = jitter,
+                                                 dodge.width = 0.25)
       ) +
-      ## halfs of the violin plots
-      geom_flat_violin(ggplot2::aes(fill = data[, symlist[["group"]]]),
+
+      ## half‑violins
+      geom_flat_violin(
+        ggplot2::aes(fill = .data[[group_col]]),
         trim = FALSE, alpha = alpha, scale = density_scale,
         position = ggplot2::position_nudge(x = rain_height + 0.05)
       ) +
-      ## --defining the stat_summary
-      ggplot2::stat_summary(ggplot2::aes(color = data[, symlist[["group"]]]),
+
+      ## mean ± CI
+      ggplot2::stat_summary(
+        ggplot2::aes(color = .data[[group_col]]),
         fun.data = mean_ci, show.legend = FALSE,
         position = ggpp::position_dodgenudge(x = rain_height * 3, width = 0.1)
       ) +
-      ## define the fill lab
-      ggplot2::guides(fill = ggplot2::guide_legend(symlist[["group"]])) +
 
+      ggplot2::guides(fill = ggplot2::guide_legend(group_col)) +
       scale_color_vecmatch(n = pal_len, type = "discrete") +
       scale_fill_vecmatch(n = pal_len, type = "discrete")
   }
@@ -665,7 +672,7 @@ raincloud <- function(data = NULL,
     # test run to define the limits of the plot
     violin_test <- ggplot2::ggplot(data, ggplot2::aes(
       x = "",
-      y = data[, symlist[["y"]]]
+      y = .data[[y_col]]
     )) +
       geom_flat_violin(
         trim = FALSE, position = ggplot2::position_nudge(x = -0.5),

@@ -624,8 +624,10 @@ raincloud <- function(data = NULL,
       ggplot2::geom_jitter(
         ggplot2::aes(color = .data[[group_col]]),
         size = 2, alpha = alpha, show.legend = FALSE,
-        position = ggplot2::position_jitterdodge(jitter.width = jitter,
-                                                 dodge.width = 0.25)
+        position = ggplot2::position_jitterdodge(
+          jitter.width = jitter,
+          dodge.width = 0.25
+        )
       ) +
 
       ## half‑violins

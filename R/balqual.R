@@ -412,35 +412,37 @@ balqual <- function(matched_data = NULL,
   count_table <- count_table[, c("Treatment", "Before", "After")]
   rownames(count_table) <- NULL
 
-  # defining final object for printing
-  quality_list_print <- list(
-    quality_mean = quality_mean,
-    quality_max = quality_max,
-    perc_matched = perc_matched,
-    statistic = statistic,
-    summary_head = summary_head,
-    n_before = length(data_before[["treat"]]),
-    n_after = length(data_after[["treat"]]),
-    count_table = count_table
+  # defining final object (core list)
+  quality_core <- list(
+    quality_mean  = quality_mean,
+    quality_max   = quality_max,
+    perc_matched  = perc_matched,
+    statistic     = statistic,
+    summary_head  = summary_head,
+    n_before      = length(data_before[["treat"]]),
+    n_after       = length(data_after[["treat"]]),
+    count_table   = count_table,
+    type          = type,
+    cutoffs       = cutoffs,
+    round         = round
   )
 
-  ## Setting a new class for the results
-  quality_list_print <- structure(quality_list_print,
-    class = "quality"
+  # assemble quality object with attributes and class in one go
+  quality_obj <- structure(
+    quality_core,
+    original_data_before = old_data,
+    original_data_after  = new_data,
+    formula              = formula,
+    function_call        = match.call(),
+    smd_df_combo         = smd_df,
+    class                = "quality"
   )
 
-  ## print custom output
-  if (print_out) show_quality(quality_list_print)
-
-  ## add attribute
-  attr(quality_list_print, "smd_df_combo") <- smd_df
-
-  ## return output list
-  return(invisible(quality_list_print))
+  return(quality_obj)
 }
 
-# Function to show the contents of an object of class 'csres'
-show_quality <- function(object) {
+#' @export
+print.quality <- function(x, ...) {
   # Helper function to print a table
   print_table <- function(df, colnames_df, ncol) {
     # Define separator based on the number of columns
@@ -485,8 +487,10 @@ show_quality <- function(object) {
   print_quality_table <- function(table, label) {
     cat(label, ":\n")
     colnames_main <- c("Variable", "Coef", "Before", "After", "Quality")
-    print_table(table,
-      colnames_df = colnames_main, ncol = 5
+    print_table(
+      table,
+      colnames_df = colnames_main,
+      ncol = 5
     )
     cat("\n")
   }
@@ -497,49 +501,169 @@ show_quality <- function(object) {
 
   # Print the count table for the treatment variable (3 columns)
   cat("Count table for the treatment variable:\n")
-  print_table(object$count_table,
-    colnames_df = colnames(object$count_table),
+  print_table(
+    x$count_table,
+    colnames_df = colnames(x$count_table),
     ncol = 3
   )
 
   # Matching summary statistics
   cat("\n\nMatching summary statistics:\n")
   cat(paste(rep("-", 40), collapse = ""), "\n")
-  cat("Total n before matching:\t", format(object$n_before, nsmall = 0), "\n")
-  cat("Total n after matching:\t\t", format(object$n_after, nsmall = 0), "\n")
+  cat("Total n before matching:\t", format(x$n_before, nsmall = 0), "\n")
+  cat("Total n after matching:\t\t", format(x$n_after, nsmall = 0), "\n")
   cat(
     "% of matched observations:\t",
-    format(object$perc_matched, nsmall = 2), "%\n"
+    format(x$perc_matched, nsmall = 2), "%\n"
   )
 
   # Print summary_head (maximal values for each variable)
-  for (i in seq_along(object$summary_head)) {
+  for (i in seq_along(x$summary_head)) {
     sum_text <- "maximal"
     tab_after <- ifelse(
-      names(
-        object$summary_head[i]
-      ) == "r" && "max" %nin% object$statistic,
+      names(x$summary_head[i]) == "r" && "max" %nin% x$statistic,
       "\t\t",
       "\t"
     )
     cat(
-      "Total ", sum_text, " ", names(object$summary_head[i]), "value:",
-      tab_after, object$summary_head[i], "\n"
+      "Total ", sum_text, " ", names(x$summary_head[i]), "value:",
+      tab_after, x$summary_head[i], "\n"
     )
   }
 
   cat("\n\n")
 
   # Print mean and/or max quality tables based on the statistic
-  if (length(object$statistic) == 1) {
-    if (object$statistic == "mean") {
-      print_quality_table(object$quality_mean, "Mean values")
+  if (length(x$statistic) == 1) {
+    if (x$statistic == "mean") {
+      print_quality_table(x$quality_mean, "Mean values")
     } else {
-      print_quality_table(object$quality_max, "Maximal values")
+      print_quality_table(x$quality_max, "Maximal values")
     }
   } else {
-    print_quality_table(object$quality_mean, "Mean values")
+    print_quality_table(x$quality_mean, "Mean values")
     cat("\n")
-    print_quality_table(object$quality_max, "Maximal values")
+    print_quality_table(x$quality_max, "Maximal values")
   }
+
+  invisible(x)
 }
+
+#' @export
+str.quality <- function(object, ...) {
+  # attributes from balqual()
+  od_before <- attr(object, "original_data_before")
+  od_after  <- attr(object, "original_data_after")
+  smd_df    <- attr(object, "smd_df_combo")
+
+  n_before_attr <- object$n_before %||% if (!is.null(od_before)) NROW(od_before) else NA_integer_
+  n_after_attr  <- object$n_after  %||% if (!is.null(od_after))  NROW(od_after)  else NA_integer_
+
+  perc <- object$perc_matched %||% if (!is.na(n_before_attr) && n_before_attr > 0) {
+    100 * n_after_attr / n_before_attr
+  } else {
+    NA_real_
+  }
+
+  types     <- object$type      %||% NA_character_
+  stats     <- object$statistic %||% NA_character_
+  cutoffs   <- object$cutoffs   %||% NA_real_
+  q_mean    <- object$quality_mean
+  q_max     <- object$quality_max
+  ct        <- object$count_table
+
+  # treatment levels from count_table, if available
+  tr_levels <- if (!is.null(ct) && "Treatment" %in% names(ct)) {
+    unique(as.character(ct$Treatment))
+  } else {
+    NULL
+  }
+
+  ## Header --------------------------------------------------------------------
+  cat("quality object: matching diagnostics\n")
+
+  cat(sprintf(
+    " Observations (treatment-level panel): before = %s, after = %s",
+    if (!is.na(n_before_attr)) n_before_attr else "NA",
+    if (!is.na(n_after_attr))  n_after_attr  else "NA"
+  ))
+  cat("\n")
+
+  if (!is.na(perc)) {
+    cat(sprintf(" Overall retention: %.2f%%\n", perc))
+  } else {
+    cat(" Overall retention: NA\n")
+  }
+
+  # metrics & summary types
+  cat(" Metrics (type): ")
+  if (all(is.na(types))) {
+    cat("NA\n")
+  } else {
+    cat(paste(types, collapse = ", "), "\n")
+  }
+
+  cat(" Summary statistics: ")
+  if (all(is.na(stats))) {
+    cat("NA\n")
+  } else {
+    cat(paste(stats, collapse = ", "), "\n")
+  }
+
+  # cutoffs
+  cat(" Cutoffs: ")
+  if (all(is.na(cutoffs))) {
+    cat("NA\n")
+  } else {
+    cat(paste(cutoffs, collapse = ", "), "\n")
+  }
+
+  # treatment levels
+  if (!is.null(tr_levels)) {
+    cat(" Treatment levels (from count_table): ",
+        paste(tr_levels, collapse = ", "),
+        "\n", sep = "")
+  }
+
+  # sizes of key tables
+  if (!is.null(q_mean)) {
+    cat(sprintf(
+      " quality_mean: %d x %d (variables x metrics)\n",
+      NROW(q_mean), NCOL(q_mean)
+    ))
+  } else {
+    cat(" quality_mean: <none>\n")
+  }
+
+  if (!is.null(q_max)) {
+    cat(sprintf(
+      " quality_max : %d x %d (variables x metrics)\n",
+      NROW(q_max), NCOL(q_max)
+    ))
+  } else {
+    cat(" quality_max : <none>\n")
+  }
+
+  if (!is.null(ct)) {
+    cat(sprintf(
+      " count_table : %d x %d (Treatment x Before/After)\n",
+      NROW(ct), NCOL(ct)
+    ))
+  } else {
+    cat(" count_table : <none>\n")
+  }
+
+  if (!is.null(smd_df)) {
+    cat(sprintf(
+      " smd_df_combo: %d x %d (pairwise combinations x covariates)\n",
+      NROW(smd_df), NCOL(smd_df)
+    ))
+  } else {
+    cat(" smd_df_combo: <none>\n")
+  }
+
+  cat("\nUnderlying list structure:\n")
+  utils::str(unclass(object), ...)
+  invisible(object)
+}
+

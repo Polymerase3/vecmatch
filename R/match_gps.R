@@ -837,22 +837,386 @@ match_gps <- function(csmatrix = NULL,
     all_extracted_ids <- Reduce(c, extracted_matches)
   }
 
-  # returning logical vector
+  # returning logical vector: which rows of the original csmatrix are matched
   matched_filter <- seq_len(nrow(csmatrix)) %in% all_extracted_ids
 
-  # return original csr data.frame but matched
-  csr_data <- attr(csmatrix, "csr_data")
-
-  csr_data <- as.data.frame(csr_data[matched_filter, ])
-  attr(csr_data, "matching_filter") <- matched_filter
-  if ("csr" %in% class(csmatrix)) {
-    attr(csr_data, "original_data") <- attr(csmatrix, "csr_data")
+  # figure out which "original" data we should use as the base
+  # - if csmatrix is a csr object: original_data = csr_data
+  # (i.e. data within CSR)
+  # - otherwise: original_data = original_data from estimate_gps()
+  if (inherits(csmatrix, "csr")) {
+    original_data <- attr(csmatrix, "csr_data")
   } else {
-    attr(csr_data, "original_data") <- attr(csmatrix, "original_data")
+    original_data <- attr(csmatrix, "original_data")
   }
 
-  # Assign class
-  class(csr_data) <- c("data.frame", "gps", "csr", "matched")
+  # subset to matched rows
+  matched_data <- as.data.frame(original_data[matched_filter, , drop = FALSE])
 
-  return(csr_data)
+  ## ---- extract treatment variable name from function call -------------
+  # function_call on csmatrix
+  est_call <- attr(csmatrix, "function_call")
+  treatment_var <- NULL
+
+  if (!is.null(est_call)) {
+    # try to find the formula in the call
+    form <- est_call[["formula"]]
+
+    if (inherits(form, "formula") && length(form) >= 3L) {
+      # LHS is the treatment variable
+      # e.g. status ~ age * sex  -> "status"
+      treatment_var <- as.character(form[[2L]])
+    }
+  }
+
+  # final fallback: if something went wrong, use first column name of
+  # original_data
+  if (is.null(treatment_var) || !treatment_var %in% names(original_data)) {
+    treatment_var <- names(original_data)[1L]
+  }
+
+  # assemble result object: attributes + class in ONE place
+  results <- structure(
+    matched_data,
+    original_data   = original_data,
+    matching_filter = matched_filter,
+    function_call   = match.call(),
+    treatment_var   = treatment_var,
+    class           = c("matched", "data.frame")
+  )
+
+}
+
+#' @export
+str.matched <- function(object, ...) {
+  original_data   <- attr(object, "original_data")
+  matching_filter <- attr(object, "matching_filter")
+
+  n_after  <- nrow(object)
+  n_before <- if (!is.null(original_data)) nrow(original_data) else NA_integer_
+
+  cat(sprintf(
+    "Matched data.frame: %d rows (from %s rows in original_data)\n",
+    n_after,
+    if (!is.na(n_before)) n_before else "NA"
+  ))
+
+  if (!is.null(matching_filter) && !is.na(n_before) &&
+      length(matching_filter) == n_before) {
+    cat(sprintf(
+      "Proportion of original units kept: %.1f%%\n",
+      100 * mean(matching_filter)
+    ))
+  }
+
+  # show underlying structure
+  utils::str(unclass(object), ...)
+  invisible(object)
+}
+
+# internal helper: print matched data.frame with a header
+.print_matched_core <- function(x, ...) {
+  n_after <- nrow(x)
+
+  treatment <- x[["treatment"]]
+  if (!is.null(treatment)) {
+    if (is.factor(treatment)) {
+      trt_levels <- levels(treatment)
+    } else {
+      trt_levels <- sort(unique(treatment))
+    }
+    k <- length(trt_levels)
+  } else {
+    trt_levels <- NULL
+    k <- NA_integer_
+  }
+
+  original_data   <- attr(x, "original_data")
+  matching_filter <- attr(x, "matching_filter")
+
+  n_before <- if (!is.null(original_data)) nrow(original_data) else NA_integer_
+  prop_kept <- if (!is.null(matching_filter) &&
+                   !is.na(n_before) &&
+                   length(matching_filter) == n_before) {
+    sprintf("%.1f%%", 100 * mean(matching_filter))
+  } else {
+    NA_character_
+  }
+
+  cli::cli_ul()
+  cli::cli_li("Number of units after matching: {n_after}")
+  if (!is.na(n_before)) {
+    cli::cli_li("Number of units in original_data: {n_before}")
+  }
+  if (!is.na(prop_kept)) {
+    cli::cli_li("Proportion of original units kept: {prop_kept}")
+  }
+
+  if (!is.null(treatment)) {
+    cli::cli_li("Treatment column: {.field treatment}")
+    cli::cli_li("Number of treatment levels: {k}")
+    cli::cli_li("Treatment levels: {paste(trt_levels, collapse = ', ')}")
+  } else {
+    cli::cli_li("Treatment column not found in the matched data.")
+  }
+
+  cli::cli_li("Underlying classes: {.field {paste(class(x), collapse = ', ')}}")
+  cli::cli_end()
+
+  cli::cli_text("")
+
+  # print underlying data.frame directly
+  base::print.data.frame(x, ...)
+
+  invisible(x)
+}
+
+#' @export
+print.matched <- function(x, ...) {
+  cli::cli_text("{.strong matched object} (GPS-based matched dataset)")
+  .print_matched_core(x, ...)
+}
+
+#' @export
+summary.matched <- function(object, digits = 1, ...) {
+  original_data   <- attr(object, "original_data")
+  matching_filter <- attr(object, "matching_filter")
+  call            <- attr(object, "function_call")
+
+  n_total     <- NROW(original_data)
+  n_matched   <- NROW(object)
+  n_unmatched <- n_total - n_matched
+  overall_retained <- if (n_total > 0) 100 * n_matched / n_total else NA_real_
+
+  ## --- treatment variable name ----------------------------------------------
+  treat_name <- attr(object, "treatment_var")
+
+  # it should not happen at all, but just in case
+  if (is.null(treat_name)) {
+    # robust fallback: prefer 'treatment' if present, else first column
+    if ("treatment" %in% names(original_data)) {
+      treat_name <- "treatment"
+    } else {
+      treat_name <- names(original_data)[1L]
+      cli::cli_warn(
+        c(
+          "!" = "No {.field treatment_var} attribute found for {.cls matched} object.",
+          "i" = "Assuming treatment variable is the first column: {.field {treat_name}}."
+        )
+      )
+    }
+  }
+
+  if (!treat_name %in% names(original_data) ||
+      !treat_name %in% names(object)) {
+    cli::cli_abort(
+      "Treatment variable {.field {treat_name}} not found in ",
+      "{.field original_data} or matched data."
+    )
+  }
+
+  ## --- per-treatment counts --------------------------------------------------
+  tr_orig  <- original_data[[treat_name]]
+  tr_match <- object[[treat_name]]
+
+  if (!is.factor(tr_orig))  tr_orig  <- factor(tr_orig)
+  if (!is.factor(tr_match)) tr_match <- factor(tr_match, levels = levels(tr_orig))
+
+  tab_before <- table(tr_orig)
+  tab_after  <- table(tr_match)
+
+  all_levels <- levels(tr_orig)
+  if (is.null(all_levels) || !length(all_levels)) {
+    all_levels <- sort(union(names(tab_before), names(tab_after)))
+  }
+
+  n_before <- as.integer(tab_before[all_levels])
+  n_before[is.na(n_before)] <- 0L
+
+  n_after <- as.integer(tab_after[all_levels])
+  n_after[is.na(n_after)] <- 0L
+
+  retained_pct <- ifelse(n_before > 0, 100 * n_after / n_before, NA_real_)
+
+  per_treatment <- data.frame(
+    Treatment        = all_levels,
+    n_before         = n_before,
+    n_after          = n_after,
+    Retained_percent = retained_pct,
+    check.names      = FALSE,
+    row.names        = NULL
+  )
+
+  ## --- extract matching parameters from match_gps() call ---------------------
+  params <- NULL
+  if (!is.null(call)) {
+    call_list <- as.list(call)[-1]                # drop function name
+    call_list <- call_list[names(call_list) %nin% c("csmatrix")]
+    params <- call_list
+  }
+
+  res <- list(
+    call              = call,
+    params            = params,
+    n_total           = n_total,
+    n_matched         = n_matched,
+    n_unmatched       = n_unmatched,
+    overall_retained  = overall_retained,
+    per_treatment     = per_treatment,
+    treatment_var     = treat_name,
+    digits            = digits
+  )
+
+  class(res) <- "summary.matched"
+  res
+}
+
+#' @export
+print.summary.matched <- function(x, digits = NULL, ...) {
+  # digits: explicit > stored > default
+  if (is.null(digits)) {
+    digits <- if (!is.null(x$digits)) x$digits else 1L
+  }
+
+  fmt_pct <- function(z) {
+    ifelse(is.na(z), NA_character_, sprintf("%.*f%%", digits, z))
+  }
+
+  # Simple fixed-width table helper with safe character conversion
+  print_table <- function(df) {
+    df_chr <- data.frame(
+      lapply(df, as.character),
+      check.names = FALSE,
+      row.names = NULL
+    )
+    colnames_df <- colnames(df_chr)
+
+    cat("\n")
+    cat(paste(sprintf("%-18s", colnames_df), collapse = " | "), "\n")
+    cat(paste(rep("-", 20 * ncol(df_chr)), collapse = ""), "\n")
+
+    apply(df_chr, 1, function(row) {
+      cat(paste(sprintf("%-18s", row), collapse = " | "), "\n")
+    })
+    cat("\n")
+  }
+
+  cli::cli_h1("Summary of matched object")
+
+  ## Matching settings ---------------------------------------------------------
+  cli::cli_h2("Matching settings")
+
+  params <- x$params
+  if (!is.null(params) && length(params)) {
+    cli::cli_ul()
+    for (nm in names(params)) {
+      val <- params[[nm]]
+      val_str <- paste(deparse(val, width.cutoff = 60L), collapse = "")
+      cli::cli_li("{.field {nm}} = {val_str}")
+    }
+    cli::cli_end()
+  } else {
+    cli::cli_text("{.emph No additional matching parameters recorded in function_call.}")
+  }
+
+  ## Overall matching performance ---------------------------------------------
+  cli::cli_h2("Overall matching performance")
+  cli::cli_ul()
+  cli::cli_li("Treatment variable: {.field {x$treatment_var}}")
+  cli::cli_li("Total units in original_data: {x$n_total}")
+  cli::cli_li("Units in matched data: {x$n_matched}")
+  cli::cli_li("Units not matched: {x$n_unmatched}")
+  cli::cli_li("Overall retention: {fmt_pct(x$overall_retained)}")
+  cli::cli_end()
+
+  ## Per-treatment retention ---------------------------------------------------
+  pt <- x$per_treatment
+
+  df <- data.frame(
+    Treatment    = pt$Treatment,
+    "N before"   = pt$n_before,
+    "N after"    = pt$n_after,
+    "Retained (%)" = fmt_pct(pt$Retained_percent),
+    check.names  = FALSE,
+    row.names    = NULL
+  )
+
+  cli::cli_h2("Per-treatment retention")
+  print_table(df)
+
+  invisible(x)
+}
+
+#' @export
+plot.matched <- function(x, ...) {
+  if (!inherits(x, "matched")) {
+    stop("plot.matched() requires an object of class 'matched'.", call. = FALSE)
+  }
+
+  # use summary.matched() programmatically
+  s  <- summary(x)
+  pt <- s$per_treatment
+
+  if (nrow(pt) == 0L) {
+    warning("No treatment information available in matched object.")
+    return(invisible(x))
+  }
+
+  # prepare matrix: rows = before/after, cols = treatment levels
+  counts_mat <- rbind(
+    "Before matching" = pt$n_before,
+    "After matching"  = pt$n_after
+  )
+
+  dots <- list(...)
+
+  # default main/xlab/ylab if not provided in ...
+  if (!"main" %in% names(dots)) {
+    dots$main <- "Matched sample sizes by treatment"
+  }
+  if (!"xlab" %in% names(dots)) {
+    dots$xlab <- sprintf("Treatment (%s)", s$treatment_var)
+  }
+  if (!"ylab" %in% names(dots)) {
+    dots$ylab <- "Number of units"
+  }
+  if (!"names.arg" %in% names(dots)) {
+    dots$names.arg <- pt$Treatment
+  }
+  if (!"ylim" %in% names(dots)) {
+    max_y <- max(counts_mat, na.rm = TRUE)
+    dots$ylim <- c(0, max_y * 1.1)
+  }
+  if (!"col" %in% names(dots)) {
+    dots$col <- c("grey70", "white")
+  }
+  if (!"border" %in% names(dots)) {
+    dots$border <- c("grey20", "black")
+  }
+
+  # always beside = TRUE for grouped bars
+  dots$height <- counts_mat
+  dots$beside <- TRUE
+
+  old_par <- graphics::par(no.readonly = TRUE)
+  on.exit(graphics::par(old_par), add = TRUE)
+
+  bar_pos <- do.call(graphics::barplot, dots)
+
+  # legend in top-right by default
+  graphics::legend(
+    "topright",
+    legend = rownames(counts_mat),
+    fill   = if (!is.null(dots$col)) dots$col else c("grey70", "white"),
+    border = if (!is.null(dots$border)) dots$border else c("grey20", "black"),
+    bty    = "n"
+  )
+
+  invisible(x)
+}
+
+#' @export
+as.data.frame.matched<- function(x, ...) {
+  class(x) <- "data.frame"
+  NextMethod()
 }

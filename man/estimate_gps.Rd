@@ -66,11 +66,11 @@ examples refer to the Details section and documentations of corresponding
 functions.}
 }
 \value{
-A numeric matrix of class \code{gps} with the number of columns equal to
+A data frame of class \code{gps} with the number of columns equal to
 the number of unique treatment variable levels plus one (for the treatment
-variable itself) and the number of row equal to the number of subjects in
+variable itself) and the number of rows equal to the number of subjects in
 the initial dataset. The original dataset used for estimation can be
-accessed as \code{original_data} attribute.
+accessed as the \code{original_data} attribute.
 }
 \description{
 \code{estimate_gps()} computes generalized propensity scores for

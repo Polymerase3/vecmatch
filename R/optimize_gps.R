@@ -902,7 +902,6 @@ print.best_opt_result <- function(x, digits = 3, ...) {
   # Filter and sort
   # if(is.numeric(x$smd) && length(x$smd) == 0L) x$smd <- NA
   # if(is.numeric(x$perc_matched) && length(x$perc_matched) == 0L) x$perc_matched <- NA
-  View(as.data.frame(x))
   x <- x[!is.na(x$smd) & !is.na(x$perc_matched) & !is.na(x$smd_group), ]
   groups <- split(x, x$smd_group)
   smd_order <- vapply(

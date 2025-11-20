@@ -153,8 +153,6 @@ csregion <- function(gps_matrix,
     gps_matrix <- subset(gps_matrix, filter_vector)
   }
 
-
-
   ## drop unused levels of treatment variable
   gps_matrix[, "treatment"] <- droplevels(gps_matrix[, "treatment"])
 
@@ -175,61 +173,312 @@ csregion <- function(gps_matrix,
     n_negative_matrix = n_negative_matrix
   )
 
-  res <- list(
-    data_csr = csr_summary,
-    excluded = n_negative
+  ## add attributes and set class
+  gps_matrix <- structure(
+    gps_matrix,
+    filter_matrix = filter_matrix,
+    filter_vector = filter_vector,
+    csr_summary   = csr_summary,
+    csr_data      = csr_data[filter_vector, ],
+    class         = c("csr", "gps", "data.frame")
   )
-
-  ## Setting a new class for the results
-  csres <- structure(res, class = "csres")
-
-  ## print custom output
-  show_csres(csres)
-
-  ## adding attributes to csr output
-  attr(gps_matrix, "filter_matrix") <- filter_matrix
-  attr(gps_matrix, "filter_vector") <- filter_vector
-  attr(gps_matrix, "csr_summary") <- csr_summary
-  attr(gps_matrix, "csr_data") <- csr_data[filter_vector, ]
-
-  # Assign attributes and class
-  class(gps_matrix) <- c("data.frame", "gps", "csr")
 
   # return the gps_matrix
-  return(invisible(gps_matrix))
+  invisible(gps_matrix)
 }
 
-# Function to show the contents of an object of class 'csres'
-show_csres <- function(object) {
-  # Function to print a data frame in a table-like format
-  print_table <- function(df, colnames_df) {
-    # Print column headers
-    cat(paste(sprintf("%-15s", colnames_df), collapse = " | "), "\n")
-    cat(paste(rep("-", 17 * ncol(df)), collapse = ""), "\n")
+#' @export
+summary.csr <- function(object, digits = 3, ...) {
+  csr_summary <- attr(object, "csr_summary")
+  filter_vector <- attr(object, "filter_vector")
 
-    # Print each row of the data frame
-    apply(df, 1, function(row) {
-      cat(paste(sprintf("%-15s", row), collapse = " | "), "\n")
-    })
+  if (is.null(csr_summary) || is.null(filter_vector)) {
+    cli::cli_abort(
+      "Object of class {.cls csr} is missing required attributes
+       {.field csr_summary} or {.field filter_vector}."
+    )
   }
 
-  # Print header and content
-  cat("\n")
-  cat("Rectangular CSR Borders Evaluation", "\n")
-  cat("==================================\n\n")
+  n_total <- length(filter_vector)
+  n_kept <- sum(filter_vector)
+  n_excluded <- n_total - n_kept
 
-  print_table(object$data_csr,
-    colnames = c(
-      "Treatment", "Lower CSR limit",
-      "Upper CSR limit", "Number excluded"
-    )
+  # sizes AFTER filtering (in actual csr object)
+  group_sizes_after <- table(object[["treatment"]])
+
+  # align to treatment order in csr_summary
+  tr <- csr_summary$treatment
+  after <- as.integer(group_sizes_after[tr])
+  after[is.na(after)] <- 0L
+  before <- after + csr_summary$n_negative_matrix
+
+  # store numeric tables, formatting happens in print.summary.csr()
+  # enables programmatic use of summary.csr()
+  df_bounds <- data.frame(
+    Treatment = tr,
+    csr_low = csr_summary$csr_low,
+    csr_high = csr_summary$csr_high,
+    n_excluded = csr_summary$n_negative_matrix,
+    check.names = FALSE
   )
 
-  cat("\n")
-  cat("===================================================\n")
-  cat("The total number of excluded observations is:\t", object$excluded, "\n")
-  cat(strwrap("Note: You can view the summary of the
-              CSR calculation using the `attr()` function.",
-    prefix = " ", initial = ""
+  df_groups <- data.frame(
+    Treatment = tr,
+    n_before = before,
+    n_after = after,
+    Excluded = csr_summary$n_negative_matrix,
+    check.names = FALSE
+  )
+
+  res <- list(
+    csr_summary        = csr_summary,
+    filter_vector      = filter_vector,
+    n_total            = n_total,
+    n_kept             = n_kept,
+    n_excluded         = n_excluded,
+    group_sizes_before = stats::setNames(before, tr),
+    group_sizes_after  = stats::setNames(after, tr),
+    bounds_table       = df_bounds,
+    groups_table       = df_groups,
+    digits             = digits
+  )
+
+  class(res) <- "summary.csr"
+  res
+}
+
+#' @export
+print.summary.csr <- function(x, digits = NULL, ...) {
+  # decide digits: explicit argument > stored in object > default 3
+  if (is.null(digits)) {
+    digits <- if (!is.null(x$digits)) x$digits else 3L
+  }
+
+  fmt <- function(z) format(round(z, digits = digits), trim = TRUE, nsmall = digits)
+
+  # local helper: fixed-width table; may convert in the future to a CLI-like
+  # table
+  print_table <- function(df) {
+    colnames_df <- colnames(df)
+
+    cat("\n")
+    cat(paste(sprintf("%-18s", colnames_df), collapse = " | "), "\n")
+    cat(paste(rep("-", 20 * ncol(df)), collapse = ""), "\n")
+
+    apply(df, 1, function(row) {
+      cat(paste(sprintf("%-18s", row), collapse = " | "), "\n")
+    })
+    cat("\n")
+  }
+
+  # build printable tables from stored numeric tables
+  bounds_raw <- x$bounds_table
+  groups_raw <- x$groups_table
+
+  df_bounds <- data.frame(
+    Treatment = bounds_raw$Treatment,
+    "Lower CSR limit" = fmt(bounds_raw$csr_low),
+    "Upper CSR limit" = fmt(bounds_raw$csr_high),
+    "Number excluded" = bounds_raw$n_excluded,
+    check.names = FALSE
+  )
+
+  df_groups <- data.frame(
+    Treatment = groups_raw$Treatment,
+    "N before" = groups_raw$n_before,
+    "N after" = groups_raw$n_after,
+    Excluded = groups_raw$Excluded,
+    check.names = FALSE
+  )
+
+  # ---------------- CLI output ----------------
+  cli::cli_h1("Rectangular CSR Borders Evaluation")
+  cli::cli_text("Class: {.cls csr} (gps filtered to common support region)")
+  cli::cli_text(
+    "Rows kept: {x$n_kept} / {x$n_total} (excluded: {x$n_excluded})"
+  )
+  cli::cli_text(
+    "Columns: {length(x$group_sizes_after)} treatment levels (plus GPS columns in the original object)"
+  )
+  cli::cli_rule()
+
+  cli::cli_h2("Per-treatment CSR bounds")
+  print_table(df_bounds)
+
+  cli::cli_h2("Group sizes before and after CSR filtering")
+  print_table(df_groups)
+
+  cli::cli_rule()
+  cli::cli_text(
+    "Details of the CSR calculation can also be accessed via ",
+    "{.code attr(x, 'csr_summary')}, ",
+    "{.code attr(x, 'filter_matrix')}, ",
+    "and {.code attr(x, 'csr_data')} on the original {.cls csr} object."
+  )
+
+  invisible(x)
+}
+
+#' @export
+print.csr <- function(x, ...) {
+  cli::cli_text("{.strong csr object} (gps filtered to common support region)")
+  .print_gps_core(x, ...) # helper defined in estimate_gps.R
+}
+
+#' @export
+#' @export
+str.csr <- function(object, ...) {
+  n  <- nrow(object)
+  p  <- ncol(object)
+
+  treatment <- object[["treatment"]]
+  if (is.factor(treatment)) {
+    trt_levels <- levels(treatment)
+  } else {
+    trt_levels <- sort(unique(treatment))
+  }
+  group_sizes_after <- if (!is.null(treatment)) table(treatment) else NULL
+
+  filter_vector <- attr(object, "filter_vector")
+  csr_summary   <- attr(object, "csr_summary")
+  csr_data      <- attr(object, "csr_data")
+  filter_matrix <- attr(object, "filter_matrix")
+
+  # totals
+  if (!is.null(filter_vector)) {
+    n_total    <- length(filter_vector)
+    n_kept     <- sum(filter_vector)
+    n_excluded <- n_total - n_kept
+  } else {
+    n_total    <- n
+    n_kept     <- n
+    n_excluded <- 0L
+  }
+
+  # ---- header -------------------------------------------------------------
+  cat("csr object: gps filtered to common support region\n")
+  cat(sprintf(" Dimensions (csr object): %d rows x %d columns\n", n, p))
+  cat(sprintf(" Treatment column: %s\n", "treatment"))
+  cat(sprintf(
+    " Treatment levels: %s\n",
+    if (length(trt_levels)) paste(trt_levels, collapse = ", ") else "<none>"
   ))
+  if (!is.null(group_sizes_after)) {
+    cat(" Group sizes after CSR filtering:\n")
+    gs_txt <- paste(
+      sprintf("  - %s: %d", names(group_sizes_after), as.integer(group_sizes_after)),
+      collapse = "\n"
+    )
+    cat(gs_txt, "\n", sep = "")
+  }
+
+  cat(sprintf(
+    " Rows kept: %d / %d (excluded: %d)\n",
+    n_kept, n_total, n_excluded
+  ))
+
+  if (!is.null(csr_data)) {
+    cat(sprintf(
+      " csr_data: data.frame with %d rows and %d columns\n",
+      NROW(csr_data), NCOL(csr_data)
+    ))
+  } else {
+    cat(" csr_data: <none>\n")
+  }
+
+  if (!is.null(filter_matrix)) {
+    cat(sprintf(
+      " filter_matrix: logical matrix %d x %d\n",
+      NROW(filter_matrix), NCOL(filter_matrix)
+    ))
+  } else {
+    cat(" filter_matrix: <none>\n")
+  }
+
+  if (!is.null(csr_summary)) {
+    cat(sprintf(
+      " csr_summary: data.frame with %d rows (per-treatment bounds)\n",
+      NROW(csr_summary)
+    ))
+  } else {
+    cat(" csr_summary: <none>\n")
+  }
+
+  cat("\nUnderlying data.frame structure:\n")
+
+  # ---- delegate to data.frame str() ---------------------------------------
+  utils::str(unclass(object), ...)
+
+  invisible(object)
+}
+
+#' @export
+as.data.frame.csr <- function(x, ...) {
+  class(x) <- "data.frame"
+  NextMethod()
+}
+
+#' @export
+plot.csr <- function(x,
+                     gps_cols = NULL,
+                     treatment_col = "treatment",
+                     ...) {
+  # x: csr object (data.frame with GPS columns + treatment)
+  # gps_cols: optional character vector of GPS columns to plot (panels)
+  # treatment_col: name of treatment column in x
+  # ...: additional arguments passed to boxplot()
+
+  # --- basic checks ----------------------------------------------------------
+  df <- as.data.frame(x)
+
+  trt <- df[[treatment_col]]
+  if (!is.factor(trt)) {
+    trt <- factor(trt)
+  }
+
+  all_gps_cols <- setdiff(names(df), treatment_col)
+
+  if (is.null(gps_cols)) {
+    gps_cols <- all_gps_cols
+  } else {
+    gps_cols <- intersect(gps_cols, all_gps_cols)
+    if (!length(gps_cols)) {
+      stop(
+        "None of the requested `gps_cols` are valid. ",
+        "Available: ", paste(all_gps_cols, collapse = ", ")
+      )
+    }
+  }
+
+  n_gps <- length(gps_cols)
+
+  # --- layout: number of panels based on number of GPS columns --------------
+  old_par <- graphics::par(no.readonly = TRUE)
+  on.exit(graphics::par(old_par))
+
+  if (n_gps == 1L) {
+    graphics::par(mfrow = c(1, 1))
+  } else if (n_gps == 2L) {
+    graphics::par(mfrow = c(1, 2))
+  } else if (n_gps <= 4L) {
+    graphics::par(mfrow = c(2, 2))
+  } else {
+    nrow <- ceiling(n_gps / 2)
+    graphics::par(mfrow = c(nrow, 2))
+  }
+
+  # --- draw boxplots: one panel per GPS column -------------------------------
+  for (col in gps_cols) {
+    y <- df[[col]]
+
+    graphics::boxplot(
+      y ~ trt,
+      main = paste("GPS column:", col),
+      xlab = "Treatment",
+      ylab = "Generalized propensity score",
+      ...
+    )
+  }
+
+  invisible(x)
 }

@@ -328,8 +328,8 @@ print.csr <- function(x, ...) {
 #' @export
 #' @export
 str.csr <- function(object, ...) {
-  n  <- nrow(object)
-  p  <- ncol(object)
+  n <- nrow(object)
+  p <- ncol(object)
 
   treatment <- object[["treatment"]]
   if (is.factor(treatment)) {
@@ -340,18 +340,18 @@ str.csr <- function(object, ...) {
   group_sizes_after <- if (!is.null(treatment)) table(treatment) else NULL
 
   filter_vector <- attr(object, "filter_vector")
-  csr_summary   <- attr(object, "csr_summary")
-  csr_data      <- attr(object, "csr_data")
+  csr_summary <- attr(object, "csr_summary")
+  csr_data <- attr(object, "csr_data")
   filter_matrix <- attr(object, "filter_matrix")
 
   # totals
   if (!is.null(filter_vector)) {
-    n_total    <- length(filter_vector)
-    n_kept     <- sum(filter_vector)
+    n_total <- length(filter_vector)
+    n_kept <- sum(filter_vector)
     n_excluded <- n_total - n_kept
   } else {
-    n_total    <- n
-    n_kept     <- n
+    n_total <- n
+    n_kept <- n
     n_excluded <- 0L
   }
 

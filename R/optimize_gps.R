@@ -1625,19 +1625,20 @@ print.select_result <- function(x, digits = 3, ...) {
 #'
 #' @export
 make_opt_args <- function(
-    data = NULL,
-    formula,
-    reference = NULL,
-    gps_method = paste0("m", 1:10),
-    matching_method = c("fullopt", "nnm"),
-    caliper = seq(0.01, 10, 0.01),
-    order = c("desc", "asc", "original", "random"),
-    cluster = 2,
-    replace = c(TRUE, FALSE),
-    ties = c(TRUE, FALSE),
-    ratio = 1,
-    min_controls = 1,
-    max_controls = 1) {
+  data = NULL,
+  formula,
+  reference = NULL,
+  gps_method = paste0("m", 1:10),
+  matching_method = c("fullopt", "nnm"),
+  caliper = seq(0.01, 10, 0.01),
+  order = c("desc", "asc", "original", "random"),
+  cluster = 2,
+  replace = c(TRUE, FALSE),
+  ties = c(TRUE, FALSE),
+  ratio = 1,
+  min_controls = 1,
+  max_controls = 1
+) {
   ############## PARAMETER CHECK ###############################################
   ## gps_method
   ### define allowed methods

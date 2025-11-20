@@ -38,7 +38,6 @@
   args[["link"]] <- link
 
 
-
   ################### FITTING THE MODELS #######################################
   if (treat_type == "multinom" || treat_type == "binary" ||
     (treat_type == "ordinal" && method != "polr")) {

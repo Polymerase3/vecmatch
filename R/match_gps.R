@@ -884,15 +884,14 @@ match_gps <- function(csmatrix = NULL,
     treatment_var   = treatment_var,
     class           = c("matched", "data.frame")
   )
-
 }
 
 #' @export
 str.matched <- function(object, ...) {
-  original_data   <- attr(object, "original_data")
+  original_data <- attr(object, "original_data")
   matching_filter <- attr(object, "matching_filter")
 
-  n_after  <- nrow(object)
+  n_after <- nrow(object)
   n_before <- if (!is.null(original_data)) nrow(original_data) else NA_integer_
 
   cat(sprintf(
@@ -902,7 +901,7 @@ str.matched <- function(object, ...) {
   ))
 
   if (!is.null(matching_filter) && !is.na(n_before) &&
-      length(matching_filter) == n_before) {
+    length(matching_filter) == n_before) {
     cat(sprintf(
       "Proportion of original units kept: %.1f%%\n",
       100 * mean(matching_filter)
@@ -931,13 +930,13 @@ str.matched <- function(object, ...) {
     k <- NA_integer_
   }
 
-  original_data   <- attr(x, "original_data")
+  original_data <- attr(x, "original_data")
   matching_filter <- attr(x, "matching_filter")
 
   n_before <- if (!is.null(original_data)) nrow(original_data) else NA_integer_
   prop_kept <- if (!is.null(matching_filter) &&
-                   !is.na(n_before) &&
-                   length(matching_filter) == n_before) {
+    !is.na(n_before) &&
+    length(matching_filter) == n_before) {
     sprintf("%.1f%%", 100 * mean(matching_filter))
   } else {
     NA_character_
@@ -979,12 +978,12 @@ print.matched <- function(x, ...) {
 
 #' @export
 summary.matched <- function(object, digits = 1, ...) {
-  original_data   <- attr(object, "original_data")
+  original_data <- attr(object, "original_data")
   matching_filter <- attr(object, "matching_filter")
-  call            <- attr(object, "function_call")
+  call <- attr(object, "function_call")
 
-  n_total     <- NROW(original_data)
-  n_matched   <- NROW(object)
+  n_total <- NROW(original_data)
+  n_matched <- NROW(object)
   n_unmatched <- n_total - n_matched
   overall_retained <- if (n_total > 0) 100 * n_matched / n_total else NA_real_
 
@@ -1008,7 +1007,7 @@ summary.matched <- function(object, digits = 1, ...) {
   }
 
   if (!treat_name %in% names(original_data) ||
-      !treat_name %in% names(object)) {
+    !treat_name %in% names(object)) {
     cli::cli_abort(
       "Treatment variable {.field {treat_name}} not found in ",
       "{.field original_data} or matched data."
@@ -1016,14 +1015,14 @@ summary.matched <- function(object, digits = 1, ...) {
   }
 
   ## --- per-treatment counts --------------------------------------------------
-  tr_orig  <- original_data[[treat_name]]
+  tr_orig <- original_data[[treat_name]]
   tr_match <- object[[treat_name]]
 
-  if (!is.factor(tr_orig))  tr_orig  <- factor(tr_orig)
+  if (!is.factor(tr_orig)) tr_orig <- factor(tr_orig)
   if (!is.factor(tr_match)) tr_match <- factor(tr_match, levels = levels(tr_orig))
 
   tab_before <- table(tr_orig)
-  tab_after  <- table(tr_match)
+  tab_after <- table(tr_match)
 
   all_levels <- levels(tr_orig)
   if (is.null(all_levels) || !length(all_levels)) {
@@ -1050,7 +1049,7 @@ summary.matched <- function(object, digits = 1, ...) {
   ## --- extract matching parameters from match_gps() call ---------------------
   params <- NULL
   if (!is.null(call)) {
-    call_list <- as.list(call)[-1]                # drop function name
+    call_list <- as.list(call)[-1] # drop function name
     call_list <- call_list[names(call_list) %nin% c("csmatrix")]
     params <- call_list
   }
@@ -1133,12 +1132,12 @@ print.summary.matched <- function(x, digits = NULL, ...) {
   pt <- x$per_treatment
 
   df <- data.frame(
-    Treatment    = pt$Treatment,
-    "N before"   = pt$n_before,
-    "N after"    = pt$n_after,
+    Treatment = pt$Treatment,
+    "N before" = pt$n_before,
+    "N after" = pt$n_after,
     "Retained (%)" = fmt_pct(pt$Retained_percent),
-    check.names  = FALSE,
-    row.names    = NULL
+    check.names = FALSE,
+    row.names = NULL
   )
 
   cli::cli_h2("Per-treatment retention")
@@ -1154,7 +1153,7 @@ plot.matched <- function(x, ...) {
   }
 
   # use summary.matched() programmatically
-  s  <- summary(x)
+  s <- summary(x)
   pt <- s$per_treatment
 
   if (nrow(pt) == 0L) {
@@ -1216,7 +1215,7 @@ plot.matched <- function(x, ...) {
 }
 
 #' @export
-as.data.frame.matched<- function(x, ...) {
+as.data.frame.matched <- function(x, ...) {
   class(x) <- "data.frame"
   NextMethod()
 }

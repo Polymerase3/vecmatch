@@ -9,7 +9,6 @@ optimize_gps(
   formula,
   ordinal_treat = NULL,
   n_iter = 1000,
-  n_cores = 1,
   opt_args = NULL
 )
 }
@@ -40,14 +39,6 @@ spaces, increasing \code{n_iter} is recommended. When using parallel processing
 (\code{n_cores > 1}), performance gains become more apparent with larger
 \code{n_iter}. Too many cores with too few iterations may introduce
 overhead and reduce efficiency.}
-
-\item{n_cores}{Integer. Number of CPU cores to use for parallel execution. If
-set to a value greater than 1, a parallel backend is registered using
-\code{\link[future:multisession]{future::multisession()}}. \strong{Note:} parallel execution can significantly
-increase memory usage. With large datasets or high \code{n_iter} values, RAM
-consumption may spike, especially on systems with 16-32 GB RAM. Users are
-advised to monitor system resources. Internally, the function performs
-memory cleanup post-execution to manage resource usage efficiently.}
 
 \item{opt_args}{An object of class \code{"opt_args"} containing optimization
 parameters and argument settings. Use \code{\link[=make_opt_args]{make_opt_args()}} to create this
@@ -126,7 +117,7 @@ number of treatment levels):
 \item \code{smd_group}: SMD range category for the row
 }
 
-The resulting \code{best_opt_result} object also includes a custom \code{print()}
+The resulting \code{best_opt_result} object also includes a custom \code{summary()}
 method that summarizes:
 \itemize{
 \item The number of optimal parameter sets per SMD group

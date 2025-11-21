@@ -18,7 +18,6 @@ Depends:
     R (>= 3.5)
 Imports: 
     brglm2,
-    callr,
     chk,
     cli,
     doRNG,

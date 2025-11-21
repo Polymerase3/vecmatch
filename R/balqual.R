@@ -666,4 +666,3 @@ str.quality <- function(object, ...) {
   utils::str(unclass(object), ...)
   invisible(object)
 }
-

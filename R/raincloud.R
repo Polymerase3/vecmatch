@@ -167,7 +167,7 @@ raincloud <- function(data = NULL,
   ############################ INPUT CHECKING###################################
 
   args_signif <- list(...)
-
+  .data <- rlang::.data #silence R CMD CHECK note
   #--check data frame-----------------------------------------------------------
   if ("matched" %in% class(data)) {
     class(data) <- "data.frame"
@@ -637,7 +637,7 @@ raincloud <- function(data = NULL,
         position = ggplot2::position_nudge(x = rain_height + 0.05)
       ) +
 
-      ## mean ± CI
+      ## mean ± CI
       ggplot2::stat_summary(
         ggplot2::aes(color = .data[[group_col]]),
         fun.data = mean_ci, show.legend = FALSE,

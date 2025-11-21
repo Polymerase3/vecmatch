@@ -332,11 +332,9 @@ str.csr <- function(object, ...) {
   p  <- ncol(object)
 
   treatment <- object[["treatment"]]
-  if (is.factor(treatment)) {
-    trt_levels <- levels(treatment)
-  } else {
-    trt_levels <- sort(unique(treatment))
-  }
+
+  trt_levels <- levels(treatment)
+
   group_sizes_after <- if (!is.null(treatment)) table(treatment) else NULL
 
   filter_vector <- attr(object, "filter_vector")
@@ -345,15 +343,9 @@ str.csr <- function(object, ...) {
   filter_matrix <- attr(object, "filter_matrix")
 
   # totals
-  if (!is.null(filter_vector)) {
-    n_total    <- length(filter_vector)
-    n_kept     <- sum(filter_vector)
-    n_excluded <- n_total - n_kept
-  } else {
-    n_total    <- n
-    n_kept     <- n
-    n_excluded <- 0L
-  }
+  n_total    <- length(filter_vector)
+  n_kept     <- sum(filter_vector)
+  n_excluded <- n_total - n_kept
 
   # ---- header -------------------------------------------------------------
   cat("csr object: gps filtered to common support region\n")
@@ -377,32 +369,20 @@ str.csr <- function(object, ...) {
     n_kept, n_total, n_excluded
   ))
 
-  if (!is.null(csr_data)) {
-    cat(sprintf(
-      " csr_data: data.frame with %d rows and %d columns\n",
-      NROW(csr_data), NCOL(csr_data)
-    ))
-  } else {
-    cat(" csr_data: <none>\n")
-  }
+  cat(sprintf(
+    " csr_data: data.frame with %d rows and %d columns\n",
+    NROW(csr_data), NCOL(csr_data)
+  ))
 
-  if (!is.null(filter_matrix)) {
-    cat(sprintf(
-      " filter_matrix: logical matrix %d x %d\n",
-      NROW(filter_matrix), NCOL(filter_matrix)
-    ))
-  } else {
-    cat(" filter_matrix: <none>\n")
-  }
+  cat(sprintf(
+    " filter_matrix: logical matrix %d x %d\n",
+    NROW(filter_matrix), NCOL(filter_matrix)
+  ))
 
-  if (!is.null(csr_summary)) {
-    cat(sprintf(
-      " csr_summary: data.frame with %d rows (per-treatment bounds)\n",
-      NROW(csr_summary)
-    ))
-  } else {
-    cat(" csr_summary: <none>\n")
-  }
+  cat(sprintf(
+    " csr_summary: data.frame with %d rows (per-treatment bounds)\n",
+    NROW(csr_summary)
+  ))
 
   cat("\nUnderlying data.frame structure:\n")
 
@@ -432,9 +412,7 @@ plot.csr <- function(x,
   df <- as.data.frame(x)
 
   trt <- df[[treatment_col]]
-  if (!is.factor(trt)) {
-    trt <- factor(trt)
-  }
+  trt <- factor(trt)
 
   all_gps_cols <- setdiff(names(df), treatment_col)
 

@@ -919,17 +919,8 @@ str.matched <- function(object, ...) {
   n_after <- nrow(x)
 
   treatment <- x[["treatment"]]
-  if (!is.null(treatment)) {
-    if (is.factor(treatment)) {
-      trt_levels <- levels(treatment)
-    } else {
-      trt_levels <- sort(unique(treatment))
-    }
-    k <- length(trt_levels)
-  } else {
-    trt_levels <- NULL
-    k <- NA_integer_
-  }
+  trt_levels <- NULL
+  k <- NA_integer_
 
   original_data   <- attr(x, "original_data")
   matching_filter <- attr(x, "matching_filter")
@@ -991,30 +982,6 @@ summary.matched <- function(object, digits = 1, ...) {
   ## --- treatment variable name ----------------------------------------------
   treat_name <- attr(object, "treatment_var")
 
-  # it should not happen at all, but just in case
-  if (is.null(treat_name)) {
-    # robust fallback: prefer 'treatment' if present, else first column
-    if ("treatment" %in% names(original_data)) {
-      treat_name <- "treatment"
-    } else {
-      treat_name <- names(original_data)[1L]
-      cli::cli_warn(
-        c(
-          "!" = "No {.field treatment_var} attribute found for {.cls matched} object.",
-          "i" = "Assuming treatment variable is the first column: {.field {treat_name}}."
-        )
-      )
-    }
-  }
-
-  if (!treat_name %in% names(original_data) ||
-      !treat_name %in% names(object)) {
-    cli::cli_abort(
-      "Treatment variable {.field {treat_name}} not found in ",
-      "{.field original_data} or matched data."
-    )
-  }
-
   ## --- per-treatment counts --------------------------------------------------
   tr_orig  <- original_data[[treat_name]]
   tr_match <- object[[treat_name]]
@@ -1026,9 +993,6 @@ summary.matched <- function(object, digits = 1, ...) {
   tab_after  <- table(tr_match)
 
   all_levels <- levels(tr_orig)
-  if (is.null(all_levels) || !length(all_levels)) {
-    all_levels <- sort(union(names(tab_before), names(tab_after)))
-  }
 
   n_before <- as.integer(tab_before[all_levels])
   n_before[is.na(n_before)] <- 0L
@@ -1149,18 +1113,9 @@ print.summary.matched <- function(x, digits = NULL, ...) {
 
 #' @export
 plot.matched <- function(x, ...) {
-  if (!inherits(x, "matched")) {
-    stop("plot.matched() requires an object of class 'matched'.", call. = FALSE)
-  }
-
   # use summary.matched() programmatically
   s  <- summary(x)
   pt <- s$per_treatment
-
-  if (nrow(pt) == 0L) {
-    warning("No treatment information available in matched object.")
-    return(invisible(x))
-  }
 
   # prepare matrix: rows = before/after, cols = treatment levels
   counts_mat <- rbind(

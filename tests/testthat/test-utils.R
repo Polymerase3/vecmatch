@@ -153,4 +153,36 @@ test_that("Testing small utils", {
 
   # %nin%
   expect_equal(1 %nin% 0, TRUE)
+
+  # .ordering_func
+  x <- c(3, 1, 2, 5, 4)
+
+  idx_desc <- .ordering_func(x, order = "desc")
+  idx_asc  <- .ordering_func(x, order = "asc")
+  idx_orig <- .ordering_func(x, order = "original")
+
+  # desc:
+  expect_equal(idx_desc, order(x, decreasing = TRUE))
+
+  # asc:
+  expect_equal(idx_asc, order(x, decreasing = FALSE))
+
+  # original:
+  expect_equal(idx_orig, seq_along(x))
+
+  x <- 1:5
+
+  # compare with sample
+  withr::with_seed(42, {
+    res_random <- .ordering_func(x, order = "random")
+    res_sample <- sample(x)  # dzięki with_preserve_seed we dostaniemy to samo
+    expect_equal(res_random, res_sample)
+  })
+
+  # 2) global seed
+  withr::with_seed(101, {
+    seed_before <- .Random.seed
+    invisible(.ordering_func(x, order = "random"))
+    expect_identical(.Random.seed, seed_before)
+  })
 })

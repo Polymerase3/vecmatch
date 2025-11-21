@@ -160,7 +160,7 @@ test_that("Testing make_opt_args S3 class", {
     max_controls    = 3
   )
 
-  expected_nnm     <- 2 * 10 * 185 * 3 * 3 * 2 * 3
+  expected_nnm <- 2 * 10 * 185 * 3 * 3 * 2 * 3
   expected_fullopt <- 2 * 10 * 185 * 3 * 3 * 3
 
   expect_equal(
@@ -271,7 +271,7 @@ test_that("Testing make_opt_args S3 class", {
 
 test_that("best_opt_result / select_result methods and helpers work end-to-end", {
   # data and formula
-  data    <- cancer
+  data <- cancer
   formula <- status ~ age * sex
 
   ## define a relatively small search space to keep runtime reasonable
@@ -319,9 +319,12 @@ test_that("best_opt_result / select_result methods and helpers work end-to-end",
   )
 
   ## print.best_opt_result + .print_best_opt_result_core ----------------------
-  out_best <- utils::capture.output({
-    res_print <- print(best_res)
-  }, type = "message")
+  out_best <- utils::capture.output(
+    {
+      res_print <- print(best_res)
+    },
+    type = "message"
+  )
   out_best <- cli::ansi_strip(out_best)
 
   expect_true(
@@ -378,9 +381,12 @@ test_that("best_opt_result / select_result methods and helpers work end-to-end",
   )
 
   ## print.select_result -------------------------------------------------------
-  out_sel <- utils::capture.output({
-    res_sel_print <- print(sel_res)
-  }, type = "message")
+  out_sel <- utils::capture.output(
+    {
+      res_sel_print <- print(sel_res)
+    },
+    type = "message"
+  )
   out_sel <- cli::ansi_strip(out_sel)
 
   expect_true(

@@ -1,9 +1,9 @@
 test_that("balqual: argument checks and basic run", {
   # estimate the gps
   gps_matrix <- estimate_gps(status ~ age,
-                             cancer,
-                             method = "multinom",
-                             refernce = "control"
+    cancer,
+    method = "multinom",
+    refernce = "control"
   )
 
   # drop observations outside the csr
@@ -18,9 +18,9 @@ test_that("balqual: argument checks and basic run", {
   withr::with_options(list(warn = -1), {
     # matching the csmatrix
     matched_cancer <- match_gps(csmatrix,
-                                reference = "control",
-                                caliper = 1,
-                                kmeans_cluster = 5
+      reference = "control",
+      caliper = 1,
+      kmeans_cluster = 5
     )
   })
 
@@ -90,7 +90,7 @@ test_that("balqual: argument checks and basic run", {
 
   # attributes used by str.quality should exist (at least some of them)
   expect_true(!is.null(attr(quality_obj, "original_data_before")) ||
-                !is.null(attr(quality_obj, "original_data_after")))
+    !is.null(attr(quality_obj, "original_data_after")))
 
   ## reproducibility tests ----------------------------------------------------
   # 1) balqual() should not change the global .Random.seed

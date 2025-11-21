@@ -251,7 +251,6 @@ test_that("plot_name and overwrite: argument and functioning check", {
     )
 
 
-
     # expect no error when allowed to overwrite
     expect_no_error(raincloud(datax, y, charr,
       plot_name = "myplot.png",

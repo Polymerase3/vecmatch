@@ -158,7 +158,7 @@ test_that("Testing small utils", {
   x <- c(3, 1, 2, 5, 4)
 
   idx_desc <- .ordering_func(x, order = "desc")
-  idx_asc  <- .ordering_func(x, order = "asc")
+  idx_asc <- .ordering_func(x, order = "asc")
   idx_orig <- .ordering_func(x, order = "original")
 
   # desc:
@@ -175,7 +175,7 @@ test_that("Testing small utils", {
   # compare with sample
   withr::with_seed(42, {
     res_random <- .ordering_func(x, order = "random")
-    res_sample <- sample(x)  # dzięki with_preserve_seed we dostaniemy to samo
+    res_sample <- sample(x) # dzięki with_preserve_seed we dostaniemy to samo
     expect_equal(res_random, res_sample)
   })
 

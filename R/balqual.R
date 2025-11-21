@@ -553,11 +553,11 @@ print.quality <- function(x, ...) {
 str.quality <- function(object, ...) {
   # attributes from balqual()
   od_before <- attr(object, "original_data_before")
-  od_after  <- attr(object, "original_data_after")
-  smd_df    <- attr(object, "smd_df_combo")
+  od_after <- attr(object, "original_data_after")
+  smd_df <- attr(object, "smd_df_combo")
 
   n_before_attr <- object$n_before %||% if (!is.null(od_before)) NROW(od_before) else NA_integer_
-  n_after_attr  <- object$n_after  %||% if (!is.null(od_after))  NROW(od_after)  else NA_integer_
+  n_after_attr <- object$n_after %||% if (!is.null(od_after)) NROW(od_after) else NA_integer_
 
   perc <- object$perc_matched %||% if (!is.na(n_before_attr) && n_before_attr > 0) {
     100 * n_after_attr / n_before_attr
@@ -565,12 +565,12 @@ str.quality <- function(object, ...) {
     NA_real_
   }
 
-  types     <- object$type      %||% NA_character_
-  stats     <- object$statistic %||% NA_character_
-  cutoffs   <- object$cutoffs   %||% NA_real_
-  q_mean    <- object$quality_mean
-  q_max     <- object$quality_max
-  ct        <- object$count_table
+  types <- object$type %||% NA_character_
+  stats <- object$statistic %||% NA_character_
+  cutoffs <- object$cutoffs %||% NA_real_
+  q_mean <- object$quality_mean
+  q_max <- object$quality_max
+  ct <- object$count_table
 
   # treatment levels from count_table, if available
   tr_levels <- if (!is.null(ct) && "Treatment" %in% names(ct)) {
@@ -585,7 +585,7 @@ str.quality <- function(object, ...) {
   cat(sprintf(
     " Observations (treatment-level panel): before = %s, after = %s",
     if (!is.na(n_before_attr)) n_before_attr else "NA",
-    if (!is.na(n_after_attr))  n_after_attr  else "NA"
+    if (!is.na(n_after_attr)) n_after_attr else "NA"
   ))
   cat("\n")
 
@@ -621,8 +621,10 @@ str.quality <- function(object, ...) {
   # treatment levels
   if (!is.null(tr_levels)) {
     cat(" Treatment levels (from count_table): ",
-        paste(tr_levels, collapse = ", "),
-        "\n", sep = "")
+      paste(tr_levels, collapse = ", "),
+      "\n",
+      sep = ""
+    )
   }
 
   # sizes of key tables

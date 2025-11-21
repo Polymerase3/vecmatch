@@ -981,33 +981,6 @@ summary.matched <- function(object, digits = 1, ...) {
   ## --- treatment variable name ----------------------------------------------
   treat_name <- attr(object, "treatment_var")
 
-<<<<<<< HEAD
-=======
-  # it should not happen at all, but just in case
-  if (is.null(treat_name)) {
-    # robust fallback: prefer 'treatment' if present, else first column
-    if ("treatment" %in% names(original_data)) {
-      treat_name <- "treatment"
-    } else {
-      treat_name <- names(original_data)[1L]
-      cli::cli_warn(
-        c(
-          "!" = "No {.field treatment_var} attribute found for {.cls matched} object.",
-          "i" = "Assuming treatment variable is the first column: {.field {treat_name}}."
-        )
-      )
-    }
-  }
-
-  if (!treat_name %in% names(original_data) ||
-    !treat_name %in% names(object)) {
-    cli::cli_abort(
-      "Treatment variable {.field {treat_name}} not found in ",
-      "{.field original_data} or matched data."
-    )
-  }
-
->>>>>>> adf747a3dc06ae7efa77252b9eab85e0ebe03817
   ## --- per-treatment counts --------------------------------------------------
   tr_orig <- original_data[[treat_name]]
   tr_match <- object[[treat_name]]

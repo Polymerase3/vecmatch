@@ -167,7 +167,7 @@ raincloud <- function(data = NULL,
   ############################ INPUT CHECKING###################################
 
   args_signif <- list(...)
-  .data <- rlang::.data #silence R CMD CHECK note
+  .data <- rlang::.data # silence R CMD CHECK note
   #--check data frame-----------------------------------------------------------
   if ("matched" %in% class(data)) {
     class(data) <- "data.frame"

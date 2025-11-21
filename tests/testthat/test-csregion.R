@@ -9,8 +9,8 @@ test_that("csregion() with multinom data", {
     )
   })
 
-  gps_matrix  <- estimate_gps(treat ~ pred,  data, method = "multinom")
-  gps_matrix2 <- estimate_gps(y ~ pred,      data, method = "multinom")
+  gps_matrix <- estimate_gps(treat ~ pred, data, method = "multinom")
+  gps_matrix2 <- estimate_gps(y ~ pred, data, method = "multinom")
   gps_matrix3 <- estimate_gps(treat ~ pred2, data)
 
   ## testing -------------------------------------------------------------------
@@ -26,7 +26,7 @@ test_that("csregion() with multinom data", {
   # csregion() should not change the global .Random.seed
   set.seed(12345)
   old_seed <- .Random.seed
-  tmp_csr  <- csregion(gps_matrix3)
+  tmp_csr <- csregion(gps_matrix3)
   expect_identical(.Random.seed, old_seed)
 
   # running csregion() twice with the same seed should give identical results
@@ -49,7 +49,7 @@ test_that("csr methods: summary/print/str/plot/as.data.frame", {
   })
 
   gps_matrix <- estimate_gps(treat ~ pred, data, method = "multinom")
-  csr_obj    <- csregion(gps_matrix)
+  csr_obj <- csregion(gps_matrix)
 
   expect_s3_class(csr_obj, "csr")
   expect_s3_class(csr_obj, "gps")
@@ -65,27 +65,36 @@ test_that("csr methods: summary/print/str/plot/as.data.frame", {
   expect_true(is.data.frame(s$bounds_table))
   expect_true(is.data.frame(s$groups_table))
   expect_true(all(c("Treatment", "n_before", "n_after", "Excluded") %in%
-                    names(s$groups_table)))
+    names(s$groups_table)))
 
   ## print.summary.csr ---------------------------------------------------------
-  out_sum <- utils::capture.output({
-    res_sum <- print(s)
-  }, type = "message")
+  out_sum <- utils::capture.output(
+    {
+      res_sum <- print(s)
+    },
+    type = "message"
+  )
 
   out_sum_clean <- cli::ansi_strip(out_sum)
   expect_true(any(grepl("Rectangular CSR Borders Evaluation", out_sum_clean,
-                        fixed = TRUE)))
+    fixed = TRUE
+  )))
 
   expect_identical(res_sum, s)
 
   ## print.csr -----------------------------------------------------------------
-  out_pc <- utils::capture.output({
-    res_pc <- print(csr_obj)
-  }, type = "message")
+  out_pc <- utils::capture.output(
+    {
+      res_pc <- print(csr_obj)
+    },
+    type = "message"
+  )
 
   out_pc_clean <- cli::ansi_strip(out_pc)
-  expect_true(any(grepl("csr object \\(gps filtered to common support region\\)",
-                        out_pc_clean)))
+  expect_true(any(grepl(
+    "csr object \\(gps filtered to common support region\\)",
+    out_pc_clean
+  )))
 
   expect_identical(res_pc, csr_obj)
 
@@ -95,7 +104,9 @@ test_that("csr methods: summary/print/str/plot/as.data.frame", {
   })
 
   expect_true(any(grepl("csr object: gps filtered to common support region",
-                        out_sc, fixed = TRUE)))
+    out_sc,
+    fixed = TRUE
+  )))
   expect_identical(res_sc, csr_obj)
 
   ## as.data.frame.csr ---------------------------------------------------------
@@ -168,7 +179,7 @@ test_that("plot.csr handles gps_cols argument and layout branches", {
   })
 
   gps_matrix <- estimate_gps(treat ~ pred, data, method = "multinom")
-  csr_obj    <- csregion(gps_matrix)
+  csr_obj <- csregion(gps_matrix)
 
   all_gps_cols <- setdiff(names(csr_obj), "treatment")
 

@@ -132,11 +132,11 @@
 #' )
 #' }
 #' @export
-optimize_gps <- function(data         = NULL,
+optimize_gps <- function(data = NULL,
                          formula,
                          ordinal_treat = NULL,
-                         n_iter       = 1000,
-                         opt_args     = NULL) {
+                         n_iter = 1000,
+                         opt_args = NULL) {
   ####################### INPUT CHECKING #######################################
   ########################### AND ##############################################
   ####################### DATA PROCESSING ######################################
@@ -261,28 +261,28 @@ optimize_gps <- function(data         = NULL,
   ###### MATCH GPS
 
   ## defining number of iterations and searches
-  n_iter_final <- n_iter      # final number of iterations used for looping
-  n_iter       <- n_iter * 10 # number of iterations for grid search
+  n_iter_final <- n_iter # final number of iterations used for looping
+  n_iter <- n_iter * 10 # number of iterations for grid search
 
   # generate base parameter grid using random sampling
   withr::with_preserve_seed({
     search_matching <- data.frame(
-      gps_model      = sample(
+      gps_model = sample(
         unique(estimate_space$row_name),
         n_iter,
         replace = TRUE
       ),
-      method         = sample(
+      method = sample(
         opt_args[["matching_method"]],
         n_iter,
         replace = TRUE
       ),
-      caliper        = sample(
+      caliper = sample(
         opt_args[["caliper"]],
         n_iter,
         replace = TRUE
       ),
-      order          = sample(
+      order = sample(
         opt_args[["order"]],
         n_iter,
         replace = TRUE
@@ -301,7 +301,7 @@ optimize_gps <- function(data         = NULL,
   search_matching[cols_to_add] <- lapply(cols_to_add, function(x) NA)
 
   # Logical index for method-specific assignments
-  is_nnm     <- search_matching$method == "nnm"
+  is_nnm <- search_matching$method == "nnm"
   is_fullopt <- search_matching$method == "fullopt"
 
   # Assign values for "nnm" method
@@ -395,13 +395,13 @@ optimize_gps <- function(data         = NULL,
         )
       )
       withr::with_preserve_seed({
-      search_matching[
-        sample(
-          nrow(search_matching),
-          n_iter_final,
-          replace = TRUE
-        ),
-      ]
+        search_matching[
+          sample(
+            nrow(search_matching),
+            n_iter_final,
+            replace = TRUE
+          ),
+        ]
       })
     }
   )
@@ -453,11 +453,11 @@ optimize_gps <- function(data         = NULL,
     ## looping through all estimate space combinations
     suppressMessages({
       estimate_results <- foreach::foreach(
-        i          = loop_seq,
-        .packages  = c("vecmatch", "withr"), # add any other needed packages
+        i = loop_seq,
+        .packages = c("vecmatch", "withr"), # add any other needed packages
         # i needed to export all used objects to the workers in the parallel
         # setup
-        .export    = c(
+        .export = c(
           "data", "formula", "estimate_space", "ordinal_treat",
           "estimate_gps", "csregion", "export_seed"
         ),
@@ -494,7 +494,7 @@ optimize_gps <- function(data         = NULL,
               },
               error = function(e) {
                 list(
-                  error   = TRUE,
+                  error = TRUE,
                   message = sprintf(
                     "Error with method %s: %s",
                     arglist_loop$method,
@@ -575,12 +575,12 @@ optimize_gps <- function(data         = NULL,
         colnames(smd_template) <- smd_colnames
 
         opt_results <- foreach::foreach(
-          i         = loop_seq,
+          i = loop_seq,
           .packages = "vecmatch",
-          .export   = c(
+          .export = c(
             "search_matching", "estimate_results", "formula",
             "treatment_cols", "smd_colnames", "smd_template",
-            "match_gps", "balqual", "export_seed",  # make sure workers see these
+            "match_gps", "balqual", "export_seed", # make sure workers see these
             "p", "throttle", "loop_seq"
           ),
           .errorhandling = "pass"
@@ -597,7 +597,7 @@ optimize_gps <- function(data         = NULL,
 
             # Defaults in case of error
             perc_matched <- NA_real_
-            smd          <- NA_real_
+            smd <- NA_real_
             perc <- as.data.frame(
               t(rep(NA_real_, length(treatment_cols)))
             )
@@ -605,64 +605,67 @@ optimize_gps <- function(data         = NULL,
 
             smd_df <- smd_template # predefine smd_df with correct structure
 
-            try({
-              # matching
-              loop_estimate <- do.call(match_gps, args_loop)
+            try(
+              {
+                # matching
+                loop_estimate <- do.call(match_gps, args_loop)
 
-              # max SMD and %matched statistics
-              utils::capture.output({
-                qual_out <- balqual(
-                  loop_estimate,
-                  formula,
-                  type      = "smd",
-                  statistic = "max",
-                  round     = 8,
-                  print_out = FALSE
+                # max SMD and %matched statistics
+                utils::capture.output({
+                  qual_out <- balqual(
+                    loop_estimate,
+                    formula,
+                    type      = "smd",
+                    statistic = "max",
+                    round     = 8,
+                    print_out = FALSE
+                  )
+                })
+
+                # Take the smd_df from balqual
+                smd_extracted <- attr(qual_out, "smd_df_combo")
+
+                ## baseline stats
+                perc_matched <- qual_out$perc_matched
+                smd <- qual_out$summary_head
+
+                # Calculate percentages
+                ptab <- as.data.frame(qual_out$count_table)
+                ptab$Before <- as.numeric(ptab$Before)
+                ptab$After <- as.numeric(ptab$After)
+                ptab$p <- (ptab$After / ptab$Before) * 100
+
+                # Fill into correct named columns
+                computed <- stats::setNames(
+                  as.list(ptab$p),
+                  paste0("p_", ptab$Treatment)
                 )
-              })
-
-              # Take the smd_df from balqual
-              smd_extracted <- attr(qual_out, "smd_df_combo")
-
-              ## baseline stats
-              perc_matched <- qual_out$perc_matched
-              smd          <- qual_out$summary_head
-
-              # Calculate percentages
-              ptab <- as.data.frame(qual_out$count_table)
-              ptab$Before <- as.numeric(ptab$Before)
-              ptab$After  <- as.numeric(ptab$After)
-              ptab$p      <- (ptab$After / ptab$Before) * 100
-
-              # Fill into correct named columns
-              computed <- stats::setNames(
-                as.list(ptab$p),
-                paste0("p_", ptab$Treatment)
-              )
-              for (col in names(computed)) {
-                if (col %in% treatment_cols) {
-                  perc[[col]] <- computed[[col]]
+                for (col in names(computed)) {
+                  if (col %in% treatment_cols) {
+                    perc[[col]] <- computed[[col]]
+                  }
                 }
-              }
 
-              # update template with correct number of rows
-              smd_df <- as.data.frame(
-                matrix(
-                  NA,
-                  nrow = nrow(smd_extracted),
-                  ncol = length(smd_colnames)
-                ),
-                stringsAsFactors = FALSE
-              )
-              colnames(smd_df) <- smd_colnames
+                # update template with correct number of rows
+                smd_df <- as.data.frame(
+                  matrix(
+                    NA,
+                    nrow = nrow(smd_extracted),
+                    ncol = length(smd_colnames)
+                  ),
+                  stringsAsFactors = FALSE
+                )
+                colnames(smd_df) <- smd_colnames
 
-              # fill only matching columns
-              for (col in colnames(smd_extracted)) {
-                if (col %in% smd_colnames) {
-                  smd_df[[col]] <- smd_extracted[[col]]
+                # fill only matching columns
+                for (col in colnames(smd_extracted)) {
+                  if (col %in% smd_colnames) {
+                    smd_df[[col]] <- smd_extracted[[col]]
+                  }
                 }
-              }
-            }, silent = TRUE)
+              },
+              silent = TRUE
+            )
 
             ## Update progress at most n_steps times
             if (i %% throttle == 0L) {
@@ -684,7 +687,7 @@ optimize_gps <- function(data         = NULL,
             # returning output from single iteration
             res <- list(
               results = as.data.frame(result_row, stringsAsFactors = FALSE),
-              smd_dfs = as.data.frame(smd_df,   stringsAsFactors = FALSE)
+              smd_dfs = as.data.frame(smd_df, stringsAsFactors = FALSE)
             )
 
             ## --- tidy-up: remove *everything* except 'res' ----------------
@@ -766,8 +769,8 @@ optimize_gps <- function(data         = NULL,
   # Loop through each group and extract rows with max perc_matched
   for (g in groups) {
     group_rows <- filtered[filtered$smd_group == g, ]
-    max_value  <- max(group_rows$perc_matched, na.rm = TRUE)
-    best_rows  <- group_rows[group_rows$perc_matched == max_value, ]
+    max_value <- max(group_rows$perc_matched, na.rm = TRUE)
+    best_rows <- group_rows[group_rows$perc_matched == max_value, ]
     best_rows_list[[as.character(g)]] <- best_rows
   }
 
@@ -797,8 +800,8 @@ optimize_gps <- function(data         = NULL,
 #' @export
 summary.best_opt_result <- function(object, digits = 3, ...) {
   # keep attributes BEFORE any subsetting (subsetting a data.frame drops them)
-  time_taken <- attr(object, "optimization_time",   exact = TRUE)
-  n_combos   <- attr(object, "combinations_tested", exact = TRUE)
+  time_taken <- attr(object, "optimization_time", exact = TRUE)
+  n_combos <- attr(object, "combinations_tested", exact = TRUE)
 
   x <- object
 
@@ -807,7 +810,7 @@ summary.best_opt_result <- function(object, digits = 3, ...) {
 
   # filter to rows with non-NA smd / perc_matched / smd_group
   ok <- !is.na(x$smd) & !is.na(x$perc_matched) & !is.na(x$smd_group)
-  x  <- x[ok, , drop = FALSE]
+  x <- x[ok, , drop = FALSE]
 
   # split by SMD group
   groups <- split(x, x$smd_group, drop = TRUE)
@@ -816,7 +819,7 @@ summary.best_opt_result <- function(object, digits = 3, ...) {
   smd_order <- vapply(
     groups,
     function(g) {
-        min(g$smd, na.rm = TRUE)
+      min(g$smd, na.rm = TRUE)
     },
     numeric(1L)
   )
@@ -824,10 +827,10 @@ summary.best_opt_result <- function(object, digits = 3, ...) {
 
   # build summary table (same logic as before, but without printing)
   result_table <- data.frame(
-    smd_group      = character(),
+    smd_group = character(),
     unique_configs = integer(),
-    smd            = numeric(),
-    perc_matched   = numeric(),
+    smd = numeric(),
+    perc_matched = numeric(),
     stringsAsFactors = FALSE
   )
 
@@ -838,14 +841,14 @@ summary.best_opt_result <- function(object, digits = 3, ...) {
     config_cols <- setdiff(names(rows), c("smd", "perc_matched"))
     unique_configs <- nrow(unique(rows[, config_cols, drop = FALSE]))
 
-    smd_vals  <- rows$smd
+    smd_vals <- rows$smd
     perc_vals <- rows$perc_matched
 
     summary_rows <- unique(data.frame(
-      smd_group      = grp,
+      smd_group = grp,
       unique_configs = unique_configs,
-      smd            = smd_vals,
-      perc_matched   = perc_vals,
+      smd = smd_vals,
+      perc_matched = perc_vals,
       stringsAsFactors = FALSE
     ))
 
@@ -901,16 +904,16 @@ print.summary.best_opt_result <- function(x,
       "|",
       format(row$smd_group, width = col_widths[1], justify = "left"), "|",
       format(row$unique_configs,
-             width    = col_widths[2],
-             justify  = "right"
+        width    = col_widths[2],
+        justify  = "right"
       ), "|",
       format(round(row$smd, digits),
-             width    = col_widths[3],
-             justify  = "right"
+        width    = col_widths[3],
+        justify  = "right"
       ), "|",
       format(round(row$perc_matched, digits),
-             width    = col_widths[4],
-             justify  = "right"
+        width    = col_widths[4],
+        justify  = "right"
       ), "|\n",
       sep = ""
     )
@@ -920,8 +923,8 @@ print.summary.best_opt_result <- function(x,
   cat(strrep("-", total_width), "\n\n", sep = "")
 
   # Optimization summary footer
-  time_taken <- attr(x, "optimization_time",   exact = TRUE)
-  n_combos   <- attr(x, "combinations_tested", exact = TRUE)
+  time_taken <- attr(x, "optimization_time", exact = TRUE)
+  n_combos <- attr(x, "combinations_tested", exact = TRUE)
 
   if (!is.null(time_taken) || !is.null(n_combos)) {
     cat("Optimization Summary\n")
@@ -956,10 +959,10 @@ print.summary.best_opt_result <- function(x,
   n <- nrow(x)
   p <- ncol(x)
 
-  opt_time   <- attr(x, "optimization_time", exact = TRUE)
-  comb_test  <- attr(x, "combinations_tested", exact = TRUE)
-  opt_res    <- attr(x, "opt_results", exact = TRUE)
-  smd_res    <- attr(x, "smd_results", exact = TRUE)
+  opt_time <- attr(x, "optimization_time", exact = TRUE)
+  comb_test <- attr(x, "combinations_tested", exact = TRUE)
+  opt_res <- attr(x, "opt_results", exact = TRUE)
+  smd_res <- attr(x, "smd_results", exact = TRUE)
   treat_attr <- attr(x, "treat_names", exact = TRUE)
   model_covs <- attr(x, "model_covs", exact = TRUE)
 
@@ -975,14 +978,14 @@ print.summary.best_opt_result <- function(x,
   }
 
   # basic SMD / perc summary
-  smd_vals  <- x[["smd"]]
-  pm_vals   <- x[["perc_matched"]]
+  smd_vals <- x[["smd"]]
+  pm_vals <- x[["perc_matched"]]
   smd_range <- if (all(is.na(smd_vals))) {
     "<all NA>"
   } else {
     sprintf("[%.3f, %.3f]", min(smd_vals, na.rm = TRUE), max(smd_vals, na.rm = TRUE))
   }
-  pm_range  <- if (all(is.na(pm_vals))) {
+  pm_range <- if (all(is.na(pm_vals))) {
     "<all NA>"
   } else {
     sprintf("[%.1f, %.1f]", min(pm_vals, na.rm = TRUE), max(pm_vals, na.rm = TRUE))
@@ -1030,11 +1033,11 @@ print.best_opt_result <- function(x, ...) {
 
 #' @export
 plot.best_opt_result <- function(x,
-                                 smd_xlim     = c(0, 1),
-                                 smd_cutoffs  = c(0.10, 0.25),
-                                 xlab         = "Max SMD",
-                                 ylab         = "% matched",
-                                 main         = "Matching optimization results",
+                                 smd_xlim = c(0, 1),
+                                 smd_cutoffs = c(0.10, 0.25),
+                                 xlab = "Max SMD",
+                                 ylab = "% matched",
+                                 main = "Matching optimization results",
                                  ...) {
   # x: best_opt_result object (data.frame with columns 'smd' and 'perc_matched')
 
@@ -1045,13 +1048,13 @@ plot.best_opt_result <- function(x,
     )
   }
 
-  smd   <- x[["smd"]]
-  pm    <- x[["perc_matched"]]
+  smd <- x[["smd"]]
+  pm <- x[["perc_matched"]]
 
   # drop NAs
   ok <- !is.na(smd) & !is.na(pm)
   smd <- smd[ok]
-  pm  <- pm[ok]
+  pm <- pm[ok]
 
   if (!length(smd)) {
     warning("No finite (smd, perc_matched) pairs to plot.")
@@ -1060,7 +1063,7 @@ plot.best_opt_result <- function(x,
 
   # enforce numeric
   smd <- as.numeric(smd)
-  pm  <- as.numeric(pm)
+  pm <- as.numeric(pm)
 
   # x-axis limited to [0, 1] as requested
   smd_xlim <- c(0, 1)
@@ -1110,13 +1113,13 @@ str.best_opt_result <- function(object, ...) {
   n <- nrow(object)
   p <- ncol(object)
 
-  opt_time   <- attr(object, "optimization_time",   exact = TRUE)
-  comb_test  <- attr(object, "combinations_tested", exact = TRUE)
-  opt_res    <- attr(object, "opt_results",         exact = TRUE)
-  smd_res    <- attr(object, "smd_results",         exact = TRUE)
-  treat_attr <- attr(object, "treat_names",         exact = TRUE)
-  model_covs <- attr(object, "model_covs",          exact = TRUE)
-  call       <- attr(object, "function_call",       exact = TRUE)
+  opt_time <- attr(object, "optimization_time", exact = TRUE)
+  comb_test <- attr(object, "combinations_tested", exact = TRUE)
+  opt_res <- attr(object, "opt_results", exact = TRUE)
+  smd_res <- attr(object, "smd_results", exact = TRUE)
+  treat_attr <- attr(object, "treat_names", exact = TRUE)
+  model_covs <- attr(object, "model_covs", exact = TRUE)
+  call <- attr(object, "function_call", exact = TRUE)
 
   ## Treatments -----------------------------------------------------------
   if (!is.null(treat_attr)) {
@@ -1557,7 +1560,7 @@ select_opt <- function(x,
   ## filter out NAs
   perc_df <- perc_df[stats::complete.cases(perc_df), ]
 
-  perc_components <- NULL   # will store which columns were used
+  perc_components <- NULL # will store which columns were used
 
   ## if single column after iter_ID, then no need to aggregate
   if (ncol(perc_df) == 2L) {
@@ -1654,8 +1657,8 @@ select_opt <- function(x,
   }
 
   # add the parameter data.frame and function call
-  attr(res, "param_df")       <- param_df
-  attr(res, "function_call")  <- match.call()
+  attr(res, "param_df") <- param_df
+  attr(res, "function_call") <- match.call()
 
   # return invisibly; printing is handled by print() methods
   invisible(res)
@@ -1667,16 +1670,16 @@ summary.select_result <- function(object, digits = 3, ...) {
 
   # Remove rows with NA in key columns
   x <- x[!is.na(x$smd_group) &
-           !is.na(x$overall_stat) &
-           !is.na(x$perc_matched), , drop = FALSE]
+    !is.na(x$overall_stat) &
+    !is.na(x$perc_matched), , drop = FALSE]
 
   if (!nrow(x)) {
     # empty summary
     result_table <- data.frame(
-      smd_group      = character(0),
+      smd_group = character(0),
       unique_configs = integer(0),
-      smd            = numeric(0),
-      perc_matched   = numeric(0),
+      smd = numeric(0),
+      perc_matched = numeric(0),
       stringsAsFactors = FALSE
     )
   } else {
@@ -1692,10 +1695,10 @@ summary.select_result <- function(object, digits = 3, ...) {
 
     # Build result table (unrounded here; rounding is in print())
     result_table <- data.frame(
-      smd_group      = character(),
+      smd_group = character(),
       unique_configs = integer(),
-      smd            = numeric(),
-      perc_matched   = numeric(),
+      smd = numeric(),
+      perc_matched = numeric(),
       stringsAsFactors = FALSE
     )
 
@@ -1707,10 +1710,10 @@ summary.select_result <- function(object, digits = 3, ...) {
       result_table <- rbind(
         result_table,
         data.frame(
-          smd_group      = grp,
+          smd_group = grp,
           unique_configs = unique_configs,
-          smd            = first_row$overall_stat,
-          perc_matched   = first_row$perc_matched,
+          smd = first_row$overall_stat,
+          perc_matched = first_row$perc_matched,
           stringsAsFactors = FALSE
         )
       )
@@ -1756,8 +1759,8 @@ print.summary.select_result <- function(x,
   result_table <- x
 
   # Table formatting
-  header      <- c("smd_group", "unique_configs", "smd", "perc_matched")
-  col_widths  <- c(12, 16, 8, 14)
+  header <- c("smd_group", "unique_configs", "smd", "perc_matched")
+  col_widths <- c(12, 16, 8, 14)
   total_width <- sum(col_widths) + length(col_widths) + 1
 
   cat(strrep("-", total_width), "\n")
@@ -1777,12 +1780,14 @@ print.summary.select_result <- function(x,
 
       cat(
         "|",
-        format(row$smd_group,      width = col_widths[1], justify = "left"), "|",
+        format(row$smd_group, width = col_widths[1], justify = "left"), "|",
         format(row$unique_configs, width = col_widths[2], justify = "right"), "|",
-        format(round(row$smd,          digits),
-               width = col_widths[3], justify = "right"), "|",
+        format(round(row$smd, digits),
+          width = col_widths[3], justify = "right"
+        ), "|",
         format(round(row$perc_matched, digits),
-               width = col_widths[4], justify = "right"),
+          width = col_widths[4], justify = "right"
+        ),
         "|\n",
         sep = ""
       )
@@ -1847,15 +1852,15 @@ str.select_result <- function(object, ...) {
   n <- nrow(object)
   p <- ncol(object)
 
-  opt_time   <- attr(object, "optimization_time",   exact = TRUE)
-  comb_test  <- attr(object, "combinations_tested", exact = TRUE)
-  opt_res    <- attr(object, "opt_results",         exact = TRUE)
-  smd_res    <- attr(object, "smd_results",         exact = TRUE)
-  treat_attr <- attr(object, "treat_names",         exact = TRUE)
-  model_covs <- attr(object, "model_covs",          exact = TRUE)
-  param_df   <- attr(object, "param_df",            exact = TRUE)
-  comps      <- attr(object, "perc_components",     exact = TRUE)
-  call       <- attr(object, "function_call",       exact = TRUE)
+  opt_time <- attr(object, "optimization_time", exact = TRUE)
+  comb_test <- attr(object, "combinations_tested", exact = TRUE)
+  opt_res <- attr(object, "opt_results", exact = TRUE)
+  smd_res <- attr(object, "smd_results", exact = TRUE)
+  treat_attr <- attr(object, "treat_names", exact = TRUE)
+  model_covs <- attr(object, "model_covs", exact = TRUE)
+  param_df <- attr(object, "param_df", exact = TRUE)
+  comps <- attr(object, "perc_components", exact = TRUE)
+  call <- attr(object, "function_call", exact = TRUE)
 
   ## Treatments -----------------------------------------------------------
   if (!is.null(treat_attr)) {
@@ -2067,8 +2072,8 @@ run_selected_matching <- function(x,
 
   ## --------- GPS estimation (via reconstructed call) ----------------------
   method_gps <- as.character(par_row[["method_gps"]])
-  link       <- as.character(par_row[["link"]])
-  reference  <- as.character(par_row[["reference"]])
+  link <- as.character(par_row[["link"]])
+  reference <- as.character(par_row[["reference"]])
 
   .chk_cond(
     any(is.na(c(method_gps, link, reference))),
@@ -2094,15 +2099,15 @@ run_selected_matching <- function(x,
   csr_mat <- csregion(gps_mat)
 
   ## --------- Matching ----------------------------------------------------
-  method_match   <- as.character(par_row[["method_match"]])
-  caliper        <- as.numeric(par_row[["caliper"]])
-  order          <- as.character(par_row[["order"]])
+  method_match <- as.character(par_row[["method_match"]])
+  caliper <- as.numeric(par_row[["caliper"]])
+  order <- as.character(par_row[["order"]])
   kmeans_cluster <- par_row[["kmeans_cluster"]]
-  replace        <- par_row[["replace"]]
-  ties           <- par_row[["ties"]]
-  ratio          <- par_row[["ratio"]]
-  min_controls   <- par_row[["min_controls"]]
-  max_controls   <- par_row[["max_controls"]]
+  replace <- par_row[["replace"]]
+  ties <- par_row[["ties"]]
+  ratio <- par_row[["ratio"]]
+  min_controls <- par_row[["min_controls"]]
+  max_controls <- par_row[["max_controls"]]
 
   args_match <- list(
     csmatrix       = csr_mat,
@@ -2142,9 +2147,9 @@ run_selected_matching <- function(x,
   matched <- do.call(match_gps, args_match)
 
   # provenance
-  attr(matched, "select_row")       <- par_row
+  attr(matched, "select_row") <- par_row
   attr(matched, "select_smd_group") <- par_row[["smd_group"]]
-  attr(matched, "select_call")      <- match.call()
+  attr(matched, "select_call") <- match.call()
 
   matched
 }
@@ -2299,7 +2304,7 @@ make_opt_args <- function(
     .process_ref(
       treatment_var,
       ordinal_treat = NULL,
-      reference      = ref
+      reference = ref
     )[["reference"]]
   })
   reference <- unlist(ref_list)
@@ -2392,8 +2397,8 @@ make_opt_args <- function(
     max_controls <- NULL
   } else if (length(matching_method) == 1 && matching_method == "fullopt") {
     replace <- NULL
-    ties    <- NULL
-    ratio   <- NULL
+    ties <- NULL
+    ratio <- NULL
   }
 
   ############# DEFINE THE LIST ################################################
@@ -2449,7 +2454,7 @@ make_opt_args <- function(
   }
 
   total_combinations_fmt <- format(total_combinations, scientific = FALSE)
-  model_covs             <- colnames(data_list[["model_covs"]])
+  model_covs <- colnames(data_list[["model_covs"]])
 
   ############# RETURN STRUCTURED OBJECT ######################################
   res <- structure(

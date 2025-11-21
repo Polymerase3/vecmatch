@@ -343,8 +343,8 @@ str.csr <- function(object, ...) {
   filter_matrix <- attr(object, "filter_matrix")
 
   # totals
-  n_total    <- length(filter_vector)
-  n_kept     <- sum(filter_vector)
+  n_total <- length(filter_vector)
+  n_kept <- sum(filter_vector)
   n_excluded <- n_total - n_kept
 
 

@@ -42,32 +42,32 @@ test_that("Formals checking:  method, ref, logicals", {
   # method
   expect_error(estimate_gps(y ~ pred, data, method = c()), regexp = "string")
   expect_error(estimate_gps(y ~ pred, data, method = "error"),
-               regexp = "method"
+    regexp = "method"
   )
   expect_no_error(estimate_gps(y ~ pred, data, method = NULL))
   expect_no_error(estimate_gps(y ~ pred, data, method = "vglm"))
 
   # ref
   expect_error(estimate_gps(y ~ pred, data, method = NULL, reference = TRUE),
-               regexp = "reference"
+    regexp = "reference"
   )
   expect_error(estimate_gps(y ~ pred, data, method = NULL, reference = "FAIL"),
-               regexp = "unique"
+    regexp = "unique"
   )
   expect_warning(estimate_gps(treat ~ pred, data,
-                              method = "multinom",
-                              reference = "1",
-                              ordinal_treat = c(1, 3, 2, 5, 4)
+    method = "multinom",
+    reference = "1",
+    ordinal_treat = c(1, 3, 2, 5, 4)
   ))
   expect_no_error(estimate_gps(y ~ pred, data, method = NULL, reference = NULL))
   expect_no_error(estimate_gps(y ~ pred, data,
-                               method = "multinom",
-                               reference = "TRUE"
+    method = "multinom",
+    reference = "TRUE"
   ))
 
   # logicals
   expect_error(estimate_gps(y ~ pred, data, fit_object = "fail"),
-               regexp = "flag"
+    regexp = "flag"
   )
 
   expect_output(estimate_gps(y ~ pred, data, verbose_output = TRUE))
@@ -96,35 +96,35 @@ test_that("Formals checking: missing and by", {
   )
 
   expect_no_error(estimate_gps(treat ~ y, data,
-                               method = "multinom",
-                               by = "sex"
+    method = "multinom",
+    by = "sex"
   ))
   expect_no_error(estimate_gps(treat ~ y, data,
-                               method = "vglm",
-                               by = "sex"
+    method = "vglm",
+    by = "sex"
   ))
   expect_error(estimate_gps(treat ~ y, data, method = "vglm", by = "abc"),
-               regexp = "stratify"
+    regexp = "stratify"
   )
 
   ## reproducibility tests ----------------------------------------------------
   set.seed(5005)
   old_seed <- .Random.seed
   res_by <- estimate_gps(treat ~ y, data,
-                         method = "multinom",
-                         by = "sex"
+    method = "multinom",
+    by = "sex"
   )
   expect_identical(.Random.seed, old_seed)
 
   set.seed(6006)
   g_by1 <- estimate_gps(treat ~ y, data,
-                        method = "multinom",
-                        by = "sex"
+    method = "multinom",
+    by = "sex"
   )
   set.seed(6006)
   g_by2 <- estimate_gps(treat ~ y, data,
-                        method = "multinom",
-                        by = "sex"
+    method = "multinom",
+    by = "sex"
   )
   expect_identical(g_by1, g_by2)
 })
@@ -138,43 +138,43 @@ test_that("Formals checking: link", {
 
   expect_error(
     estimate_gps(treat ~ pred, data,
-                 method = "multinom",
-                 link = list()
+      method = "multinom",
+      link = list()
     ),
     regexp = "string"
   )
 
   expect_error(
     estimate_gps(treat ~ pred, data,
-                 method = "multinom",
-                 link = "fail_link"
+      method = "multinom",
+      link = "fail_link"
     ),
     regexp = "link"
   )
 
   expect_no_error(estimate_gps(treat ~ pred, data,
-                               method = "multinom",
-                               link = "generalized_logit"
+    method = "multinom",
+    link = "generalized_logit"
   ))
 
   ## reproducibility tests ----------------------------------------------------
   set.seed(7007)
   old_seed <- .Random.seed
   res_link <- estimate_gps(treat ~ pred, data,
-                           method = "multinom",
-                           link = "generalized_logit"
+    method = "multinom",
+    link = "generalized_logit"
   )
   expect_identical(.Random.seed, old_seed)
 
   set.seed(8008)
   g_link1 <- estimate_gps(treat ~ pred, data,
-                          method = "multinom",
-                          link = "generalized_logit"
+    method = "multinom",
+    link = "generalized_logit"
   )
   set.seed(8008)
   g_link2 <- estimate_gps(treat ~ pred, data,
-                          method = "multinom",
-                          link = "generalized_logit"
+    method = "multinom",
+    link = "generalized_logit"
   )
   expect_identical(g_link1, g_link2)
 })
@@ -189,43 +189,43 @@ test_that("Formals checking: ordinal_treat", {
 
   expect_error(
     estimate_gps(treat ~ pred, data,
-                 method = "multinom",
-                 ordinal_treat = list(1)
+      method = "multinom",
+      ordinal_treat = list(1)
     ),
     regexp = "atomic"
   )
 
   expect_error(
     estimate_gps(treat ~ pred, data,
-                 method = "multinom",
-                 ordinal_treat = c(1, 2, 3)
+      method = "multinom",
+      ordinal_treat = c(1, 2, 3)
     ),
     regexp = "levels"
   )
 
   expect_no_error(estimate_gps(treat ~ pred, data,
-                               method = "multinom",
-                               ordinal_treat = c(1, 3, 2, 5, 4)
+    method = "multinom",
+    ordinal_treat = c(1, 3, 2, 5, 4)
   ))
 
   ## reproducibility tests ----------------------------------------------------
   set.seed(9009)
   old_seed <- .Random.seed
   res_ord <- estimate_gps(treat ~ pred, data,
-                          method = "multinom",
-                          ordinal_treat = c(1, 3, 2, 5, 4)
+    method = "multinom",
+    ordinal_treat = c(1, 3, 2, 5, 4)
   )
   expect_identical(.Random.seed, old_seed)
 
   set.seed(10101)
   g_ord1 <- estimate_gps(treat ~ pred, data,
-                         method = "multinom",
-                         ordinal_treat = c(1, 3, 2, 5, 4)
+    method = "multinom",
+    ordinal_treat = c(1, 3, 2, 5, 4)
   )
   set.seed(10101)
   g_ord2 <- estimate_gps(treat ~ pred, data,
-                         method = "multinom",
-                         ordinal_treat = c(1, 3, 2, 5, 4)
+    method = "multinom",
+    ordinal_treat = c(1, 3, 2, 5, 4)
   )
   expect_identical(g_ord1, g_ord2)
 })
@@ -241,51 +241,51 @@ test_that("Formals checking: subset", {
 
   expect_error(
     estimate_gps(treat ~ pred, data,
-                 method = "multinom",
-                 subset = list()
+      method = "multinom",
+      subset = list()
     ),
     regexp = "string"
   )
 
   expect_error(
     estimate_gps(treat ~ pred, data,
-                 method = "multinom",
-                 subset = "some_col"
+      method = "multinom",
+      subset = "some_col"
     ),
     regexp = "provided dataset"
   )
 
   expect_error(
     estimate_gps(treat ~ pred, data,
-                 method = "multinom",
-                 subset = "subset_fail"
+      method = "multinom",
+      subset = "subset_fail"
     ),
     regexp = "logical values"
   )
 
   expect_no_error(estimate_gps(treat ~ pred, data,
-                               method = "multinom",
-                               subset = "subset_pass"
+    method = "multinom",
+    subset = "subset_pass"
   ))
 
   ## reproducibility tests ----------------------------------------------------
   set.seed(11111)
   old_seed <- .Random.seed
   res_sub <- estimate_gps(treat ~ pred, data,
-                          method = "multinom",
-                          subset = "subset_pass"
+    method = "multinom",
+    subset = "subset_pass"
   )
   expect_identical(.Random.seed, old_seed)
 
   set.seed(12121)
   g_sub1 <- estimate_gps(treat ~ pred, data,
-                         method = "multinom",
-                         subset = "subset_pass"
+    method = "multinom",
+    subset = "subset_pass"
   )
   set.seed(12121)
   g_sub2 <- estimate_gps(treat ~ pred, data,
-                         method = "multinom",
-                         subset = "subset_pass"
+    method = "multinom",
+    subset = "subset_pass"
   )
   expect_identical(g_sub1, g_sub2)
 })
@@ -295,7 +295,7 @@ test_that("estimate_gps: methods and scenarios", {
   data <- data.frame(
     treat = rep(c(1, 2, 3, 4, 5), 20),
     treat_fold = factor(rep(c(1, 2, 3, 4, 5), 20),
-                        ordered = TRUE
+      ordered = TRUE
     ),
     treat_bin_log = rep(c(TRUE, FALSE), 50),
     treat_bin_char = rep(c("A", "B"), 50),
@@ -309,7 +309,7 @@ test_that("estimate_gps: methods and scenarios", {
   expect_no_error(estimate_gps(treat ~ pred, data, method = "brglm2"))
   expect_no_error(estimate_gps(treat ~ pred, data, method = "mblogit"))
   expect_error(estimate_gps(treat_fold ~ pred, data, method = "polr"),
-               regexp = "ordered factor"
+    regexp = "ordered factor"
   )
 
   ## reproducibility tests ----------------------------------------------------
@@ -342,9 +342,11 @@ test_that("gps methods: setup helper object", {
     structure(
       df,
       original_data = original_data,
-      function_call = quote(estimate_gps(formula = status ~ x,
-                                         data = original_data)),
-      class         = c("gps", "data.frame")
+      function_call = quote(estimate_gps(
+        formula = status ~ x,
+        data = original_data
+      )),
+      class = c("gps", "data.frame")
     )
   }
 
@@ -381,9 +383,12 @@ test_that(".print_gps_core prints header and returns invisibly", {
   gps_obj <- make_test_gps()
 
   utils::capture.output({
-    out <- utils::capture.output({
-      res <- .print_gps_core(gps_obj)
-    }, type = "message")
+    out <- utils::capture.output(
+      {
+        res <- .print_gps_core(gps_obj)
+      },
+      type = "message"
+    )
   })
 
   # check that the header line is present
@@ -424,9 +429,12 @@ test_that("print.gps uses .print_gps_core and prints header", {
   gps_obj <- make_test_gps()
 
   utils::capture.output({
-    out <- utils::capture.output({
-      res <- print(gps_obj)
-    }, type = "message")
+    out <- utils::capture.output(
+      {
+        res <- print(gps_obj)
+      },
+      type = "message"
+    )
   })
 
   # header from print.gps
@@ -558,9 +566,12 @@ test_that("print.summary.gps prints without error and includes sections", {
   gps_obj <- make_test_gps()
   s <- summary(gps_obj)
 
-  out <- utils::capture.output({
-    res <- print(s)
-  }, type = "message")
+  out <- utils::capture.output(
+    {
+      res <- print(s)
+    },
+    type = "message"
+  )
 
   out <- cli::ansi_strip(out)
 

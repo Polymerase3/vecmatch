@@ -19,7 +19,7 @@ test_that("match_gps checking arguments: csmatrix", {
   # drop observations outside the csr
   invisible(capture.output(
     {
-      csmatrix    <- csregion(gps_matrix)
+      csmatrix <- csregion(gps_matrix)
       csmatrix_2t <- csregion(gps_matrix_2t)
     },
     file = NULL
@@ -158,9 +158,12 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
   expect_identical(res_str, matched_obj)
 
   ## .print_matched_core --------------------------------------------------------
-  out_core <- utils::capture.output({
-    res_core <- .print_matched_core(matched_obj)
-  }, type = "message")
+  out_core <- utils::capture.output(
+    {
+      res_core <- .print_matched_core(matched_obj)
+    },
+    type = "message"
+  )
 
   # strip ansi if present and check header line
   out_core_clean <- cli::ansi_strip(out_core)
@@ -169,13 +172,18 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
   expect_identical(res_core, matched_obj)
 
   ## print.matched --------------------------------------------------------------
-  out_print <- utils::capture.output({
-    res_print <- print(matched_obj)
-  }, type = "message")
+  out_print <- utils::capture.output(
+    {
+      res_print <- print(matched_obj)
+    },
+    type = "message"
+  )
 
   out_print_clean <- cli::ansi_strip(out_print)
-  expect_true(any(grepl("matched object \\(GPS-based matched dataset\\)",
-                        out_print_clean)))
+  expect_true(any(grepl(
+    "matched object \\(GPS-based matched dataset\\)",
+    out_print_clean
+  )))
 
   expect_identical(res_print, matched_obj)
 
@@ -188,13 +196,16 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
   expect_true(s$n_total >= s$n_matched)
   expect_true(is.data.frame(s$per_treatment))
   expect_true(all(c("Treatment", "n_before", "n_after", "Retained_percent") %in%
-                    names(s$per_treatment)))
+    names(s$per_treatment)))
   expect_true(s$treatment_var %in% names(matched_obj))
 
   ## print.summary.matched ------------------------------------------------------
-  out_ps <- utils::capture.output({
-    res_ps <- print(s)
-  }, type = "message")
+  out_ps <- utils::capture.output(
+    {
+      res_ps <- print(s)
+    },
+    type = "message"
+  )
 
   out_ps_clean <- cli::ansi_strip(out_ps)
   expect_true(any(grepl("Summary of matched object", out_ps_clean, fixed = TRUE)))

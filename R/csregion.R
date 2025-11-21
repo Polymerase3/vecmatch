@@ -328,8 +328,8 @@ print.csr <- function(x, ...) {
 #' @export
 #' @export
 str.csr <- function(object, ...) {
-  n  <- nrow(object)
-  p  <- ncol(object)
+  n <- nrow(object)
+  p <- ncol(object)
 
   treatment <- object[["treatment"]]
 
@@ -338,14 +338,15 @@ str.csr <- function(object, ...) {
   group_sizes_after <- if (!is.null(treatment)) table(treatment) else NULL
 
   filter_vector <- attr(object, "filter_vector")
-  csr_summary   <- attr(object, "csr_summary")
-  csr_data      <- attr(object, "csr_data")
+  csr_summary <- attr(object, "csr_summary")
+  csr_data <- attr(object, "csr_data")
   filter_matrix <- attr(object, "filter_matrix")
 
   # totals
   n_total    <- length(filter_vector)
   n_kept     <- sum(filter_vector)
   n_excluded <- n_total - n_kept
+
 
   # ---- header -------------------------------------------------------------
   cat("csr object: gps filtered to common support region\n")

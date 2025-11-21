@@ -427,8 +427,8 @@ print.gps <- function(x, ...) {
 
 #' @export
 str.gps <- function(object, ...) {
-  n  <- nrow(object)
-  p  <- ncol(object)
+  n <- nrow(object)
+  p <- ncol(object)
 
   treatment <- object[["treatment"]]
   if (is.factor(treatment)) {
@@ -438,10 +438,10 @@ str.gps <- function(object, ...) {
   }
 
   gps_cols <- setdiff(names(object), "treatment")
-  k        <- length(trt_levels)
+  k <- length(trt_levels)
 
   original_data <- attr(object, "original_data")
-  call          <- attr(object, "function_call")
+  call <- attr(object, "function_call")
 
   ## Header -------------------------------------------------------------
   cat("gps object: generalized propensity scores\n")
@@ -469,9 +469,9 @@ str.gps <- function(object, ...) {
   if (!is.null(call)) {
     cat(" Call:\n")
     cat("  ",
-        paste(deparse(call, width.cutoff = 80L), collapse = "\n  "),
-        "\n",
-        sep = ""
+      paste(deparse(call, width.cutoff = 80L), collapse = "\n  "),
+      "\n",
+      sep = ""
     )
   }
 

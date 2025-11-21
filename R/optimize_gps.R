@@ -2274,7 +2274,6 @@ make_opt_args <- function(
     ratio = 1,
     min_controls = 1,
     max_controls = 1) {
-
   ############## PARAMETER CHECK ###############################################
   ## gps_method
   allowed_gps_methods <- paste0("m", 1:10)

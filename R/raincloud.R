@@ -165,316 +165,638 @@ raincloud <- function(data = NULL,
                       overwrite = FALSE,
                       ...) {
   ############################ INPUT CHECKING###################################
+  withr::with_preserve_seed({
+    args_signif <- list(...)
+    .data <- rlang::.data # silence R CMD CHECK note
+    #--check data frame-----------------------------------------------------------
+    if ("matched" %in% class(data)) {
+      class(data) <- "data.frame"
+    }
 
-  args_signif <- list(...)
-  .data <- rlang::.data # silence R CMD CHECK note
-  #--check data frame-----------------------------------------------------------
-  if ("matched" %in% class(data)) {
-    class(data) <- "data.frame"
-  }
+    ## must be an object of class data frame
+    .check_df(data)
 
-  ## must be an object of class data frame
-  .check_df(data)
+    ## with at least one numeric column
+    .chk_cond(
+      length(data) == 1 && !is.numeric(data[, 1]),
+      "The provided data is not numeric"
+    )
 
-  ## with at least one numeric column
-  .chk_cond(
-    length(data) == 1 && !is.numeric(data[, 1]),
-    "The provided data is not numeric"
-  )
+    #--check y, group and facet---------------------------------------------------
+    ## check if the provided names are valid names + convert to characters
+    symlist <- list(
+      y = substitute(y),
+      group = substitute(group),
+      facet = substitute(facet)
+    )
+    symlist <- .conv_nam(symlist)
 
-  #--check y, group and facet---------------------------------------------------
-  ## check if the provided names are valid names + convert to characters
-  symlist <- list(
-    y = substitute(y),
-    group = substitute(group),
-    facet = substitute(facet)
-  )
-  symlist <- .conv_nam(symlist)
+    ## check if y exists
+    .chk_cond(
+      is.null(symlist[[1]]),
+      "The argument `y` is missing with no default!"
+    )
 
-  ## check if y exists
-  .chk_cond(
-    is.null(symlist[[1]]),
-    "The argument `y` is missing with no default!"
-  )
-
-  ## check if the names are in the provided data.frame
-  nonames <- .check_name(data, symlist)
-  .chk_cond(
-    length(nonames) != 0,
-    sprintf("The following names are not present in the
+    ## check if the names are in the provided data.frame
+    nonames <- .check_name(data, symlist)
+    .chk_cond(
+      length(nonames) != 0,
+      sprintf("The following names are not present in the
                     provided data frame: %s", word_list(add_quotes(nonames)))
-  )
+    )
 
-  ## check if limits is a numeric vector of length 2
-  .chk_cond(
-    !is.null(limits) && !.check_vecl(limits, leng = 2),
-    "The `limits` argument should be a numeric vector of
+    ## check if limits is a numeric vector of length 2
+    .chk_cond(
+      !is.null(limits) && !.check_vecl(limits, leng = 2),
+      "The `limits` argument should be a numeric vector of
             length 2: c(min, max)"
-  )
-
-  ## check if density scale allowed
-  chk::chk_character(density_scale)
-  .chk_cond(
-    density_scale %nin% c("area", "count", "width"),
-    'The `density_scale` argument should be a single character. The allowed values are: "area", "count" and "width".'
-  )
-
-  ## check range for jitter
-  chk::chk_range(jitter, range = c(0, 1))
-
-  ## check range for alpha
-  chk::chk_range(alpha, range = c(0, 1))
-
-  ## check logicals
-  chk::chk_all(c(overwrite, sig_label_color), chk::chk_flag)
-
-  ## check character and valid name for plot_name
-  if (!is.null(plot_name)) {
-    chk::chk_character(plot_name)
-    .check_extension(plot_name,
-      x_name = "plot_name",
-      ext_vec = c(".png", ".PNG", ".pdf", ".PDF")
     )
-  }
 
-  # check if sig_label_size is integer
-  if (!is.null(sig_label_size)) {
-    suppressWarnings(sig_label_size <- try(as.integer(sig_label_size)))
-
+    ## check if density scale allowed
+    chk::chk_character(density_scale)
     .chk_cond(
-      is.na(sig_label_size) || inherits(sig_label_size, "try-error"),
-      "`sig_label_size` must be an integer."
+      density_scale %nin% c("area", "count", "width"),
+      'The `density_scale` argument should be a single character. The allowed values are: "area", "count" and "width".'
     )
 
-    chk::chk_integer(sig_label_size, x_name = "sig_label_size")
-  }
+    ## check range for jitter
+    chk::chk_range(jitter, range = c(0, 1))
 
-  # check smd_type
-  chk::chk_character(smd_type)
-  chk::chk_length(smd_type, length = 1)
-  .chk_cond(
-    smd_type %nin% c("mean", "median"),
-    'The `smd_type` argument can only take one of the
+    ## check range for alpha
+    chk::chk_range(alpha, range = c(0, 1))
+
+    ## check logicals
+    chk::chk_all(c(overwrite, sig_label_color), chk::chk_flag)
+
+    ## check character and valid name for plot_name
+    if (!is.null(plot_name)) {
+      chk::chk_character(plot_name)
+      .check_extension(plot_name,
+        x_name = "plot_name",
+        ext_vec = c(".png", ".PNG", ".pdf", ".PDF")
+      )
+    }
+
+    # check if sig_label_size is integer
+    if (!is.null(sig_label_size)) {
+      suppressWarnings(sig_label_size <- try(as.integer(sig_label_size)))
+
+      .chk_cond(
+        is.na(sig_label_size) || inherits(sig_label_size, "try-error"),
+        "`sig_label_size` must be an integer."
+      )
+
+      chk::chk_integer(sig_label_size, x_name = "sig_label_size")
+    }
+
+    # check smd_type
+    chk::chk_character(smd_type)
+    chk::chk_length(smd_type, length = 1)
+    .chk_cond(
+      smd_type %nin% c("mean", "median"),
+      'The `smd_type` argument can only take one of the
             following values: "mean", "median".'
-  )
-
-  ####################### DATA PROCESSING ######################################
-  # assure y is numeric and convert facet, group to factors
-  mapply(.conv_data,
-    type = list("numeric", "factor", "factor"),
-    varname = symlist,
-    MoreArgs = list(
-      data = data,
-      env = environment() ## allows replacing the data without reassignment
-    )
-  )
-
-  ## use only complete.cases of variables in the function call
-  which_use <- unlist(symlist[!vapply(symlist, is.null, logical(1L))])
-  complete_sub <- stats::complete.cases(data[, colnames(data) %in% which_use])
-  data <- as.data.frame(subset(data, complete_sub))
-
-  # defining levels of facet for the test
-  facet_levels <- length(unique(data[, symlist[["facet"]]]))
-  facet_levels <- max(facet_levels, 1) # if facet_levels = 0
-
-  # check and process the significance argument
-  use_signif <- FALSE
-  if (!is.null(significance)) {
-    rlang::check_installed(c("rstatix", "ggpubr"))
-    use_signif <- TRUE
-
-    # check if more than 2 groups in the data
-    .chk_cond(
-      length(unique(data[, symlist[["group"]]])) <= 1,
-      "It is impossible to compute statistical significance
-              tests for only one group. Check your `group` argument."
     )
 
-    # check if significance is a valid implemented method
-    .chk_cond(
-      !chk::vld_string(significance) || significance %nin%
-        names(.sig_methods),
-      sprintf(
-        "The argument `significance` must be a single string
-                      specifying one of the available methods: %s",
-        word_list(add_quotes(names(.sig_methods)))
+    ####################### DATA PROCESSING ######################################
+    # assure y is numeric and convert facet, group to factors
+    mapply(.conv_data,
+      type = list("numeric", "factor", "factor"),
+      varname = symlist,
+      MoreArgs = list(
+        data = data,
+        env = environment() ## allows replacing the data without reassignment
       )
     )
 
-    # build formula for further calculations
-    args_signif[["formula"]] <- stats::as.formula(paste0(
-      symlist[["y"]],
-      " ~ ",
-      symlist[["group"]]
-    ))
+    ## use only complete.cases of variables in the function call
+    which_use <- unlist(symlist[!vapply(symlist, is.null, logical(1L))])
+    complete_sub <- stats::complete.cases(data[, colnames(data) %in% which_use])
+    data <- as.data.frame(subset(data, complete_sub))
 
-    # perform the tests for rstatix
-    # define rstatix funciton used
-    func_used <- switch(significance,
-      "t_test" = rstatix::pairwise_t_test,
-      "dunn_test" = rstatix::dunn_test,
-      "tukeyHSD_test" = rstatix::tukey_hsd,
-      "games_howell_test" = rstatix::games_howell_test,
-      "wilcoxon_test" = rstatix::pairwise_wilcox_test,
-      "sign_test" = rstatix::pairwise_sign_test
-    )
+    # defining levels of facet for the test
+    facet_levels <- length(unique(data[, symlist[["facet"]]]))
+    facet_levels <- max(facet_levels, 1) # if facet_levels = 0
 
-    # matching args from ...
-    args_signif <- match_add_args(
-      arglist = args_signif,
-      .sig_methods[[significance]]$args_check_fun
-    )
+    # check and process the significance argument
+    use_signif <- FALSE
+    if (!is.null(significance)) {
+      rlang::check_installed(c("rstatix", "ggpubr"))
+      use_signif <- TRUE
 
-    suppressWarnings(args_signif <- Filter(
-      function(x) !all(is.na(x)),
-      args_signif
-    ))
+      # check if more than 2 groups in the data
+      .chk_cond(
+        length(unique(data[, symlist[["group"]]])) <= 1,
+        "It is impossible to compute statistical significance
+              tests for only one group. Check your `group` argument."
+      )
 
-    # correcting pool.sd to logical if default value for t_test
-    if (!is.logical(args_signif[["pool.sd"]]) && significance == "t_test") {
-      args_signif[["pool.sd"]] <- !args_signif[["paired"]]
-    }
+      # check if significance is a valid implemented method
+      .chk_cond(
+        !chk::vld_string(significance) || significance %nin%
+          names(.sig_methods),
+        sprintf(
+          "The argument `significance` must be a single string
+                      specifying one of the available methods: %s",
+          word_list(add_quotes(names(.sig_methods)))
+        )
+      )
 
-    # predefining output list
-    test_results <- list()
+      # build formula for further calculations
+      args_signif[["formula"]] <- stats::as.formula(paste0(
+        symlist[["y"]],
+        " ~ ",
+        symlist[["group"]]
+      ))
 
-    # fitting
-    for (i in 1:facet_levels) {
-      # Subsetting the data
-      args_signif[["data"]] <- if (facet_levels == 1) {
-        data
-      } else {
-        subset_cond <- data[, symlist[["facet"]]] ==
-          levels(data[, symlist[["facet"]]])[i]
-        data[subset_cond, ]
+      # perform the tests for rstatix
+      # define rstatix funciton used
+      func_used <- switch(significance,
+        "t_test" = rstatix::pairwise_t_test,
+        "dunn_test" = rstatix::dunn_test,
+        "tukeyHSD_test" = rstatix::tukey_hsd,
+        "games_howell_test" = rstatix::games_howell_test,
+        "wilcoxon_test" = rstatix::pairwise_wilcox_test,
+        "sign_test" = rstatix::pairwise_sign_test
+      )
+
+      # matching args from ...
+      args_signif <- match_add_args(
+        arglist = args_signif,
+        .sig_methods[[significance]]$args_check_fun
+      )
+
+      suppressWarnings(args_signif <- Filter(
+        function(x) !all(is.na(x)),
+        args_signif
+      ))
+
+      # correcting pool.sd to logical if default value for t_test
+      if (!is.logical(args_signif[["pool.sd"]]) && significance == "t_test") {
+        args_signif[["pool.sd"]] <- !args_signif[["paired"]]
       }
 
-      # modify name of data argument for tukeyHSD
-      names(args_signif)[names(args_signif) == "data"] <- {
-        ifelse(significance == "tukeyHSD_test", "x", "data")
-      }
+      # predefining output list
+      test_results <- list()
 
-      ## call the rstatix func to calculate significance levels
-      tryCatch(
-        {
-          test_results[[i]] <- do.call(
-            func_used,
-            args_signif
-          )
-        },
-        error = function(e) {
-          chk::abort_chk(
-            strwrap(
-              sprintf(
-                "There was a problem in estimating the significance levels
+      # fitting
+      for (i in 1:facet_levels) {
+        # Subsetting the data
+        args_signif[["data"]] <- if (facet_levels == 1) {
+          data
+        } else {
+          subset_cond <- data[, symlist[["facet"]]] ==
+            levels(data[, symlist[["facet"]]])[i]
+          data[subset_cond, ]
+        }
+
+        # modify name of data argument for tukeyHSD
+        names(args_signif)[names(args_signif) == "data"] <- {
+          ifelse(significance == "tukeyHSD_test", "x", "data")
+        }
+
+        ## call the rstatix func to calculate significance levels
+        tryCatch(
+          {
+            test_results[[i]] <- do.call(
+              func_used,
+              args_signif
+            )
+          },
+          error = function(e) {
+            chk::abort_chk(
+              strwrap(
+                sprintf(
+                  "There was a problem in estimating the significance levels
             using %s method. It is probably a bug - consider reporting to
             the maintainer. \n
             Error message from `%s`: %s",
-                significance,
-                as.character(func_used),
-                conditionMessage(e)
+                  significance,
+                  as.character(func_used),
+                  conditionMessage(e)
+                ),
+                prefix = " ", initial = ""
               ),
-              prefix = " ", initial = ""
+              tidy = FALSE
+            )
+          }
+        )
+
+        # calculating original add_xy_position to locate the pvalues
+        test_results[[i]] <- rstatix::add_xy_position(test_results[[i]],
+          fun = "max",
+          stack = FALSE,
+          x = symlist[["group"]],
+          scales = "fixed"
+        )
+
+        # adding effsize
+        names(args_signif)[names(args_signif) == "x"] <- "data"
+
+        # dynamically choose the function based on smd_type
+        effsize_function <- switch(smd_type,
+          "mean" = rstatix::cohens_d,
+          "median" = rstatix::wilcox_effsize
+        )
+
+        # calculate SMD using the selected function
+        smd <- effsize_function(
+          args_signif[["data"]],
+          args_signif[["formula"]]
+        )
+
+        smd <- smd[, c("group1", "group2", "effsize")]
+
+        colnames(smd)[colnames(smd) == "effsize"] <- "smd"
+
+        smd$smd <- abs(round(smd$smd, 2))
+
+        # binding the results together
+        test_results[[i]] <- merge(test_results[[i]], smd,
+          by = c("group1", "group2"),
+          all = TRUE
+        )
+
+        # adding the facet var
+        if (facet_levels > 1) {
+          test_results[[i]] <- cbind(
+            facet = rep(
+              levels(data[, symlist[["facet"]]])[i],
+              dim(test_results[[i]])[1]
             ),
-            tidy = FALSE
+            test_results[[i]]
           )
         }
-      )
+      }
 
-      # calculating original add_xy_position to locate the pvalues
-      test_results[[i]] <- rstatix::add_xy_position(test_results[[i]],
-        fun = "max",
-        stack = FALSE,
-        x = symlist[["group"]],
-        scales = "fixed"
-      )
+      # process the resulting list to df
+      if (facet_levels == 1) {
+        test_results <- as.data.frame(test_results)
+      } else {
+        test_results <- do.call(rbind, test_results)
 
-      # adding effsize
-      names(args_signif)[names(args_signif) == "x"] <- "data"
+        ## change facet to factor with original levels
+        fac_levels <- levels(data[, symlist[["facet"]]])
+        test_results[, "facet"] <- factor(test_results[, "facet"],
+          levels = fac_levels
+        )
+      }
 
-      # dynamically choose the function based on smd_type
-      effsize_function <- switch(smd_type,
-        "mean" = rstatix::cohens_d,
-        "median" = rstatix::wilcox_effsize
-      )
-
-      # calculate SMD using the selected function
-      smd <- effsize_function(
-        args_signif[["data"]],
-        args_signif[["formula"]]
-      )
-
-      smd <- smd[, c("group1", "group2", "effsize")]
-
-      colnames(smd)[colnames(smd) == "effsize"] <- "smd"
-
-      smd$smd <- abs(round(smd$smd, 2))
-
-      # binding the results together
-      test_results[[i]] <- merge(test_results[[i]], smd,
-        by = c("group1", "group2"),
-        all = TRUE
-      )
-
-      # adding the facet var
-      if (facet_levels > 1) {
-        test_results[[i]] <- cbind(
-          facet = rep(
-            levels(data[, symlist[["facet"]]])[i],
-            dim(test_results[[i]])[1]
-          ),
-          test_results[[i]]
+      # add color to the plot
+      if (sig_label_color) {
+        test_results <- cbind(test_results,
+          color.pval = as.character(ifelse(test_results[, "p.adj"] < 0.05,
+            "#de2d26",
+            "#31a354"
+          )),
+          color.smd = as.character(ifelse(test_results[, "smd"] >= 0.1,
+            "#de2d26",
+            "#31a354"
+          ))
+        )
+      } else {
+        test_results <- cbind(test_results,
+          color.pval = "#000000",
+          color.smd = "#000000"
         )
       }
     }
 
-    # process the resulting list to df
-    if (facet_levels == 1) {
-      test_results <- as.data.frame(test_results)
-    } else {
-      test_results <- do.call(rbind, test_results)
+    ####################### PLOTTING #############################################
+    # define the replace function
+    "%+replace%" <- ggplot2::"%+replace%"
 
-      ## change facet to factor with original levels
-      fac_levels <- levels(data[, symlist[["facet"]]])
-      test_results[, "facet"] <- factor(test_results[, "facet"],
-        levels = fac_levels
-      )
-    }
+    ## Unique values in grouping variables (necessary to define the palette)
+    pal_len <- length(unique(data[, symlist[["group"]]]))
+    pal_len <- max(pal_len, 1)
 
-    # add color to the plot
-    if (sig_label_color) {
-      test_results <- cbind(test_results,
-        color.pval = as.character(ifelse(test_results[, "p.adj"] < 0.05,
-          "#de2d26",
-          "#31a354"
-        )),
-        color.smd = as.character(ifelse(test_results[, "smd"] >= 0.1,
-          "#de2d26",
-          "#31a354"
+    ## redefining 'group' labels to include sample sizes--------------------------
+    if (!is.null(symlist[["group"]])) {
+      if (is.null(symlist[["facet"]])) {
+        freq_table <- as.data.frame(table(data[, symlist[["group"]]]))
+
+        for (i in seq_len(nrow(freq_table))) {
+          message <- sprintf(
+            "%s (n = %s)",
+            freq_table[i, 1],
+            freq_table[i, 2]
+          )
+
+          levels(data[, symlist[["group"]]])[
+            levels(data[, symlist[["group"]]]) == freq_table[i, 1]
+          ] <- message
+        }
+      } else {
+        # define the counts
+        freq_table <- as.data.frame(table(
+          data[, symlist[["facet"]]],
+          data[, symlist[["group"]]]
         ))
-      )
+
+        tryCatch(
+          {
+            # pivoting that data.frame to wide based on sex
+            freq_table <- stats::reshape(freq_table,
+              timevar = "Var1",
+              idvar = c("Var2"),
+              direction = "wide"
+            )
+          },
+          error = function(e) {
+            chk::abort_chk(strwrap(
+              "Counts could not be calculated from the provided data frame.
+            Please ensure that your data frame contains observations.",
+              prefix = " ", initial = ""
+            ))
+          }
+        )
+
+        make_group_label <- function(freq_row,
+                                     var_col = "Var2",
+                                     prefix = "Freq\\.",
+                                     minlength = 4) {
+          # 1) identify the count-columns
+          all_cols <- base::names(freq_row)
+          freq_cols <- base::grep(paste0("^", prefix), all_cols, value = TRUE)
+
+          # 2) strip off the prefix to get category names, pull counts
+          cats <- base::sub(prefix, "", freq_cols)
+          counts <- base::as.integer(freq_row[1, freq_cols])
+
+          # 3) abbreviate categories (e.g. “Female” → “Fem”)
+          shorts <- base::abbreviate(cats, minlength = minlength)
+
+          # 4) build “Short: n=NN” entries and collapse
+          entries <- base::paste0(shorts, ": n=", counts)
+          inside <- base::paste(entries, collapse = ", ")
+
+          # 5) full label: “GroupName (inside)”
+          grp <- as.character(freq_row[[var_col]])
+          label <- paste0(grp, " (", inside, ")")
+
+          # 6) return named vector so e.g. scale_*_discrete(labels = ...) works
+          rlang::set_names(label, grp)
+        }
+
+        for (i in seq_len(nrow(freq_table))) {
+          row <- freq_table[i, , drop = FALSE]
+          message <- make_group_label(
+            freq_row = row,
+            var_col = "Var2",
+            prefix = "Freq\\."
+          )
+
+          levels(data[, symlist[["group"]]])[
+            levels(data[, symlist[["group"]]]) == freq_table[i, 1]
+          ] <- message
+        }
+      }
     } else {
-      test_results <- cbind(test_results,
-        color.pval = "#000000",
-        color.smd = "#000000"
-      )
+      n_len <- length(data[, symlist[["y"]]])
     }
-  }
 
-  ####################### PLOTTING #############################################
-  # define the replace function
-  "%+replace%" <- ggplot2::"%+replace%"
+    #--defining height of jitter plots--------------------------------------------
+    rain_height <- 0.1
 
-  ## Unique values in grouping variables (necessary to define the palette)
-  pal_len <- length(unique(data[, symlist[["group"]]]))
-  pal_len <- max(pal_len, 1)
+    ## --defining the main ggplot formula-----------------------------------------
+    colnames(data)[which(colnames(data) == symlist["facet"])] <- "facet"
+    y_col <- symlist[["y"]]
+    main <- ggplot2::ggplot(data, ggplot2::aes(
+      x = "",
+      y = .data[[y_col]]
+    ))
 
-  ## redefining 'group' labels to include sample sizes--------------------------
-  if (!is.null(symlist[["group"]])) {
-    if (is.null(symlist[["facet"]])) {
-      freq_table <- as.data.frame(table(data[, symlist[["group"]]]))
+    # defining theme for the subplots
+    custom_theme <- ggplot2::theme_classic() %+replace%
+      ggplot2::theme(
+        axis.line.y = ggplot2::element_blank(),
+        axis.text.y = ggplot2::element_blank(),
+        axis.title.y = ggplot2::element_blank(),
+        axis.ticks.y = ggplot2::element_blank(),
+        legend.title = ggplot2::element_text(face = "bold"),
+        legend.position = "top",
+        legend.direction = "vertical"
+      )
 
+    ## --defining the geom_jitter
+    #### CASE 1 - only y, no group, no facet======================================
+    main_geom_layers <- if (pal_len == 1 || is.null(symlist[["group"]])) {
+      main +
+        ## --defining the geom_boxplot
+        ggplot2::geom_boxplot(
+          width = 0.1, alpha = alpha, show.legend = FALSE, fill = "#005b99",
+          position = ggplot2::position_nudge(x = -0.22)
+        ) +
+        ## --defining the datapoints
+        ggplot2::geom_jitter(ggplot2::aes(color = "#005b99"),
+          size = 2, alpha = alpha, show.legend = TRUE,
+          position = ggplot2::position_jitter(width = jitter)
+        ) +
+        ## halfs of the violin plots
+        geom_flat_violin(
+          fill = "#005b99",
+          trim = FALSE, alpha = alpha, scale = density_scale,
+          position = ggplot2::position_nudge(x = rain_height + 0.05)
+        ) +
+        ## --defining the stat_summary
+        ggplot2::stat_summary(
+          fun.data = mean_ci, show.legend = FALSE,
+          position = ggplot2::position_nudge(x = rain_height * 3)
+        ) +
+        ggplot2::scale_color_identity(
+          guide = "legend",
+          name = symlist[["y"]],
+          labels = sprintf("%s (n = %s)", symlist[["y"]], n_len)
+        )
+    } else {
+      #### CASE 2 - y + group, no facet===========================================
+      group_col <- symlist[["group"]]
+
+      main +
+        ## boxplot
+        ggplot2::geom_boxplot(
+          ggplot2::aes(fill = .data[[group_col]]),
+          width = 0.1, alpha = alpha, show.legend = FALSE,
+          position = ggpp::position_dodgenudge(width = 0.2, x = -0.22)
+        ) +
+
+        ## jittered points
+        ggplot2::geom_jitter(
+          ggplot2::aes(color = .data[[group_col]]),
+          size = 2, alpha = alpha, show.legend = FALSE,
+          position = ggplot2::position_jitterdodge(
+            jitter.width = jitter,
+            dodge.width = 0.25
+          )
+        ) +
+
+        ## half‑violins
+        geom_flat_violin(
+          ggplot2::aes(fill = .data[[group_col]]),
+          trim = FALSE, alpha = alpha, scale = density_scale,
+          position = ggplot2::position_nudge(x = rain_height + 0.05)
+        ) +
+
+        ## mean ± CI
+        ggplot2::stat_summary(
+          ggplot2::aes(color = .data[[group_col]]),
+          fun.data = mean_ci, show.legend = FALSE,
+          position = ggpp::position_dodgenudge(x = rain_height * 3, width = 0.1)
+        ) +
+
+        ggplot2::guides(fill = ggplot2::guide_legend(group_col)) +
+        scale_color_vecmatch(n = pal_len, type = "discrete") +
+        scale_fill_vecmatch(n = pal_len, type = "discrete")
+    }
+
+    #--defining the ggplot object-------------------------------------------------
+    p <- main_geom_layers +
+      ## defining scales
+      ggplot2::scale_x_discrete(
+        name = "",
+        expand = c(rain_height * 3.5, 0, 0, 0.62)
+      ) +
+      ## flipping coordinates
+      ggplot2::coord_flip() +
+      ## defining theme
+      ggplot2::theme_classic() %+replace%
+      ggplot2::theme(
+        axis.ticks.y = ggplot2::element_blank(),
+        axis.line.y = ggplot2::element_blank(),
+        legend.title = ggplot2::element_text(face = "bold")
+      ) +
+      ## define ylabs
+      ggplot2::ylab(symlist[["y"]])
+
+    #### CASE 3 - use signif TRUE=================================================
+    if (use_signif) {
+      ## defining the lims and calculating the significance bars if necessary
+      # test run to define the limits of the plot
+      violin_test <- ggplot2::ggplot(data, ggplot2::aes(
+        x = "",
+        y = .data[[y_col]]
+      )) +
+        geom_flat_violin(
+          trim = FALSE, position = ggplot2::position_nudge(x = -0.5),
+          scale = density_scale
+        )
+
+      # getting the xlim out of the violin plot
+      x_limits <- ggplot2::ggplot_build(violin_test)
+      x_limits <- as.vector(x_limits$layout$panel_scales_y[[1]]$range$range)
+      range <- abs(x_limits[1] - x_limits[2])
+      x_max <- max(data[, symlist[["y"]]]) + range * 0.03
+      x_limits[2] <- x_limits[2] + range * 0.06
+
+      # overwrite x_limits if limits defined
+      x_limits <- limits %||% x_limits
+
+      # getting the nudged xlim
+      p_build <- ggplot2::ggplot_build(p)
+      x_boxplot <- p_build$data[[1]][, c("group", "x")]
+      x_jitter <- p_build$data[[2]][, c("group", "x")]
+
+      # recalculating the y.positions
+      # calculating approximate range, maximum y and y.positions for stat_pvalue
+      y_pos_seq <- list()
+
+      # looping along the levels of fcaet to calulacte yposition
+      for (i in 1:facet_levels) {
+        #### CASE 3.1 - use facet=================================================
+        if (facet_levels > 1) {
+          test_results_sub <- test_results[
+            test_results$facet == unique(levels(data[, "facet"]))[i],
+          ]
+        } else {
+          #### CASE 3.1 - no facet================================================
+          test_results_sub <- test_results
+        }
+
+        number_comp <- dim(test_results_sub)[1]
+        y_pos_seq[[i]] <- seq(
+          from = x_max,
+          to = x_limits[2],
+          length.out = number_comp
+        )
+      }
+
+      # overwriting y.position
+      test_results$y.position <- unlist(y_pos_seq)
+
+      # overwriting xmin and xmax
+      test_results$xmin_box <- x_boxplot$x[match(
+        test_results$xmin,
+        x_boxplot$group
+      )]
+      test_results$xmax_box <- x_boxplot$x[match(
+        test_results$xmax,
+        x_boxplot$group
+      )]
+      test_results$xmin_jit <- x_jitter$x[match(
+        test_results$xmin,
+        x_jitter$group
+      )]
+      test_results$xmax_jit <- x_jitter$x[match(
+        test_results$xmax,
+        x_jitter$group
+      )]
+
+      ## adding stat_pvalue
+      p <- p +
+        ## adding custom pvalues
+        ggpubr::stat_pvalue_manual(test_results,
+          y.position = "y.position",
+          xmin = "xmin_box",
+          xmax = "xmax_box",
+          label = "p.adj.signif",
+          coord.flip = TRUE,
+          tip.length = 0.006,
+          size = sig_label_size,
+          color = rep(test_results[, "color.pval"], each = 3)
+        ) +
+        ggplot2::annotate("text",
+          x = max(test_results$xmax_box) + 0.022,
+          y = mean(test_results$y.position),
+          label = "p-value",
+          size = sig_label_size,
+          fontface = "bold"
+        ) +
+        ## adding smds
+        ggpubr::stat_pvalue_manual(test_results,
+          y.position = "y.position",
+          xmin = "xmin_jit",
+          xmax = "xmax_jit",
+          label = "smd",
+          coord.flip = TRUE,
+          tip.length = 0.006,
+          size = sig_label_size,
+          color = rep(test_results[, "color.smd"], each = 3)
+        ) +
+        ggplot2::annotate("text",
+          x = max(test_results$xmax_jit) + 0.022,
+          y = mean(test_results$y.position),
+          label = "SMD",
+          size = sig_label_size,
+          fontface = "bold"
+        )
+    }
+
+    ## add theme
+    p <- p +
+      custom_theme
+
+    # define limits
+    if (!is.null(limits)) {
+      p <- p +
+        ggplot2::ylim(limits)
+    }
+
+    #### CASE 4 - add facet=======================================================
+    if (!is.null(symlist[["facet"]])) {
+      ## custom labeller function to include the number of obs--------------------
+      freq_table <- as.data.frame(table(data[, "facet"]))
+
+      labeller_vec <- c()
       for (i in seq_len(nrow(freq_table))) {
         message <- sprintf(
           "%s (n = %s)",
@@ -482,357 +804,36 @@ raincloud <- function(data = NULL,
           freq_table[i, 2]
         )
 
-        levels(data[, symlist[["group"]]])[
-          levels(data[, symlist[["group"]]]) == freq_table[i, 1]
-        ] <- message
-      }
-    } else {
-      # define the counts
-      freq_table <- as.data.frame(table(
-        data[, symlist[["facet"]]],
-        data[, symlist[["group"]]]
-      ))
-
-      tryCatch(
-        {
-          # pivoting that data.frame to wide based on sex
-          freq_table <- stats::reshape(freq_table,
-            timevar = "Var1",
-            idvar = c("Var2"),
-            direction = "wide"
-          )
-        },
-        error = function(e) {
-          chk::abort_chk(strwrap(
-            "Counts could not be calculated from the provided data frame.
-            Please ensure that your data frame contains observations.",
-            prefix = " ", initial = ""
-          ))
-        }
-      )
-
-      make_group_label <- function(freq_row,
-                                   var_col = "Var2",
-                                   prefix = "Freq\\.",
-                                   minlength = 4) {
-        # 1) identify the count-columns
-        all_cols <- base::names(freq_row)
-        freq_cols <- base::grep(paste0("^", prefix), all_cols, value = TRUE)
-
-        # 2) strip off the prefix to get category names, pull counts
-        cats <- base::sub(prefix, "", freq_cols)
-        counts <- base::as.integer(freq_row[1, freq_cols])
-
-        # 3) abbreviate categories (e.g. “Female” → “Fem”)
-        shorts <- base::abbreviate(cats, minlength = minlength)
-
-        # 4) build “Short: n=NN” entries and collapse
-        entries <- base::paste0(shorts, ": n=", counts)
-        inside <- base::paste(entries, collapse = ", ")
-
-        # 5) full label: “GroupName (inside)”
-        grp <- as.character(freq_row[[var_col]])
-        label <- paste0(grp, " (", inside, ")")
-
-        # 6) return named vector so e.g. scale_*_discrete(labels = ...) works
-        rlang::set_names(label, grp)
+        ## defining named variable
+        labeller_vec[i] <- message
+        names(labeller_vec)[i] <- as.character(freq_table[i, 1])
       }
 
-      for (i in seq_len(nrow(freq_table))) {
-        row <- freq_table[i, , drop = FALSE]
-        message <- make_group_label(
-          freq_row = row,
-          var_col = "Var2",
-          prefix = "Freq\\."
+      p <- p +
+        ggplot2::facet_wrap(. ~ facet,
+          ncol = ncol,
+          labeller = ggplot2::as_labeller(labeller_vec)
         )
-
-        levels(data[, symlist[["group"]]])[
-          levels(data[, symlist[["group"]]]) == freq_table[i, 1]
-        ] <- message
-      }
-    }
-  } else {
-    n_len <- length(data[, symlist[["y"]]])
-  }
-
-  #--defining height of jitter plots--------------------------------------------
-  rain_height <- 0.1
-
-  ## --defining the main ggplot formula-----------------------------------------
-  colnames(data)[which(colnames(data) == symlist["facet"])] <- "facet"
-  y_col <- symlist[["y"]]
-  main <- ggplot2::ggplot(data, ggplot2::aes(
-    x = "",
-    y = .data[[y_col]]
-  ))
-
-  # defining theme for the subplots
-  custom_theme <- ggplot2::theme_classic() %+replace%
-    ggplot2::theme(
-      axis.line.y = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_blank(),
-      axis.title.y = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
-      legend.title = ggplot2::element_text(face = "bold"),
-      legend.position = "top",
-      legend.direction = "vertical"
-    )
-
-  ## --defining the geom_jitter
-  #### CASE 1 - only y, no group, no facet======================================
-  main_geom_layers <- if (pal_len == 1 || is.null(symlist[["group"]])) {
-    main +
-      ## --defining the geom_boxplot
-      ggplot2::geom_boxplot(
-        width = 0.1, alpha = alpha, show.legend = FALSE, fill = "#005b99",
-        position = ggplot2::position_nudge(x = -0.22)
-      ) +
-      ## --defining the datapoints
-      ggplot2::geom_jitter(ggplot2::aes(color = "#005b99"),
-        size = 2, alpha = alpha, show.legend = TRUE,
-        position = ggplot2::position_jitter(width = jitter)
-      ) +
-      ## halfs of the violin plots
-      geom_flat_violin(
-        fill = "#005b99",
-        trim = FALSE, alpha = alpha, scale = density_scale,
-        position = ggplot2::position_nudge(x = rain_height + 0.05)
-      ) +
-      ## --defining the stat_summary
-      ggplot2::stat_summary(
-        fun.data = mean_ci, show.legend = FALSE,
-        position = ggplot2::position_nudge(x = rain_height * 3)
-      ) +
-      ggplot2::scale_color_identity(
-        guide = "legend",
-        name = symlist[["y"]],
-        labels = sprintf("%s (n = %s)", symlist[["y"]], n_len)
-      )
-  } else {
-    #### CASE 2 - y + group, no facet===========================================
-    group_col <- symlist[["group"]]
-
-    main +
-      ## boxplot
-      ggplot2::geom_boxplot(
-        ggplot2::aes(fill = .data[[group_col]]),
-        width = 0.1, alpha = alpha, show.legend = FALSE,
-        position = ggpp::position_dodgenudge(width = 0.2, x = -0.22)
-      ) +
-
-      ## jittered points
-      ggplot2::geom_jitter(
-        ggplot2::aes(color = .data[[group_col]]),
-        size = 2, alpha = alpha, show.legend = FALSE,
-        position = ggplot2::position_jitterdodge(
-          jitter.width = jitter,
-          dodge.width = 0.25
-        )
-      ) +
-
-      ## half‑violins
-      geom_flat_violin(
-        ggplot2::aes(fill = .data[[group_col]]),
-        trim = FALSE, alpha = alpha, scale = density_scale,
-        position = ggplot2::position_nudge(x = rain_height + 0.05)
-      ) +
-
-      ## mean ± CI
-      ggplot2::stat_summary(
-        ggplot2::aes(color = .data[[group_col]]),
-        fun.data = mean_ci, show.legend = FALSE,
-        position = ggpp::position_dodgenudge(x = rain_height * 3, width = 0.1)
-      ) +
-
-      ggplot2::guides(fill = ggplot2::guide_legend(group_col)) +
-      scale_color_vecmatch(n = pal_len, type = "discrete") +
-      scale_fill_vecmatch(n = pal_len, type = "discrete")
-  }
-
-  #--defining the ggplot object-------------------------------------------------
-  p <- main_geom_layers +
-    ## defining scales
-    ggplot2::scale_x_discrete(
-      name = "",
-      expand = c(rain_height * 3.5, 0, 0, 0.62)
-    ) +
-    ## flipping coordinates
-    ggplot2::coord_flip() +
-    ## defining theme
-    ggplot2::theme_classic() %+replace%
-    ggplot2::theme(
-      axis.ticks.y = ggplot2::element_blank(),
-      axis.line.y = ggplot2::element_blank(),
-      legend.title = ggplot2::element_text(face = "bold")
-    ) +
-    ## define ylabs
-    ggplot2::ylab(symlist[["y"]])
-
-  #### CASE 3 - use signif TRUE=================================================
-  if (use_signif) {
-    ## defining the lims and calculating the significance bars if necessary
-    # test run to define the limits of the plot
-    violin_test <- ggplot2::ggplot(data, ggplot2::aes(
-      x = "",
-      y = .data[[y_col]]
-    )) +
-      geom_flat_violin(
-        trim = FALSE, position = ggplot2::position_nudge(x = -0.5),
-        scale = density_scale
-      )
-
-    # getting the xlim out of the violin plot
-    x_limits <- ggplot2::ggplot_build(violin_test)
-    x_limits <- as.vector(x_limits$layout$panel_scales_y[[1]]$range$range)
-    range <- abs(x_limits[1] - x_limits[2])
-    x_max <- max(data[, symlist[["y"]]]) + range * 0.03
-    x_limits[2] <- x_limits[2] + range * 0.06
-
-    # overwrite x_limits if limits defined
-    x_limits <- limits %||% x_limits
-
-    # getting the nudged xlim
-    p_build <- ggplot2::ggplot_build(p)
-    x_boxplot <- p_build$data[[1]][, c("group", "x")]
-    x_jitter <- p_build$data[[2]][, c("group", "x")]
-
-    # recalculating the y.positions
-    # calculating approximate range, maximum y and y.positions for stat_pvalue
-    y_pos_seq <- list()
-
-    # looping along the levels of fcaet to calulacte yposition
-    for (i in 1:facet_levels) {
-      #### CASE 3.1 - use facet=================================================
-      if (facet_levels > 1) {
-        test_results_sub <- test_results[
-          test_results$facet == unique(levels(data[, "facet"]))[i],
-        ]
-      } else {
-        #### CASE 3.1 - no facet================================================
-        test_results_sub <- test_results
-      }
-
-      number_comp <- dim(test_results_sub)[1]
-      y_pos_seq[[i]] <- seq(
-        from = x_max,
-        to = x_limits[2],
-        length.out = number_comp
-      )
     }
 
-    # overwriting y.position
-    test_results$y.position <- unlist(y_pos_seq)
+    ## Saving the plot
+    if (!is.null(plot_name)) {
+      fexist <- file.exists(plot_name)
 
-    # overwriting xmin and xmax
-    test_results$xmin_box <- x_boxplot$x[match(
-      test_results$xmin,
-      x_boxplot$group
-    )]
-    test_results$xmax_box <- x_boxplot$x[match(
-      test_results$xmax,
-      x_boxplot$group
-    )]
-    test_results$xmin_jit <- x_jitter$x[match(
-      test_results$xmin,
-      x_jitter$group
-    )]
-    test_results$xmax_jit <- x_jitter$x[match(
-      test_results$xmax,
-      x_jitter$group
-    )]
-
-    ## adding stat_pvalue
-    p <- p +
-      ## adding custom pvalues
-      ggpubr::stat_pvalue_manual(test_results,
-        y.position = "y.position",
-        xmin = "xmin_box",
-        xmax = "xmax_box",
-        label = "p.adj.signif",
-        coord.flip = TRUE,
-        tip.length = 0.006,
-        size = sig_label_size,
-        color = rep(test_results[, "color.pval"], each = 3)
-      ) +
-      ggplot2::annotate("text",
-        x = max(test_results$xmax_box) + 0.022,
-        y = mean(test_results$y.position),
-        label = "p-value",
-        size = sig_label_size,
-        fontface = "bold"
-      ) +
-      ## adding smds
-      ggpubr::stat_pvalue_manual(test_results,
-        y.position = "y.position",
-        xmin = "xmin_jit",
-        xmax = "xmax_jit",
-        label = "smd",
-        coord.flip = TRUE,
-        tip.length = 0.006,
-        size = sig_label_size,
-        color = rep(test_results[, "color.smd"], each = 3)
-      ) +
-      ggplot2::annotate("text",
-        x = max(test_results$xmax_jit) + 0.022,
-        y = mean(test_results$y.position),
-        label = "SMD",
-        size = sig_label_size,
-        fontface = "bold"
-      )
-  }
-
-  ## add theme
-  p <- p +
-    custom_theme
-
-  # define limits
-  if (!is.null(limits)) {
-    p <- p +
-      ggplot2::ylim(limits)
-  }
-
-  #### CASE 4 - add facet=======================================================
-  if (!is.null(symlist[["facet"]])) {
-    ## custom labeller function to include the number of obs--------------------
-    freq_table <- as.data.frame(table(data[, "facet"]))
-
-    labeller_vec <- c()
-    for (i in seq_len(nrow(freq_table))) {
-      message <- sprintf(
-        "%s (n = %s)",
-        freq_table[i, 1],
-        freq_table[i, 2]
-      )
-
-      ## defining named variable
-      labeller_vec[i] <- message
-      names(labeller_vec)[i] <- as.character(freq_table[i, 1])
-    }
-
-    p <- p +
-      ggplot2::facet_wrap(. ~ facet,
-        ncol = ncol,
-        labeller = ggplot2::as_labeller(labeller_vec)
-      )
-  }
-
-  ## Saving the plot
-  if (!is.null(plot_name)) {
-    fexist <- file.exists(plot_name)
-
-    if (overwrite || (!fexist && !overwrite)) {
-      suppressMessages(ggplot2::ggsave(plot_name,
-        plot = p, dpi = 300, create.dir = TRUE
-      ))
-    } else if (fexist && !overwrite) {
-      chk::abort_chk(strwrap(
-        "The file specified in the plot_name argument already exists.
+      if (overwrite || (!fexist && !overwrite)) {
+        suppressMessages(ggplot2::ggsave(plot_name,
+          plot = p, dpi = 300, create.dir = TRUE
+        ))
+      } else if (fexist && !overwrite) {
+        chk::abort_chk(strwrap(
+          "The file specified in the plot_name argument already exists.
         Set overwrite = TRUE to replace the existing file.",
-        prefix = " ", initial = ""
-      ))
+          prefix = " ", initial = ""
+        ))
+      }
     }
-  }
 
-  ## Returning a ggplot object
-  return(p)
+    ## Returning a ggplot object
+    return(p)
+  })
 }

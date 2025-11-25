@@ -261,3 +261,133 @@ test_that("plot_name and overwrite: argument and functioning check", {
   # control if cleaned
   expect_false(file.exists("myplot.png"))
 })
+
+test_that("raincloud() does not change RNG state", {
+  # deterministic test data
+  set.seed(123)
+  datax <- data.frame(
+    y     = runif(100),
+    group = rep(c("a", "b"), each = 50)
+  )
+
+  # as.raincloud should not touch RNG and be reproducible
+  set.seed(636363)
+  old_seed <- .Random.seed
+
+  invisible(raincloud(datax, y, group, jitter = 0.7))
+
+  expect_identical(.Random.seed, old_seed)
+})
+
+test_that("raincloud() is graphically reproducible under fixed seed", {
+  skip_if_not_installed("ggplot2")
+
+  # deterministic test data
+  set.seed(123)
+  datax <- data.frame(
+    y     = runif(100),
+    group = rep(c("a", "b"), each = 50)
+  )
+
+  # first plot under fixed seed
+  set.seed(999)
+  p1 <- raincloud(datax, y, group, jitter = 0.7)
+
+  # second plot under the same seed
+  set.seed(999)
+  p2 <- raincloud(datax, y, group, jitter = 0.7)
+
+  b1 <- ggplot2::ggplot_build(p1)
+  b2 <- ggplot2::ggplot_build(p2)
+
+  # same number of layers
+  expect_equal(length(b1$data), length(b2$data))
+
+  # compare per layer; focus on actual data columns
+  for (i in seq_along(b1$data)) {
+    d1 <- b1$data[[i]]
+    d2 <- b2$data[[i]]
+
+    # only columns present in both (just in case)
+    common_cols <- intersect(names(d1), names(d2))
+    d1 <- d1[common_cols]
+    d2 <- d2[common_cols]
+
+    expect_equal(d1, d2, ignore_attr = TRUE)
+  }
+})
+
+## -- RNG: mosaic() must not change global seed --------------------------------
+test_that("mosaic() does not change RNG state", {
+  withr::with_seed(164678, {
+    data <- data.frame(
+      age = sample(c("18-25", "26-35", "36-45"), 1000, replace = TRUE),
+      sex = sample(c(0, 1), 1000, replace = TRUE),
+      product = sample(c("Electronics", "Clothing", "Food"),
+                       1000, replace = TRUE)
+    )
+  })
+
+  # snapshot RNG state
+  set.seed(636363)
+  old_seed <- .Random.seed
+
+  invisible(mosaic(
+    data,
+    age, sex, product,
+    significance = TRUE,
+    group_counts = TRUE
+  ))
+
+  expect_identical(.Random.seed, old_seed)
+})
+
+## -- Reproducibility: same seed -> same plot geometry -------------------------
+test_that("mosaic() is graphically reproducible under fixed seed", {
+  skip_if_not_installed("ggplot2")
+
+  withr::with_seed(164678, {
+    data <- data.frame(
+      age = sample(c("18-25", "26-35", "36-45"), 1000, replace = TRUE),
+      sex = sample(c(0, 1), 1000, replace = TRUE),
+      product = sample(c("Electronics", "Clothing", "Food"),
+                       1000, replace = TRUE)
+    )
+  })
+
+  # first plot under fixed seed
+  set.seed(999)
+  p1 <- mosaic(
+    data,
+    age, sex, product,
+    significance = TRUE,
+    group_counts = TRUE
+  )
+
+  # second plot under the same seed
+  set.seed(999)
+  p2 <- mosaic(
+    data,
+    age, sex, product,
+    significance = TRUE,
+    group_counts = TRUE
+  )
+
+  b1 <- ggplot2::ggplot_build(p1)
+  b2 <- ggplot2::ggplot_build(p2)
+
+  # same number of layers
+  expect_equal(length(b1$data), length(b2$data))
+
+  # compare layer data (coordinates etc.), ignoring attributes and grob names
+  for (i in seq_along(b1$data)) {
+    d1 <- b1$data[[i]]
+    d2 <- b2$data[[i]]
+
+    common_cols <- intersect(names(d1), names(d2))
+    d1 <- d1[common_cols]
+    d2 <- d2[common_cols]
+
+    expect_equal(d1, d2, ignore_attr = TRUE)
+  }
+})

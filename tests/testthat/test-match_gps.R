@@ -300,6 +300,15 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
   p2 <- plot(matched_obj)
   expect_identical(p1, p2)
 
+  # plot.matched() does not permanently change par settings
+  old_par <- par(no.readonly = TRUE)
+  on.exit(par(old_par))
+
+  plot(matched_obj)
+
+  new_par <- par(no.readonly = TRUE)
+  expect_identical(old_par, new_par)
+
   # as.data.frame.matched should not touch RNG and be reproducible
   set.seed(636363)
   old_seed <- .Random.seed

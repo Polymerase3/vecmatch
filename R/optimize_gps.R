@@ -2464,7 +2464,7 @@ make_opt_args <- function(
     user_args,
     total_combinations = total_combinations_fmt,
     model_covs         = model_covs,
-    class              = "opt_args"
+    class              = c("opt_args", "list")
   )
 
   res

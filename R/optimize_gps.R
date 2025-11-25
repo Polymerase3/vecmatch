@@ -870,7 +870,8 @@ summary.best_opt_result <- function(object, digits = 3, ...) {
 
 #' @export
 print.summary.best_opt_result <- function(x,
-                                          digits = attr(x, "digits", exact = TRUE) %||% 3L,
+                                          digits = attr(x, "digits",
+                                                        exact = TRUE) %||% 3L,
                                           ...) {
   digits <- as.integer(digits)
   if (!is.finite(digits) || digits < 0L) {
@@ -1732,7 +1733,8 @@ summary.select_result <- function(object, digits = 3, ...) {
 
 #' @export
 print.summary.select_result <- function(x,
-                                        digits = attr(x, "digits", exact = TRUE) %||% 3L,
+                                        digits = attr(x, "digits",
+                                                      exact = TRUE) %||% 3L,
                                         ...) {
   digits <- as.integer(digits)
   if (!is.finite(digits) || digits < 0L) digits <- 3L
@@ -2494,4 +2496,79 @@ print.opt_args <- function(x, ...) {
   }
 
   invisible(x)
+}
+
+#' @export
+str.opt_args <- function(object, ...) {
+  # pull attributes
+  total_combinations <- attr(object, "total_combinations")
+  model_covs         <- attr(object, "model_covs")
+
+  n_args <- length(object)
+  n_covs <- if (!is.null(model_covs)) length(model_covs) else NA_integer_
+
+  cat("Optimization argument grid (class: opt_args)\n")
+
+  if (!is.null(total_combinations)) {
+    cat(sprintf("  Total combinations in grid: %s\n", total_combinations))
+  }
+
+  cat(sprintf("  Number of argument dimensions: %d\n", n_args))
+
+  if (!is.null(model_covs)) {
+    cat(sprintf("  Number of model covariates: %d\n", n_covs))
+    # show only first few covariates if there are many
+    if (n_covs <= 10L) {
+      cat("  Model covariates: ",
+          paste(model_covs, collapse = ", "),
+          "\n", sep = "")
+    } else {
+      cat("  Model covariates: ",
+          paste(head(model_covs, 10L), collapse = ", "),
+          ", ...\n", sep = "")
+    }
+  }
+
+  cat("\nArgument dimensions (unique values per argument):\n")
+
+  # small per-argument summary (no full dump, str() will follow)
+  for (name in names(object)) {
+    values <- object[[name]]
+    uvals  <- unique(values)
+    n_u    <- length(uvals)
+    cls    <- paste(class(values), collapse = "/")
+
+    # short preview of values
+    preview <- if (n_u == 0L) {
+      "<empty>"
+    } else if (is.numeric(uvals)) {
+      sprintf(
+        "numeric, range [%.3g, %.3g], %d unique",
+        min(uvals), max(uvals), n_u
+      )
+    } else if (is.logical(uvals)) {
+      paste0("logical: ", paste(uvals, collapse = ", "), " (", n_u, " unique)")
+    } else {
+      if (n_u <= 5L) {
+        paste0(
+          cls, ": ",
+          paste(uvals, collapse = ", "),
+          " (", n_u, " unique)"
+        )
+      } else {
+        paste0(
+          cls, ": ",
+          paste(head(uvals, 5L), collapse = ", "),
+          ", ... (", n_u, " unique)"
+        )
+      }
+    }
+
+    cat(sprintf("  $ %-15s: %s\n", name, preview))
+  }
+
+  cat("\nUnderlying list structure:\n")
+  utils::str(unclass(object), ...)
+
+  invisible(object)
 }

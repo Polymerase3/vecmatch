@@ -1980,7 +1980,7 @@ str.select_result <- function(object, ...) {
   invisible(object)
 }
 
-#' @title Extract parameter grid for selected configurations
+#' @title Extract Parameter Grid for Selected Configurations
 #'
 #' @param x A \code{select_result} object returned by \code{select_opt()}.
 #' @param smd_group Optional character vector of SMD groups
@@ -2021,7 +2021,7 @@ get_select_params <- function(x, smd_group = NULL) {
   param_df
 }
 
-#' @title Rerun GPS estimation and matching for a selected configuration
+#' @title Rerun GPS Estimation and Matching for a Selected Configuration
 #'
 #' @param x A \code{select_result} object returned by \code{select_opt()}.
 #' @param data Data frame used in the original optimization (pass it the same

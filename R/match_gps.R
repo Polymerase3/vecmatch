@@ -1,4 +1,4 @@
-#' @title Match the data based on generalized propensity score
+#' @title Match the Data Based on Generalized Propensity Scores
 #'
 #' @description The `match_gps()` function performs sample matching based on
 #'   generalized propensity scores (GPS). It utilizes the k-means clustering

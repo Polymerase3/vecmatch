@@ -1,4 +1,4 @@
-#' @title Examine the imbalance of continuous covariates
+#' @title Examine the Imbalance of Continuous Covariates
 #'
 #' @description The `raincloud()` function allows to generate distribution plots
 #'   for continuous data in an easy and uncomplicated way. The function is based

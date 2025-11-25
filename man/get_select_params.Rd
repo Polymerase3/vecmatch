@@ -2,7 +2,7 @@
 % Please edit documentation in R/optimize_gps.R
 \name{get_select_params}
 \alias{get_select_params}
-\title{Extract parameter grid for selected configurations}
+\title{Extract Parameter Grid for Selected Configurations}
 \usage{
 get_select_params(x, smd_group = NULL)
 }
@@ -18,5 +18,5 @@ A data.frame with the parameter combinations corresponding
 to the selected configurations.
 }
 \description{
-Extract parameter grid for selected configurations
+Extract Parameter Grid for Selected Configurations
 }

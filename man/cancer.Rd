@@ -3,7 +3,7 @@
 \docType{data}
 \name{cancer}
 \alias{cancer}
-\title{Patients with Colorectal Cancer and Adenoma metadata}
+\title{Patients with Colorectal Cancer and Adenoma}
 \format{
 A data frame (\code{cancer}) with 1,224 rows and 5 columns:
 \describe{
@@ -27,10 +27,10 @@ Data generated artificially
 data(cancer)
 }
 \description{
-This is a synthetically generated dataset containing metadata for healthy
-individuals and patients diagnosed with colorectal cancer or adenomas. The
-primary purpose of this dataset in the context of matching is to balance the
-\code{status} groups across various covariates and achieve optimal matching
-quality.
+This is a synthetically generated dataset containing metadata
+for healthy individuals and patients diagnosed with colorectal cancer or
+adenomas. The primary purpose of this dataset in the context of matching is
+to balance the \code{status} groups across various covariates and achieve
+optimal matching quality.
 }
 \keyword{datasets}

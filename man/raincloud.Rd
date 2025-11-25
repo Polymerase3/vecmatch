@@ -2,7 +2,7 @@
 % Please edit documentation in R/raincloud.R
 \name{raincloud}
 \alias{raincloud}
-\title{Examine the imbalance of continuous covariates}
+\title{Examine the Imbalance of Continuous Covariates}
 \usage{
 raincloud(
   data = NULL,

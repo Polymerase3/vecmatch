@@ -1,19 +1,10 @@
-#' @keywords internal
-"_PACKAGE"
-#' @title vecmatch
-#' @name vecmatch
-## usethis namespace: start
-## usethis namespace: end
-NULL
-
-
-#' Patients with Colorectal Cancer and Adenoma metadata
+#' @title Patients with Colorectal Cancer and Adenoma
 #'
-#' This is a synthetically generated dataset containing metadata for healthy
-#' individuals and patients diagnosed with colorectal cancer or adenomas. The
-#' primary purpose of this dataset in the context of matching is to balance the
-#' `status` groups across various covariates and achieve optimal matching
-#' quality.
+#' @description This is a synthetically generated dataset containing metadata
+#'   for healthy individuals and patients diagnosed with colorectal cancer or
+#'   adenomas. The primary purpose of this dataset in the context of matching is
+#'   to balance the `status` groups across various covariates and achieve
+#'   optimal matching quality.
 #'
 #' @format A data frame (`cancer`) with 1,224 rows and 5 columns:
 #' \describe{

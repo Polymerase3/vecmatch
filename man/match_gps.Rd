@@ -2,7 +2,7 @@
 % Please edit documentation in R/match_gps.R
 \name{match_gps}
 \alias{match_gps}
-\title{Match the data based on generalized propensity score}
+\title{Match the Data Based on Generalized Propensity Scores}
 \usage{
 match_gps(
   csmatrix = NULL,

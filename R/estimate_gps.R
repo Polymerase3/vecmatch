@@ -1,4 +1,4 @@
-#' @title Calculate treatment allocation probabilities
+#' @title Calculate Treatment Allocation Probabilities
 #'
 #' @description `estimate_gps()` computes generalized propensity scores for
 #'   treatment groups by applying a user-defined formula and method. It returns

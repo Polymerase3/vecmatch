@@ -1,4 +1,4 @@
-#' @title Filter the data based on common support region
+#' @title Filter the Data Based on Common Support Region
 #'
 #' @description The `csregion()` function estimates the boundaries of the
 #'   rectangular common support region, as defined by Lopez and Gutman (2017),

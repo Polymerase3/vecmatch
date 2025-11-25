@@ -2,7 +2,7 @@
 % Please edit documentation in R/optimize_gps.R
 \name{run_selected_matching}
 \alias{run_selected_matching}
-\title{Rerun GPS estimation and matching for a selected configuration}
+\title{Rerun GPS Estimation and Matching for a Selected Configuration}
 \usage{
 run_selected_matching(x, data, formula, smd_group = NULL, row = 1L, ...)
 }
@@ -26,5 +26,5 @@ way as in your original analysis, e.g. \code{data = cancer}).}
 The result of \code{match_gps()}.
 }
 \description{
-Rerun GPS estimation and matching for a selected configuration
+Rerun GPS Estimation and Matching for a Selected Configuration
 }

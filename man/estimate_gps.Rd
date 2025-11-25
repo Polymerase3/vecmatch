@@ -2,7 +2,7 @@
 % Please edit documentation in R/estimate_gps.R
 \name{estimate_gps}
 \alias{estimate_gps}
-\title{Calculate treatment allocation probabilities}
+\title{Calculate Treatment Allocation Probabilities}
 \usage{
 estimate_gps(
   formula,

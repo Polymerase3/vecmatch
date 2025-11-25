@@ -1,4 +1,4 @@
-#' @title Plot the distribution of categorical covariates
+#' @title Plot the Distribution of Categorical Covariates
 #'
 #' @description The `mosaic()` function generates imbalance plots for
 #'   contingency tables with up to three variables. Frequencies in the

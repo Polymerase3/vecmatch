@@ -2,7 +2,7 @@
 % Please edit documentation in R/csregion.R
 \name{csregion}
 \alias{csregion}
-\title{Filter the data based on common support region}
+\title{Filter the Data Based on Common Support Region}
 \usage{
 csregion(gps_matrix, borders = "include", refit = TRUE)
 }

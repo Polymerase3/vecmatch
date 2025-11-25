@@ -2,7 +2,7 @@
 % Please edit documentation in R/mosaic.R
 \name{mosaic}
 \alias{mosaic}
-\title{Plot the distribution of categorical covariates}
+\title{Plot the Distribution of Categorical Covariates}
 \usage{
 mosaic(
   data = NULL,

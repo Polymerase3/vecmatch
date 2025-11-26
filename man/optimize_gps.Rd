@@ -134,7 +134,7 @@ formula_cancer <- formula(status ~ age * sex)
 opt_args <- make_opt_args(cancer, formula_cancer, gps_method = "m1")
 
 # Run optimization with 2000 random parameter sets and a fixed seed
-\dontrun{
+\donttest{
 withr::with_seed(
   8252,
   {

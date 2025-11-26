@@ -97,10 +97,10 @@ one(s) are selected based on the percentage of matched samples - either
 overall or in the specified treatment groups (\code{perc_matched}).
 }
 \examples{
+\donttest{
 # Define formula and set up optimization
 formula_cancer <- formula(status ~ age * sex)
 opt_args <- make_opt_args(cancer, formula_cancer, gps_method = "m1")
-\dontrun{
 withr::with_seed(8252, {
   opt_results <- optimize_gps(
     data = cancer,
@@ -109,11 +109,9 @@ withr::with_seed(8252, {
     n_iter = 2000
   )
 })
-}
 # Select optimal combinations prioritizing SMD balance and matching in key
 # groups
-\dontrun{
-select_results <- select_opt(
+select_opt(
   x = opt_results,
   smd_groups = list(
     c("adenoma", "controls"),

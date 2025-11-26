@@ -24,6 +24,39 @@ way as in your original analysis, e.g. \code{data = cancer}).}
 }
 \value{
 The result of \code{match_gps()}.
+#' @examples
+\donttest{
+# Define formula and set up optimization
+formula_cancer <- formula(status ~ age * sex)
+opt_args <- make_opt_args(cancer, formula_cancer, gps_method = "m1")
+withr::with_seed(8252, {
+  opt_results <- optimize_gps(
+    data = cancer,
+    formula = formula_cancer,
+    opt_args = opt_args,
+    n_iter = 2000
+  )
+})
+# Select optimal combinations prioritizing SMD balance and matching in key
+# groups
+select_results <- select_opt(
+  x = opt_results,
+  smd_groups = list(
+    c("adenoma", "controls"),
+    c("controls", "crc_beningn"),
+    c("crc_malignant", "controls")
+  ),
+  smd_variables = "age",
+  smd_type = "max",
+  perc_matched = c("adenoma", "crc_malignant")
+)
+
+# Extract the parameter grid from select_results for smd_group = "0.05-0.10"
+get_select_params(select_results, smd_group = "0.05-0.10")
+
+# Rerun the analysis
+
+}
 }
 \description{
 Rerun GPS Estimation and Matching for a Selected Configuration

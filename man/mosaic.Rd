@@ -110,7 +110,7 @@ titanic_long$Freq <- NULL
 
 # Plot the data using mosaic() and modify the result using additional ggplot2
 # functions
-p <- vecmatch::mosaic(
+p <- mosaic(
   data = titanic_long,
   y = Survived,
   group = Sex,

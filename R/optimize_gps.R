@@ -118,7 +118,7 @@
 #' opt_args <- make_opt_args(cancer, formula_cancer, gps_method = "m1")
 #'
 #' # Run optimization with 2000 random parameter sets and a fixed seed
-#' \dontrun{
+#' \donttest{
 #' withr::with_seed(
 #'   8252,
 #'   {
@@ -1280,10 +1280,10 @@ str.best_opt_result <- function(object, ...) {
 #' - Overall or group-specific percentage matched
 #'
 #' @examples
+#' \donttest{
 #' # Define formula and set up optimization
 #' formula_cancer <- formula(status ~ age * sex)
 #' opt_args <- make_opt_args(cancer, formula_cancer, gps_method = "m1")
-#' \dontrun{
 #' withr::with_seed(8252, {
 #'   opt_results <- optimize_gps(
 #'     data = cancer,
@@ -1292,11 +1292,9 @@ str.best_opt_result <- function(object, ...) {
 #'     n_iter = 2000
 #'   )
 #' })
-#' }
 #' # Select optimal combinations prioritizing SMD balance and matching in key
 #' # groups
-#' \dontrun{
-#' select_results <- select_opt(
+#' select_opt(
 #'   x = opt_results,
 #'   smd_groups = list(
 #'     c("adenoma", "controls"),
@@ -1989,6 +1987,36 @@ str.select_result <- function(object, ...) {
 #'
 #' @return A data.frame with the parameter combinations corresponding
 #'   to the selected configurations.
+#' @examples
+#' \donttest{
+#' # Define formula and set up optimization
+#' formula_cancer <- formula(status ~ age * sex)
+#' opt_args <- make_opt_args(cancer, formula_cancer, gps_method = "m1")
+#' withr::with_seed(8252, {
+#'   opt_results <- optimize_gps(
+#'     data = cancer,
+#'     formula = formula_cancer,
+#'     opt_args = opt_args,
+#'     n_iter = 2000
+#'   )
+#' })
+#' # Select optimal combinations prioritizing SMD balance and matching in key
+#' # groups
+#' select_results <- select_opt(
+#'   x = opt_results,
+#'   smd_groups = list(
+#'     c("adenoma", "controls"),
+#'     c("controls", "crc_beningn"),
+#'     c("crc_malignant", "controls")
+#'   ),
+#'   smd_variables = "age",
+#'   smd_type = "max",
+#'   perc_matched = c("adenoma", "crc_malignant")
+#' )
+#'
+#' # Extract the parameter grid from select_results for smd_group = "0.05-0.10"
+#' get_select_params(select_results, smd_group = "0.05-0.10")
+#' }
 #' @export
 get_select_params <- function(x, smd_group = NULL) {
   # Basic type check
@@ -2034,6 +2062,39 @@ get_select_params <- function(x, smd_group = NULL) {
 #' @param ... Extra args forwarded to \code{match_gps()}.
 #'
 #' @return The result of \code{match_gps()}.
+#' #' @examples
+#' \donttest{
+#' # Define formula and set up optimization
+#' formula_cancer <- formula(status ~ age * sex)
+#' opt_args <- make_opt_args(cancer, formula_cancer, gps_method = "m1")
+#' withr::with_seed(8252, {
+#'   opt_results <- optimize_gps(
+#'     data = cancer,
+#'     formula = formula_cancer,
+#'     opt_args = opt_args,
+#'     n_iter = 2000
+#'   )
+#' })
+#' # Select optimal combinations prioritizing SMD balance and matching in key
+#' # groups
+#' select_results <- select_opt(
+#'   x = opt_results,
+#'   smd_groups = list(
+#'     c("adenoma", "controls"),
+#'     c("controls", "crc_beningn"),
+#'     c("crc_malignant", "controls")
+#'   ),
+#'   smd_variables = "age",
+#'   smd_type = "max",
+#'   perc_matched = c("adenoma", "crc_malignant")
+#' )
+#'
+#' # Extract the parameter grid from select_results for smd_group = "0.05-0.10"
+#' get_select_params(select_results, smd_group = "0.05-0.10")
+#'
+#' # Rerun the analysis
+#'
+#' }
 #' @export
 run_selected_matching <- function(x,
                                   data,

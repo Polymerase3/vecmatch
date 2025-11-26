@@ -126,30 +126,42 @@ csregion <- function(gps_matrix,
 
   ## refitting the gps_matrix
   if (refit) {
-    # 1.) Filter out observations from original data
-    # 2.) Change function call
-    # 3.) Evaluate function call
-    # 4.) Overwrite gps_matrix
+    # save original gps_matrix restricted to CSR as a fallback
+    gps_matrix_csr <- subset(gps_matrix, filter_vector)
 
-    # Limiting original data only to the csr
-    csr_filtered <- csr_data[filter_vector, ]
+    # limit original data only to the CSR
+    csr_filtered <- csr_data[filter_vector, , drop = FALSE]
 
-    # Saving and changing function call for estimate_gps
+    # prepare function call for estimate_gps
     estimate_call <- attr(gps_matrix, "function_call")
     estimate_call$data <- csr_filtered
 
-    # Evaluating the changed call
-    gps_matrix <- tryCatch(
+    # try to evaluate the changed call
+    gps_matrix_refit <- tryCatch(
       eval(estimate_call),
       error = function(e) {
-        warning("Refitting caused an error and will be ignored.
-                Setting refit = FALSE.")
-        refit <<- FALSE # Assign to parent env (if refit is defined there)
-        csr_filtered # Return filtered data
+        chk::wrn(strwrap(
+          "Refitting of the GPS model on the CSR-restricted data failed. ",
+          "Falling back to the original GPS restricted to the common support ",
+          "region (refit = FALSE).",
+          prefix  = " ",
+          initial = ""
+        ))
+        NULL
       }
     )
+
+    if (is.null(gps_matrix_refit)) {
+      # refitting failed: use the non-refitted CSR-restricted gps_matrix
+      gps_matrix <- gps_matrix_csr
+      refit <- FALSE  # only local, used if you want to record this below
+    } else {
+      # refitting succeeded
+      gps_matrix <- gps_matrix_refit
+      refit <- TRUE
+    }
   } else {
-    ## subsetting the gps_matrix
+    ## subset the gps_matrix without refitting
     gps_matrix <- subset(gps_matrix, filter_vector)
   }
 

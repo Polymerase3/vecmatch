@@ -871,7 +871,8 @@ summary.best_opt_result <- function(object, digits = 3, ...) {
 #' @export
 print.summary.best_opt_result <- function(x,
                                           digits = attr(x, "digits",
-                                                        exact = TRUE) %||% 3L,
+                                            exact = TRUE
+                                          ) %||% 3L,
                                           ...) {
   digits <- as.integer(digits)
   if (!is.finite(digits) || digits < 0L) {
@@ -1732,7 +1733,8 @@ summary.select_result <- function(object, digits = 3, ...) {
 #' @export
 print.summary.select_result <- function(x,
                                         digits = attr(x, "digits",
-                                                      exact = TRUE) %||% 3L,
+                                          exact = TRUE
+                                        ) %||% 3L,
                                         ...) {
   digits <- as.integer(digits)
   if (!is.finite(digits) || digits < 0L) digits <- 3L
@@ -2563,7 +2565,7 @@ print.opt_args <- function(x, ...) {
 str.opt_args <- function(object, ...) {
   # pull attributes
   total_combinations <- attr(object, "total_combinations")
-  model_covs         <- attr(object, "model_covs")
+  model_covs <- attr(object, "model_covs")
 
   n_args <- length(object)
   n_covs <- if (!is.null(model_covs)) length(model_covs) else NA_integer_
@@ -2581,12 +2583,16 @@ str.opt_args <- function(object, ...) {
     # show only first few covariates if there are many
     if (n_covs <= 10L) {
       cat("  Model covariates: ",
-          paste(model_covs, collapse = ", "),
-          "\n", sep = "")
+        paste(model_covs, collapse = ", "),
+        "\n",
+        sep = ""
+      )
     } else {
       cat("  Model covariates: ",
-          paste(head(model_covs, 10L), collapse = ", "),
-          ", ...\n", sep = "")
+        paste(head(model_covs, 10L), collapse = ", "),
+        ", ...\n",
+        sep = ""
+      )
     }
   }
 
@@ -2595,9 +2601,9 @@ str.opt_args <- function(object, ...) {
   # small per-argument summary (no full dump, str() will follow)
   for (name in names(object)) {
     values <- object[[name]]
-    uvals  <- unique(values)
-    n_u    <- length(uvals)
-    cls    <- paste(class(values), collapse = "/")
+    uvals <- unique(values)
+    n_u <- length(uvals)
+    cls <- paste(class(values), collapse = "/")
 
     # short preview of values
     preview <- if (n_u == 0L) {

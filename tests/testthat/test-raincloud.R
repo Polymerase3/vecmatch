@@ -324,7 +324,9 @@ test_that("mosaic() does not change RNG state", {
       age = sample(c("18-25", "26-35", "36-45"), 1000, replace = TRUE),
       sex = sample(c(0, 1), 1000, replace = TRUE),
       product = sample(c("Electronics", "Clothing", "Food"),
-                       1000, replace = TRUE)
+        1000,
+        replace = TRUE
+      )
     )
   })
 
@@ -351,7 +353,9 @@ test_that("mosaic() is graphically reproducible under fixed seed", {
       age = sample(c("18-25", "26-35", "36-45"), 1000, replace = TRUE),
       sex = sample(c(0, 1), 1000, replace = TRUE),
       product = sample(c("Electronics", "Clothing", "Food"),
-                       1000, replace = TRUE)
+        1000,
+        replace = TRUE
+      )
     )
   })
 

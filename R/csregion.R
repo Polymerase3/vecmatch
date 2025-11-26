@@ -144,7 +144,7 @@ csregion <- function(gps_matrix,
           "Refitting of the GPS model on the CSR-restricted data failed. ",
           "Falling back to the original GPS restricted to the common support ",
           "region (refit = FALSE).",
-          prefix  = " ",
+          prefix = " ",
           initial = ""
         ))
         NULL
@@ -154,7 +154,7 @@ csregion <- function(gps_matrix,
     if (is.null(gps_matrix_refit)) {
       # refitting failed: use the non-refitted CSR-restricted gps_matrix
       gps_matrix <- gps_matrix_csr
-      refit <- FALSE  # only local, used if you want to record this below
+      refit <- FALSE # only local, used if you want to record this below
     } else {
       # refitting succeeded
       gps_matrix <- gps_matrix_refit

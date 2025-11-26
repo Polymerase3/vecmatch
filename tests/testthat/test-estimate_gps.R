@@ -292,6 +292,7 @@ test_that("Formals checking: subset", {
 
 ## --testing methods and scenarios----------------------------------------------
 test_that("estimate_gps: methods and scenarios", {
+  skip_if_not_installed("brglm2")
   data <- data.frame(
     treat = rep(c(1, 2, 3, 4, 5), 20),
     treat_fold = factor(rep(c(1, 2, 3, 4, 5), 20),
@@ -478,7 +479,8 @@ test_that("str.gps prints structured header and underlying structure", {
   })
 
   # header lines
-  expect_true(grepl("gps object: generalized propensity scores", out, fixed = TRUE))
+  expect_true(grepl("gps object: generalized propensity scores", out,
+                    fixed = TRUE))
   expect_true(grepl("Dimensions: 4 rows x 3 columns", out, fixed = TRUE))
   expect_true(grepl("Treatment column: treatment", out, fixed = TRUE))
   expect_true(grepl("GPS columns: A, B", out, fixed = TRUE))
@@ -527,7 +529,8 @@ test_that("summary.gps returns structured summary.gps object", {
   expect_true(is.list(s$gps_by_treatment))
   expect_setequal(names(s$gps_by_treatment), c("A", "B"))
 
-  # each element of gps_by_treatment should be a matrix with rows = summary stats
+  # each element of gps_by_treatment should be a matrix with rows = summary
+  # stats
   expect_true(all(vapply(s$gps_by_treatment, is.matrix, logical(1L))))
 
   # original_data carried through

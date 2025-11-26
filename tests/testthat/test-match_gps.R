@@ -149,7 +149,7 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
   expect_s3_class(matched_obj, "matched")
   expect_s3_class(matched_obj, "data.frame")
 
-  ## str.matched ----------------------------------------------------------------
+  ## str.matched ---------------------------------------------------------------
   out_str <- utils::capture.output({
     res_str <- str(matched_obj)
   })
@@ -157,7 +157,7 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
   expect_true(any(grepl("Matched data.frame:", out_str, fixed = TRUE)))
   expect_identical(res_str, matched_obj)
 
-  ## .print_matched_core --------------------------------------------------------
+  ## .print_matched_core -------------------------------------------------------
   out_core <- utils::capture.output(
     {
       res_core <- .print_matched_core(matched_obj)
@@ -167,11 +167,12 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
 
   # strip ansi if present and check header line
   out_core_clean <- cli::ansi_strip(out_core)
-  expect_true(any(grepl("Number of units after matching", out_core_clean, fixed = TRUE)))
+  expect_true(any(grepl("Number of units after matching", out_core_clean,
+                        fixed = TRUE)))
 
   expect_identical(res_core, matched_obj)
 
-  ## print.matched --------------------------------------------------------------
+  ## print.matched -------------------------------------------------------------
   out_print <- utils::capture.output(
     {
       res_print <- print(matched_obj)
@@ -187,7 +188,7 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
 
   expect_identical(res_print, matched_obj)
 
-  ## summary.matched ------------------------------------------------------------
+  ## summary.matched -----------------------------------------------------------
   s <- summary(matched_obj)
 
   expect_s3_class(s, "summary.matched")
@@ -199,7 +200,7 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
     names(s$per_treatment)))
   expect_true(s$treatment_var %in% names(matched_obj))
 
-  ## print.summary.matched ------------------------------------------------------
+  ## print.summary.matched -----------------------------------------------------
   out_ps <- utils::capture.output(
     {
       res_ps <- print(s)
@@ -208,18 +209,19 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
   )
 
   out_ps_clean <- cli::ansi_strip(out_ps)
-  expect_true(any(grepl("Summary of matched object", out_ps_clean, fixed = TRUE)))
+  expect_true(any(grepl("Summary of matched object", out_ps_clean,
+                        fixed = TRUE)))
 
   expect_identical(res_ps, s)
 
-  ## plot.matched ----------------------------------------------------------------
+  ## plot.matched --------------------------------------------------------------
   res_plot <- NULL
   expect_silent({
     res_plot <- plot(matched_obj)
   })
   expect_identical(res_plot, matched_obj)
 
-  ## as.data.frame.matched ------------------------------------------------------
+  ## as.data.frame.matched -----------------------------------------------------
   df_m <- as.data.frame(matched_obj)
 
   expect_s3_class(df_m, "data.frame")
@@ -227,7 +229,7 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
   expect_equal(nrow(df_m), nrow(matched_obj))
   expect_equal(colnames(df_m), colnames(matched_obj))
 
-  ## reproducibility tests ------------------------------------------------------
+  ## reproducibility tests -----------------------------------------------------
   # str.matched should not touch RNG and should be reproducible
   set.seed(515151)
   old_seed <- .Random.seed
@@ -243,13 +245,16 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
   # .print_matched_core should not touch RNG and be reproducible
   set.seed(535353)
   old_seed <- .Random.seed
-  out_core2 <- utils::capture.output(.print_matched_core(matched_obj), type = "message")
+  out_core2 <- utils::capture.output(.print_matched_core(matched_obj),
+                                     type = "message")
   expect_identical(.Random.seed, old_seed)
 
   set.seed(545454)
-  out_core_a <- utils::capture.output(.print_matched_core(matched_obj), type = "message")
+  out_core_a <- utils::capture.output(.print_matched_core(matched_obj),
+                                      type = "message")
   set.seed(545454)
-  out_core_b <- utils::capture.output(.print_matched_core(matched_obj), type = "message")
+  out_core_b <- utils::capture.output(.print_matched_core(matched_obj),
+                                      type = "message")
   expect_identical(out_core_a, out_core_b)
 
   # print.matched should not touch RNG and be reproducible

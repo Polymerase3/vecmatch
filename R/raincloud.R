@@ -168,7 +168,7 @@ raincloud <- function(data = NULL,
   withr::with_preserve_seed({
     args_signif <- list(...)
     .data <- rlang::.data # silence R CMD CHECK note
-    #--check data frame-----------------------------------------------------------
+    #--check data frame---------------------------------------------------------
     if ("matched" %in% class(data)) {
       class(data) <- "data.frame"
     }
@@ -182,7 +182,7 @@ raincloud <- function(data = NULL,
       "The provided data is not numeric"
     )
 
-    #--check y, group and facet---------------------------------------------------
+    #--check y, group and facet-------------------------------------------------
     ## check if the provided names are valid names + convert to characters
     symlist <- list(
       y = substitute(y),
@@ -216,7 +216,8 @@ raincloud <- function(data = NULL,
     chk::chk_character(density_scale)
     .chk_cond(
       density_scale %nin% c("area", "count", "width"),
-      'The `density_scale` argument should be a single character. The allowed values are: "area", "count" and "width".'
+      'The `density_scale` argument should be a single character. The allowed
+      values are: "area", "count" and "width".'
     )
 
     ## check range for jitter
@@ -258,7 +259,7 @@ raincloud <- function(data = NULL,
             following values: "mean", "median".'
     )
 
-    ####################### DATA PROCESSING ######################################
+    ####################### DATA PROCESSING ####################################
     # assure y is numeric and convert facet, group to factors
     mapply(.conv_data,
       type = list("numeric", "factor", "factor"),
@@ -462,7 +463,7 @@ raincloud <- function(data = NULL,
       }
     }
 
-    ####################### PLOTTING #############################################
+    ####################### PLOTTING ###########################################
     # define the replace function
     "%+replace%" <- ggplot2::"%+replace%"
 
@@ -470,7 +471,7 @@ raincloud <- function(data = NULL,
     pal_len <- length(unique(data[, symlist[["group"]]]))
     pal_len <- max(pal_len, 1)
 
-    ## redefining 'group' labels to include sample sizes--------------------------
+    ## redefining 'group' labels to include sample sizes------------------------
     if (!is.null(symlist[["group"]])) {
       if (is.null(symlist[["facet"]])) {
         freq_table <- as.data.frame(table(data[, symlist[["group"]]]))
@@ -555,10 +556,10 @@ raincloud <- function(data = NULL,
       n_len <- length(data[, symlist[["y"]]])
     }
 
-    #--defining height of jitter plots--------------------------------------------
+    #--defining height of jitter plots------------------------------------------
     rain_height <- 0.1
 
-    ## --defining the main ggplot formula-----------------------------------------
+    ## --defining the main ggplot formula---------------------------------------
     colnames(data)[which(colnames(data) == symlist["facet"])] <- "facet"
     y_col <- symlist[["y"]]
     main <- ggplot2::ggplot(data, ggplot2::aes(
@@ -579,7 +580,7 @@ raincloud <- function(data = NULL,
       )
 
     ## --defining the geom_jitter
-    #### CASE 1 - only y, no group, no facet======================================
+    #### CASE 1 - only y, no group, no facet====================================
     main_geom_layers <- if (pal_len == 1 || is.null(symlist[["group"]])) {
       main +
         ## --defining the geom_boxplot
@@ -609,7 +610,7 @@ raincloud <- function(data = NULL,
           labels = sprintf("%s (n = %s)", symlist[["y"]], n_len)
         )
     } else {
-      #### CASE 2 - y + group, no facet===========================================
+      #### CASE 2 - y + group, no facet=========================================
       group_col <- symlist[["group"]]
 
       main +
@@ -649,7 +650,7 @@ raincloud <- function(data = NULL,
         scale_fill_vecmatch(n = pal_len, type = "discrete")
     }
 
-    #--defining the ggplot object-------------------------------------------------
+    #--defining the ggplot object-----------------------------------------------
     p <- main_geom_layers +
       ## defining scales
       ggplot2::scale_x_discrete(
@@ -668,7 +669,7 @@ raincloud <- function(data = NULL,
       ## define ylabs
       ggplot2::ylab(symlist[["y"]])
 
-    #### CASE 3 - use signif TRUE=================================================
+    #### CASE 3 - use signif TRUE===============================================
     if (use_signif) {
       ## defining the lims and calculating the significance bars if necessary
       # test run to define the limits of the plot
@@ -702,13 +703,13 @@ raincloud <- function(data = NULL,
 
       # looping along the levels of fcaet to calulacte yposition
       for (i in 1:facet_levels) {
-        #### CASE 3.1 - use facet=================================================
+        #### CASE 3.1 - use facet===============================================
         if (facet_levels > 1) {
           test_results_sub <- test_results[
             test_results$facet == unique(levels(data[, "facet"]))[i],
           ]
         } else {
-          #### CASE 3.1 - no facet================================================
+          #### CASE 3.1 - no facet==============================================
           test_results_sub <- test_results
         }
 
@@ -791,9 +792,9 @@ raincloud <- function(data = NULL,
         ggplot2::ylim(limits)
     }
 
-    #### CASE 4 - add facet=======================================================
+    #### CASE 4 - add facet=====================================================
     if (!is.null(symlist[["facet"]])) {
-      ## custom labeller function to include the number of obs--------------------
+      ## custom labeller function to include the number of obs------------------
       freq_table <- as.data.frame(table(data[, "facet"]))
 
       labeller_vec <- c()

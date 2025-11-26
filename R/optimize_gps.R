@@ -66,7 +66,8 @@
 #' The returned `data.frame` includes the following columns (depending on the
 #' number of treatment levels):
 #' - `iter_ID`: Unique identifier for each parameter combination
-#' - `method_match`: Matching method used in [match_gps()], e.g., `"nnm"` or `"fullopt"`
+#' - `method_match`: Matching method used in [match_gps()], e.g., `"nnm"` or
+#' `"fullopt"`
 #' - `caliper`: Caliper value used in [match_gps()]
 #' - `order`: Ordering of GPS scores prior to matching
 #' - `kmeans_cluster`: Number of k-means clusters used
@@ -74,10 +75,12 @@
 #' - `ties`: Tie-breaking rule in nearest-neighbor matching (`nnm` only)
 #' - `ratio`: Control-to-treated ratio for `nnm`
 #' - `min_controls`, `max_controls`: Minimum and maximum controls for `fullopt`
-#' - `reference`: Reference group used in both [estimate_gps()] and [match_gps()]
+#' - `reference`: Reference group used in both [estimate_gps()] and
+#' [match_gps()]
 #' - `perc_matched`: Percentage of matched samples (from [balqual()])
 #' - `smd`: Maximum standardized mean difference (from [balqual()])
-#' - `p_{group_name}`: Percent matched per treatment group (based on group sample size)
+#' - `p_{group_name}`: Percent matched per treatment group (based on group s
+#' ample size)
 #' - `method_gps`: GPS estimation method used (from [estimate_gps()])
 #' - `link`: Link function used in GPS model
 #' - `smd_group`: SMD range category for the row
@@ -98,17 +101,30 @@
 #'
 #' The object contains the following custom attributes:
 #'
-#' - **`opt_results`**: A `data.frame` of optimization results. Each row corresponds to a unique parameter combination tested. For a complete description of columns, see the ***Details*** section.
+#' - **`opt_results`**: A `data.frame` of optimization results. Each row
+#' corresponds to a unique parameter combination tested. For a complete
+#' description of columns, see the ***Details*** section.
 #'
-#' - **`optimization_time`**: Time (in seconds) taken by the optimization loop (i.e., the core `for`-loop that evaluates combinations). This does **not** include the time needed for GPS estimation, pre-processing, or merging of results after loop completion. On large datasets, these excluded steps can still be substantial.
+#' - **`optimization_time`**: Time (in seconds) taken by the optimization loop
+#' (i.e., the core `for`-loop that evaluates combinations). This does **not**
+#' include the time needed for GPS estimation, pre-processing, or merging of
+#' results after loop completion. On large datasets, these excluded steps can
+#' still be substantial.
 #'
-#' - **`combinations_tested`**: Total number of unique parameter combinations evaluated during optimization.
+#' - **`combinations_tested`**: Total number of unique parameter combinations
+#' evaluated during optimization.
 #'
-#' - **`smd_results`**: A detailed table of standardized mean differences (SMDs) for all pairwise treatment group comparisons and for all covariates specified in the `formula`. This is used by the [select_opt()] function to filter optimal models based on covariate-level balance across groups.
+#' - **`smd_results`**: A detailed table of standardized mean differences (SMDs)
+#'  for all pairwise treatment group comparisons and for all covariates
+#'  specified in the `formula`. This is used by the [select_opt()] function to
+#'  filter optimal models based on covariate-level balance across groups.
 #'
-#' - **`treat_names`**: A character vector with the names of the unique treatment groups.
+#' - **`treat_names`**: A character vector with the names of the unique
+#' treatment groups.
 #'
-#' - **`model_covs`**: A character vector listing the model covariates (main effects and interactions) used in the `formula`. These names correspond to the variables shown in the `smd_results` table.
+#' - **`model_covs`**: A character vector listing the model covariates (main
+#' effects and interactions) used in the `formula`. These names correspond to
+#' the variables shown in the `smd_results` table.
 #'
 #' @examples
 #' # Define formula for GPS estimation and matching
@@ -985,12 +1001,14 @@ print.summary.best_opt_result <- function(x,
   smd_range <- if (all(is.na(smd_vals))) {
     "<all NA>"
   } else {
-    sprintf("[%.3f, %.3f]", min(smd_vals, na.rm = TRUE), max(smd_vals, na.rm = TRUE))
+    sprintf("[%.3f, %.3f]", min(smd_vals, na.rm = TRUE),
+            max(smd_vals, na.rm = TRUE))
   }
   pm_range <- if (all(is.na(pm_vals))) {
     "<all NA>"
   } else {
-    sprintf("[%.1f, %.1f]", min(pm_vals, na.rm = TRUE), max(pm_vals, na.rm = TRUE))
+    sprintf("[%.1f, %.1f]", min(pm_vals, na.rm = TRUE),
+            max(pm_vals, na.rm = TRUE))
   }
 
   cli::cli_ul()
@@ -999,8 +1017,10 @@ print.summary.best_opt_result <- function(x,
   cli::cli_li("Optimization time (sec): {opt_time %||% '<unknown>'}")
   cli::cli_li("Combinations tested: {comb_test %||% '<unknown>'}")
 
-  cli::cli_li("Treatments: {.field {if (length(treat_levels)) paste(treat_levels, collapse = ', ') else '<none>'}}")
-  cli::cli_li("Number of covariates in balance check: {length(model_covs %||% character(0))}")
+  cli::cli_li("Treatments: {.field {if (length(treat_levels))
+              paste(treat_levels, collapse = ', ') else '<none>'}}")
+  cli::cli_li("Number of covariates in balance check:
+              {length(model_covs %||% character(0))}")
 
   cli::cli_li("SMD range in selected set: {smd_range}")
   cli::cli_li("% matched range in selected set: {pm_range}")
@@ -1028,7 +1048,8 @@ print.summary.best_opt_result <- function(x,
 
 #' @export
 print.best_opt_result <- function(x, ...) {
-  cli::cli_text("{.strong best_opt_result object} (GPS matching optimization summary)")
+  cli::cli_text("{.strong best_opt_result object} (GPS matching
+                optimization summary)")
   cli::cli_text("")
   .print_best_opt_result_core(x, ...)
 }
@@ -1212,8 +1233,11 @@ str.best_opt_result <- function(object, ...) {
 #' Depending on the research design, certain pairwise comparisons or treatment
 #' groups may be more important than others. For example:
 #'
-#' - You may want to prioritize matching between a specific groups (e.g. specific disease vs. controls), while ignoring other group comparisons during SMD evaluation.
-#' - You may wish to retain as many samples as possible from a critical group or set of groups, regardless of matching rates in other groups.
+#' - You may want to prioritize matching between a specific groups (e.g.
+#' specific disease vs. controls), while ignoring other group comparisons
+#' during SMD evaluation.
+#' - You may wish to retain as many samples as possible from a critical group or
+#'  set of groups, regardless of matching rates in other groups.
 #'
 #' This function enables targeted selection of optimal parameter combinations
 #' by:
@@ -1272,8 +1296,11 @@ str.best_opt_result <- function(object, ...) {
 #' @return An S3 object of class `select_result`, containing the filtered and
 #' prioritized optimization results. The object includes:
 #'
-#' - A `data.frame` with selected parameter combinations and performance metrics.
-#' - **Attribute `param_df`**: A `data.frame` with full parameter specifications (`iter_ID`, GPS/matching parameters, etc.), useful for manually refitting or reproducing results.
+#' - A `data.frame` with selected parameter combinations and performance
+#' metrics.
+#' - **Attribute `param_df`**: A `data.frame` with full parameter specifications
+#'  (`iter_ID`, GPS/matching parameters, etc.), useful for manually refitting or
+#'   reproducing results.
 #'
 #' The object also includes a custom `print()` method that summarizes:
 #' - Number of selected combinations per SMD bin
@@ -1631,7 +1658,8 @@ select_opt <- function(x,
 
   param_df <- merge(
     full_df[, colnames(full_df) %nin% remove_cols, drop = FALSE],
-    best_rows_final[, colnames(best_rows_final) %nin% "perc_matched", drop = FALSE],
+    best_rows_final[, colnames(best_rows_final) %nin% "perc_matched",
+                    drop = FALSE],
     by = "iter_ID"
   )
 
@@ -1687,10 +1715,18 @@ summary.select_result <- function(object, digits = 3, ...) {
     groups <- split(x, x$smd_group)
 
     # Keep only groups with valid overall_stat values
-    groups <- groups[sapply(groups, function(g) any(!is.na(g$overall_stat)))]
+    groups <- groups[vapply(
+      groups,
+      function(g) any(!is.na(g$overall_stat)),
+      logical(1L)
+    )]
 
     # Sort groups by first valid overall_stat
-    smd_order <- sapply(groups, function(g) min(g$overall_stat, na.rm = TRUE))
+    smd_order <- vapply(
+      groups,
+      function(g) min(g$overall_stat, na.rm = TRUE),
+      numeric(1L)
+    )
     sorted_groups <- names(sort(smd_order))
 
     # Build result table (unrounded here; rounding is in print())
@@ -1783,7 +1819,8 @@ print.summary.select_result <- function(x,
       cat(
         "|",
         format(row$smd_group, width = col_widths[1], justify = "left"), "|",
-        format(row$unique_configs, width = col_widths[2], justify = "right"), "|",
+        format(row$unique_configs, width = col_widths[2], justify = "right"),
+        "|",
         format(round(row$smd, digits),
           width = col_widths[3], justify = "right"
         ), "|",
@@ -1811,7 +1848,8 @@ print.summary.select_result <- function(x,
 
 #' @export
 print.select_result <- function(x, n_show = 10L, ...) {
-  cli::cli_text("{.strong select_result object} (selected matching configurations)")
+  cli::cli_text("{.strong select_result object} (selected matching
+                configurations)")
   cli::cli_text("Subclass of {.cls best_opt_result} and {.cls data.frame}.")
   cli::cli_text("")
 
@@ -1822,7 +1860,8 @@ print.select_result <- function(x, n_show = 10L, ...) {
       cli::cli_text("perc_matched: global percentage of matched units.")
     } else {
       cli::cli_text(
-        "perc_matched: mean percentage matched across groups: {.field {paste(comps, collapse = ', ')}}"
+        "perc_matched: mean percentage matched across groups:
+        {.field {paste(comps, collapse = ', ')}}"
       )
     }
     cli::cli_text("")
@@ -1955,7 +1994,8 @@ str.select_result <- function(object, ...) {
 
   if (!is.null(param_df)) {
     cat(sprintf(
-      " param_df (matched parameter rows): data.frame with %d rows and %d columns\n",
+      " param_df (matched parameter rows): data.frame with %d rows and %d
+      columns\n",
       NROW(param_df), NCOL(param_df)
     ))
   } else {
@@ -2056,7 +2096,8 @@ get_select_params <- function(x, smd_group = NULL) {
 #' @param x A \code{select_result} object returned by \code{select_opt()}.
 #' @param data Data frame used in the original optimization (pass it the same
 #'   way as in your original analysis, e.g. \code{data = cancer}).
-#' @param formula Model formula used for GPS estimation (e.g. \code{formula_cancer}).
+#' @param formula Model formula used for GPS estimation (e.g.
+#' \code{formula_cancer}).
 #' @param smd_group Optional SMD bin to filter on
 #'   (e.g. \code{"0.10-0.15"}). If \code{NULL}, no filtering is applied.
 #' @param row Integer index of the row (after optional filtering by
@@ -2145,7 +2186,8 @@ run_selected_matching <- function(x,
     "Selected parameter row is missing `method_gps`, `link` or `reference`."
   )
 
-  # use the *original* symbols from the user's call: data = cancer, formula = formula_cancer, ...
+  # use the original symbols from the user's call: data = cancer,
+  # formula = formula_cancer, ...
   mc <- match.call(expand.dots = FALSE)
 
   est_call <- as.call(list(
@@ -2303,7 +2345,8 @@ run_selected_matching <- function(x,
 #'
 #' The object includes a custom S3 `print()` method that displays:
 #' - A summary table of all allowed values for each optimization parameter,
-#' - The total number of unique parameter combinations (i.e., the size of the search space).
+#' - The total number of unique parameter combinations (i.e., the size of the
+#' search space).
 #'
 #' @return An object of class `"opt_args"`, containing all valid parameter
 #'   combinations to be sampled by `optimize_gps()`. Use `print()` to explore
@@ -2409,7 +2452,7 @@ make_opt_args <- function(
   )
 
   ## cluster
-  allowed_clusters <- 1:length(treatment_levels)
+  allowed_clusters <- seq_along(treatment_levels)
   validate_optarg(
     cluster,
     allowed_clusters,

@@ -207,7 +207,8 @@ test_that("Testing make_opt_args S3 class", {
 
   # print should not error and should show header
   out <- utils::capture.output(print(fullopt))
-  expect_true(any(grepl("Optimization Argument Set \\(class: opt_args\\)", out)))
+  expect_true(any(grepl("Optimization Argument Set \\(class: opt_args\\)",
+                        out)))
 
   ## reproducibility tests -----------------------------------------------------
   # make_opt_args should not change the global rng state
@@ -269,7 +270,8 @@ test_that("Testing make_opt_args S3 class", {
   expect_identical(out_a, out_b)
 })
 
-test_that("best_opt_result / select_result methods and helpers work end-to-end", {
+test_that("best_opt_result / select_result methods and helpers work
+          end-to-end", {
   # data and formula
   data <- cancer
   formula <- status ~ age * sex
@@ -309,7 +311,8 @@ test_that("best_opt_result / select_result methods and helpers work end-to-end",
   expect_s3_class(s_best, "summary.best_opt_result")
   expect_s3_class(s_best, "data.frame")
   expect_true(
-    all(c("smd_group", "unique_configs", "smd", "perc_matched") %in% names(s_best))
+    all(c("smd_group", "unique_configs", "smd", "perc_matched") %in%
+          names(s_best))
   )
 
   # print.summary.best_opt_result: just check header appears
@@ -372,7 +375,8 @@ test_that("best_opt_result / select_result methods and helpers work end-to-end",
   expect_s3_class(s_sel, "summary.select_result")
   expect_s3_class(s_sel, "data.frame")
   expect_true(
-    all(c("smd_group", "unique_configs", "smd", "perc_matched") %in% names(s_sel))
+    all(c("smd_group", "unique_configs", "smd", "perc_matched") %in%
+          names(s_sel))
   )
 
   out_s_sel <- utils::capture.output(print(s_sel))

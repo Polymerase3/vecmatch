@@ -987,8 +987,12 @@ summary.matched <- function(object, digits = 1, ...) {
   tr_orig <- original_data[[treat_name]]
   tr_match <- object[[treat_name]]
 
-  if (!is.factor(tr_orig)) tr_orig <- factor(tr_orig)
-  if (!is.factor(tr_match)) tr_match <- factor(tr_match, levels = levels(tr_orig))
+  if (!is.factor(tr_orig)) {
+    tr_orig <- factor(tr_orig)
+  }
+  if (!is.factor(tr_match)) {
+    tr_match <- factor(tr_match, levels = levels(tr_orig))
+  }
 
   tab_before <- table(tr_orig)
   tab_after <- table(tr_match)
@@ -1081,7 +1085,8 @@ print.summary.matched <- function(x, digits = NULL, ...) {
     }
     cli::cli_end()
   } else {
-    cli::cli_text("{.emph No additional matching parameters recorded in function_call.}")
+    cli::cli_text("{.emph No additional matching parameters recorded in
+                  function_call.}")
   }
 
   ## Overall matching performance ---------------------------------------------

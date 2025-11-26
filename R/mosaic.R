@@ -79,7 +79,7 @@ mosaic <- function(data = NULL,
   withr::with_preserve_seed({
     args_signif_org <- list(...)
 
-    #--check data frame-----------------------------------------------------------
+    #--check data frame---------------------------------------------------------
     ## must be an object of class data frame
     if ("matched" %in% class(data)) {
       class(data) <- "data.frame"
@@ -87,7 +87,7 @@ mosaic <- function(data = NULL,
 
     .check_df(data)
 
-    #--check y, group and facet---------------------------------------------------
+    #--check y, group and facet-------------------------------------------------
     ## Check if the provided names are valid names + convert to
     symlist <- list(
       y = substitute(y),
@@ -127,7 +127,7 @@ mosaic <- function(data = NULL,
       )
     }
 
-    ####################### DATA PROCESSING ######################################
+    ####################### DATA PROCESSING ####################################
     # assure y is numeric and convert facet, group to factors
     mapply(.conv_data,
       type = list("factor", "factor", "factor"),
@@ -156,7 +156,7 @@ mosaic <- function(data = NULL,
 
     if (facet_levels == 0 || is.null(facet_levels)) facet_levels <- 1
 
-    ###################### SIGNIFICANCE TESTS ####################################
+    ###################### SIGNIFICANCE TESTS ##################################
     # check and process the significance argument
     if (use_signif) {
       rlang::check_installed(c("rstatix", "productplots"))
@@ -230,7 +230,8 @@ mosaic <- function(data = NULL,
                 quote = TRUE
               )
 
-              res[[i]] <- as.data.frame(rstatix::std_residuals(test_results[[i]]))
+              res[[i]] <- as.data.frame(rstatix::std_residuals(
+                test_results[[i]]))
             })
           },
           error = function(e) {
@@ -266,7 +267,7 @@ mosaic <- function(data = NULL,
       )
     }
 
-    ##################### CALCULATING COORDS #####################################
+    ##################### CALCULATING COORDS ###################################
 
     ## Define the formula (conditionally on group)
     form <- stats::as.formula(paste(
@@ -316,7 +317,7 @@ mosaic <- function(data = NULL,
       prodcoords[, "count_label"] <- paste0("n = ", prodcoords[, ".wt"])
     }
 
-    ####################### PLOTTING #############################################
+    ####################### PLOTTING ###########################################
     ## Unique values in grouping variables (necessary to define the palette)
     pal_len <- nunique(data[, if (use_group) {
       symlist[["group"]]
@@ -324,7 +325,7 @@ mosaic <- function(data = NULL,
       symlist[["y"]]
     }])
 
-    ## --defining the main ggplot formula-----------------------------------------
+    ## --defining the main ggplot formula---------------------------------------
     main <- ggplot2::ggplot(prodcoords)
 
     #### CASE 1 - no group, no facet

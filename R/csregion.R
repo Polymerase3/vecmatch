@@ -266,7 +266,9 @@ print.summary.csr <- function(x, digits = NULL, ...) {
     digits <- if (!is.null(x$digits)) x$digits else 3L
   }
 
-  fmt <- function(z) format(round(z, digits = digits), trim = TRUE, nsmall = digits)
+  fmt <- function(z) {
+    format(round(z, digits = digits), trim = TRUE, nsmall = digits)
+  }
 
   # local helper: fixed-width table; may convert in the future to a CLI-like
   # table
@@ -310,7 +312,8 @@ print.summary.csr <- function(x, digits = NULL, ...) {
     "Rows kept: {x$n_kept} / {x$n_total} (excluded: {x$n_excluded})"
   )
   cli::cli_text(
-    "Columns: {length(x$group_sizes_after)} treatment levels (plus GPS columns in the original object)"
+    "Columns: {length(x$group_sizes_after)} treatment levels
+    (plus GPS columns in the original object)"
   )
   cli::cli_rule()
 
@@ -371,7 +374,9 @@ str.csr <- function(object, ...) {
   if (!is.null(group_sizes_after)) {
     cat(" Group sizes after CSR filtering:\n")
     gs_txt <- paste(
-      sprintf("  - %s: %d", names(group_sizes_after), as.integer(group_sizes_after)),
+      sprintf("  - %s: %d",
+              names(group_sizes_after),
+              as.integer(group_sizes_after)),
       collapse = "\n"
     )
     cat(gs_txt, "\n", sep = "")

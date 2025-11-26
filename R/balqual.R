@@ -556,10 +556,19 @@ str.quality <- function(object, ...) {
   od_after <- attr(object, "original_data_after")
   smd_df <- attr(object, "smd_df_combo")
 
-  n_before_attr <- object$n_before %||% if (!is.null(od_before)) NROW(od_before) else NA_integer_
-  n_after_attr <- object$n_after %||% if (!is.null(od_after)) NROW(od_after) else NA_integer_
+  n_before_attr <- object$n_before %||% if (!is.null(od_before)) {
+    NROW(od_before)
+  } else {
+    NA_integer_
+  }
+  n_after_attr <- object$n_after %||% if (!is.null(od_after)) {
+    NROW(od_after)
+  } else {
+    NA_integer_
+  }
 
-  perc <- object$perc_matched %||% if (!is.na(n_before_attr) && n_before_attr > 0) {
+  perc <- object$perc_matched %||% if (!is.na(n_before_attr) &&
+                                       n_before_attr > 0) {
     100 * n_after_attr / n_before_attr
   } else {
     NA_real_

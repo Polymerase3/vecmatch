@@ -71,8 +71,6 @@
 #'   [match_gps()] for the matching of generalized propensity scores
 #' @examples
 #'
-#' library("brglm2")
-#'
 #' # Conducting covariate balancing on the `airquality` dataset. Our goal was to
 #' # compare ozone levels by month, but we discovered that ozone levels are
 #' # strongly correlated with wind intensity (measured in mph), and the average
@@ -406,7 +404,8 @@ estimate_gps <- function(formula,
   cli::cli_li("Number of units: {n}")
   cli::cli_li("Number of treatments: {k}")
   cli::cli_li("Treatment column: {.field treatment}")
-  cli::cli_li("GPS probability columns: {.field {paste(gps_cols, collapse = ', ')}}")
+  cli::cli_li("GPS probability columns: {.field {paste(gps_cols,
+              collapse = ', ')}}")
   cli::cli_li("Treatment levels: {paste(trt_levels, collapse = ', ')}")
   cli::cli_li("All columns except 'treatment' store probabilities in [0, 1].")
   cli::cli_end()
@@ -497,13 +496,14 @@ summary.gps <- function(object, ...) {
   gps_by_trt <- lapply(
     split(object[, gps_cols, drop = FALSE], treatment),
     function(df) {
-      stats_mat <- sapply(df, function(v) {
+      stats_list <- lapply(df, function(v) {
         if (is.numeric(v)) {
           summary(v, ...)
         } else {
           summary(as.numeric(v), ...)
         }
       })
+      stats_mat <- do.call(cbind, stats_list)
       as.matrix(stats_mat)
     }
   )

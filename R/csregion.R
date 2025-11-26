@@ -184,7 +184,7 @@ csregion <- function(gps_matrix,
   )
 
   # return the gps_matrix
-  invisible(gps_matrix)
+  return(gps_matrix)
 }
 
 #' @export
@@ -244,7 +244,7 @@ summary.csr <- function(object, digits = 3, ...) {
   )
 
   class(res) <- "summary.csr"
-  res
+  return(res)
 }
 
 #' @export

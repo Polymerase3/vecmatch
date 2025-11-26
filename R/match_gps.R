@@ -884,6 +884,8 @@ match_gps <- function(csmatrix = NULL,
     treatment_var   = treatment_var,
     class           = c("matched", "data.frame")
   )
+
+  return(results)
 }
 
 #' @export

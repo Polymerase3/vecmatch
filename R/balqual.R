@@ -546,7 +546,7 @@ print.quality <- function(x, ...) {
     print_quality_table(x$quality_max, "Maximal values")
   }
 
-  invisible(x)
+  return(x)
 }
 
 #' @export

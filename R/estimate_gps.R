@@ -384,7 +384,7 @@ estimate_gps <- function(formula,
   )
 
   ## returning gps matrix
-  invisible(results)
+  return(results)
 }
 
 # internal helper: plot data.frame with a header

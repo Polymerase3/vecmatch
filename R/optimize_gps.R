@@ -1661,8 +1661,8 @@ select_opt <- function(x,
   attr(res, "param_df") <- param_df
   attr(res, "function_call") <- match.call()
 
-  # return invisibly; printing is handled by print() methods
-  invisible(res)
+  # printing is handled by print() methods
+  return(res)
 }
 
 #' @export
@@ -2018,7 +2018,7 @@ get_select_params <- function(x, smd_group = NULL) {
     param_df <- param_df[param_df$smd_group %in% smd_group, , drop = FALSE]
   }
 
-  param_df
+  return(param_df)
 }
 
 #' @title Rerun GPS Estimation and Matching for a Selected Configuration
@@ -2153,7 +2153,7 @@ run_selected_matching <- function(x,
   attr(matched, "select_smd_group") <- par_row[["smd_group"]]
   attr(matched, "select_call") <- match.call()
 
-  matched
+  return(matched)
 }
 
 #' @title Define the Optimization Parameter Space for Matching
@@ -2467,7 +2467,7 @@ make_opt_args <- function(
     class              = c("opt_args", "list")
   )
 
-  res
+  return(res)
 }
 
 

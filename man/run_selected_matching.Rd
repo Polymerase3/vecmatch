@@ -24,7 +24,11 @@ way as in your original analysis, e.g. \code{data = cancer}).}
 }
 \value{
 The result of \code{match_gps()}.
-#' @examples
+}
+\description{
+Rerun GPS Estimation and Matching for a Selected Configuration
+}
+\examples{
 \donttest{
 # Define formula and set up optimization
 formula_cancer <- formula(status ~ age * sex)
@@ -42,9 +46,9 @@ withr::with_seed(8252, {
 select_results <- select_opt(
   x = opt_results,
   smd_groups = list(
-    c("adenoma", "controls"),
-    c("controls", "crc_beningn"),
-    c("crc_malignant", "controls")
+    c("adenoma", "control"),
+    c("control", "crc_beningn"),
+    c("crc_malignant", "control")
   ),
   smd_variables = "age",
   smd_type = "max",
@@ -57,7 +61,4 @@ get_select_params(select_results, smd_group = "0.05-0.10")
 # Rerun the analysis
 
 }
-}
-\description{
-Rerun GPS Estimation and Matching for a Selected Configuration
 }

@@ -1298,9 +1298,9 @@ str.best_opt_result <- function(object, ...) {
 #' select_opt(
 #'   x = opt_results,
 #'   smd_groups = list(
-#'     c("adenoma", "controls"),
-#'     c("controls", "crc_beningn"),
-#'     c("crc_malignant", "controls")
+#'     c("adenoma", "control"),
+#'     c("control", "crc_beningn"),
+#'     c("crc_malignant", "control")
 #'   ),
 #'   smd_variables = "age",
 #'   smd_type = "max",
@@ -2007,9 +2007,9 @@ str.select_result <- function(object, ...) {
 #' select_results <- select_opt(
 #'   x = opt_results,
 #'   smd_groups = list(
-#'     c("adenoma", "controls"),
-#'     c("controls", "crc_beningn"),
-#'     c("crc_malignant", "controls")
+#'     c("adenoma", "control"),
+#'     c("control", "crc_beningn"),
+#'     c("crc_malignant", "control")
 #'   ),
 #'   smd_variables = "age",
 #'   smd_type = "max",
@@ -2064,7 +2064,7 @@ get_select_params <- function(x, smd_group = NULL) {
 #' @param ... Extra args forwarded to \code{match_gps()}.
 #'
 #' @return The result of \code{match_gps()}.
-#' #' @examples
+#' @examples
 #' \donttest{
 #' # Define formula and set up optimization
 #' formula_cancer <- formula(status ~ age * sex)
@@ -2082,9 +2082,9 @@ get_select_params <- function(x, smd_group = NULL) {
 #' select_results <- select_opt(
 #'   x = opt_results,
 #'   smd_groups = list(
-#'     c("adenoma", "controls"),
-#'     c("controls", "crc_beningn"),
-#'     c("crc_malignant", "controls")
+#'     c("adenoma", "control"),
+#'     c("control", "crc_beningn"),
+#'     c("crc_malignant", "control")
 #'   ),
 #'   smd_variables = "age",
 #'   smd_type = "max",
@@ -2589,7 +2589,7 @@ str.opt_args <- function(object, ...) {
       )
     } else {
       cat("  Model covariates: ",
-        paste(head(model_covs, 10L), collapse = ", "),
+        paste(utils::head(model_covs, 10L), collapse = ", "),
         ", ...\n",
         sep = ""
       )
@@ -2625,7 +2625,7 @@ str.opt_args <- function(object, ...) {
       } else {
         paste0(
           cls, ": ",
-          paste(head(uvals, 5L), collapse = ", "),
+          paste(utils::head(uvals, 5L), collapse = ", "),
           ", ... (", n_u, " unique)"
         )
       }

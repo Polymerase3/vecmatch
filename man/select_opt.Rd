@@ -114,9 +114,9 @@ withr::with_seed(8252, {
 select_opt(
   x = opt_results,
   smd_groups = list(
-    c("adenoma", "controls"),
-    c("controls", "crc_beningn"),
-    c("crc_malignant", "controls")
+    c("adenoma", "control"),
+    c("control", "crc_beningn"),
+    c("crc_malignant", "control")
   ),
   smd_variables = "age",
   smd_type = "max",

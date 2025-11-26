@@ -43,15 +43,93 @@ names(vec_col_list) <- c(
 )
 
 #--function to generate palettes form the list of colors------------------------
-.generate_palettes <- function(n, col_list = vec_col_list,
-                               type = c("discrete", "continuous")) {
-  cols <- col_list[[n]]
-  type <- match.arg(type)
+# helper: parse "#RRGGBB" (or "#RGB") into numeric R,G,B in [0, 255]
+.hex_to_rgb <- function(col) {
+  col <- gsub("^#", "", col)
 
-  palette <- switch(type,
-    discrete = cols,
-    continuous = grDevices::colorRampPalette(cols)(n)
+  # expand shorthand "#RGB" to "#RRGGBB"
+  if (nchar(col) == 3L) {
+    col <- paste0(
+      substr(col, 1L, 1L), substr(col, 1L, 1L),
+      substr(col, 2L, 2L), substr(col, 2L, 2L),
+      substr(col, 3L, 3L), substr(col, 3L, 3L)
+    )
+  }
+
+  c(
+    R = strtoi(substr(col, 1L, 2L), 16L),
+    G = strtoi(substr(col, 3L, 4L), 16L),
+    B = strtoi(substr(col, 5L, 6L), 16L)
   )
+}
+
+# helper: clamp + convert back to "#RRGGBB"
+.rgb_to_hex <- function(r, g, b) {
+  r <- max(0, min(255, round(r)))
+  g <- max(0, min(255, round(g)))
+  b <- max(0, min(255, round(b)))
+  sprintf("#%02X%02X%02X", r, g, b)
+}
+
+# simple linear interpolation in RGB space
+.interpolate_palette <- function(cols, n) {
+  m <- length(cols)
+
+  if (m == 1L) {
+    # only one anchor colour: just repeat it
+    return(rep(cols, n))
+  }
+
+  # anchor positions in [0, 1]
+  stops <- seq(0, 1, length.out = m)
+
+  # matrix m x 3 of anchor RGB
+  rgb_mat <- t(vapply(cols, .hex_to_rgb, numeric(3L)))
+
+  # target positions
+  pos <- if (n == 1L) 0.5 else seq(0, 1, length.out = n)
+
+  out_rgb <- matrix(NA_real_, nrow = n, ncol = 3L)
+
+  for (i in seq_len(n)) {
+    x <- pos[i]
+
+    if (x <= 0) {
+      out_rgb[i, ] <- rgb_mat[1L, ]
+    } else if (x >= 1) {
+      out_rgb[i, ] <- rgb_mat[m, ]
+    } else {
+      # find interval [stops[j], stops[j+1]]
+      j <- max(which(stops <= x))
+      if (j >= m) j <- m - 1L
+
+      t0 <- stops[j]
+      t1 <- stops[j + 1L]
+      alpha <- (x - t0) / (t1 - t0)
+
+      out_rgb[i, ] <- (1 - alpha) * rgb_mat[j, ] + alpha * rgb_mat[j + 1L, ]
+    }
+  }
+
+  vapply(
+    seq_len(n),
+    function(i) .rgb_to_hex(out_rgb[i, 1L], out_rgb[i, 2L], out_rgb[i, 3L]),
+    character(1L)
+  )
+}
+
+.generate_palettes <- function(n,
+                               col_list = vec_col_list,
+                               type = c("discrete", "continuous")) {
+  type <- match.arg(type)
+  cols <- col_list[[n]]
+
+  palette <- switch(
+    type,
+    discrete   = cols,
+    continuous = .interpolate_palette(cols, n)
+  )
+
   structure(palette, name = names(col_list[[n]]), class = "palette")
 }
 

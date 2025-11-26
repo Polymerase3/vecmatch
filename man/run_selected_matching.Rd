@@ -12,7 +12,8 @@ run_selected_matching(x, data, formula, smd_group = NULL, row = 1L, ...)
 \item{data}{Data frame used in the original optimization (pass it the same
 way as in your original analysis, e.g. \code{data = cancer}).}
 
-\item{formula}{Model formula used for GPS estimation (e.g. \code{formula_cancer}).}
+\item{formula}{Model formula used for GPS estimation (e.g.
+\code{formula_cancer}).}
 
 \item{smd_group}{Optional SMD bin to filter on
 (e.g. \code{"0.10-0.15"}). If \code{NULL}, no filtering is applied.}

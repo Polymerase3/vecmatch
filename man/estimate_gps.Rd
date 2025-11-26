@@ -102,7 +102,9 @@ Available options: \code{link = c("logistic", "probit", "loglog", "cloglog",   "
 }
 \examples{
 
-library("brglm2")
+if (requireNamespace("brglm2", quietly = TRUE)) {
+
+library(brglm2)
 
 # Conducting covariate balancing on the `airquality` dataset. Our goal was to
 # compare ozone levels by month, but we discovered that ozone levels are
@@ -139,6 +141,7 @@ raincloud(filtered_air,
   group = Month,
   significance = "t_test"
 )
+}
 }
 \seealso{
 \code{\link[=csregion]{csregion()}} for the calculation of common support region,

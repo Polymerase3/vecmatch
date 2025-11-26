@@ -112,7 +112,8 @@ The \code{gps_method} argument must contain one or more of the following codes:
 The object includes a custom S3 \code{print()} method that displays:
 \itemize{
 \item A summary table of all allowed values for each optimization parameter,
-\item The total number of unique parameter combinations (i.e., the size of the search space).
+\item The total number of unique parameter combinations (i.e., the size of the
+search space).
 }
 }
 \examples{

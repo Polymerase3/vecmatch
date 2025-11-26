@@ -190,22 +190,25 @@ optimize_gps <- function(data = NULL,
     n_workers <- 1L
   }
 
-  if (n_workers > 1L) {
-    # doRNG is needed for %dorng% to provide reproducible RNG
+  if (n_workers <= 1L) {
+    # sequential - only foreach needed
     rlang::check_installed(
-      "doRNG",
+      "foreach",
+      reason = "for sequential foreach execution"
+    )
+
+    # get the '%do%' operator from the foreach namespace
+    `%doparallel%` <- get("%do%", asNamespace("foreach"))
+
+  } else {
+    # parallel - foreach + doRNG needed
+    rlang::check_installed(
+      c("doRNG"),
       reason = "for reproducible parallel foreach execution"
     )
 
-    #' @importFrom foreach %do%
-    #' @importFrom doRNG %dorng%
-  }
-
-  # define the infix operator for the foreach loops
-  `%doparallel%` <- if (n_workers <= 1L) {
-    `%do%`
-  } else {
-    `%dorng%`
+    # get the '%dorng%' operator from the doRNG namespace
+    `%doparallel%` <- get("%dorng%", asNamespace("doRNG"))
   }
 
   ## adding default optimization parameters if not specified

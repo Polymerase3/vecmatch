@@ -38,8 +38,11 @@ groups is used for selection within each SMD category.}
 An S3 object of class \code{select_result}, containing the filtered and
 prioritized optimization results. The object includes:
 \itemize{
-\item A \code{data.frame} with selected parameter combinations and performance metrics.
-\item \strong{Attribute \code{param_df}}: A \code{data.frame} with full parameter specifications (\code{iter_ID}, GPS/matching parameters, etc.), useful for manually refitting or reproducing results.
+\item A \code{data.frame} with selected parameter combinations and performance
+metrics.
+\item \strong{Attribute \code{param_df}}: A \code{data.frame} with full parameter specifications
+(\code{iter_ID}, GPS/matching parameters, etc.), useful for manually refitting or
+reproducing results.
 }
 
 The object also includes a custom \code{print()} method that summarizes:
@@ -55,8 +58,11 @@ results from \code{optimize_gps()} based on the specific goals of a study.
 Depending on the research design, certain pairwise comparisons or treatment
 groups may be more important than others. For example:
 \itemize{
-\item You may want to prioritize matching between a specific groups (e.g. specific disease vs. controls), while ignoring other group comparisons during SMD evaluation.
-\item You may wish to retain as many samples as possible from a critical group or set of groups, regardless of matching rates in other groups.
+\item You may want to prioritize matching between a specific groups (e.g.
+specific disease vs. controls), while ignoring other group comparisons
+during SMD evaluation.
+\item You may wish to retain as many samples as possible from a critical group or
+set of groups, regardless of matching rates in other groups.
 }
 
 This function enables targeted selection of optimal parameter combinations

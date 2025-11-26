@@ -71,6 +71,10 @@
 #'   [match_gps()] for the matching of generalized propensity scores
 #' @examples
 #'
+#' if (requireNamespace("brglm2", quietly = TRUE)) {
+#'
+#' library(brglm2)
+#'
 #' # Conducting covariate balancing on the `airquality` dataset. Our goal was to
 #' # compare ozone levels by month, but we discovered that ozone levels are
 #' # strongly correlated with wind intensity (measured in mph), and the average
@@ -106,6 +110,7 @@
 #'   group = Month,
 #'   significance = "t_test"
 #' )
+#' }
 #' @export
 estimate_gps <- function(formula,
                          data = NULL,

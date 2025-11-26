@@ -81,6 +81,7 @@ test_that("Checking `vglm` method", {
 
 ## -- checking brglm2 package---------------------------------------------------
 test_that("Checking `brglm2` method", {
+  skip_if_not_installed("brglm2")
   data <- data.frame(
     treat = rep(c(1, 2, 3, 4, 5), 20),
     pred = runif(100),

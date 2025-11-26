@@ -17,36 +17,33 @@ BugReports: https://github.com/Polymerase3/vecmatch/issues
 Depends: 
     R (>= 3.5)
 Imports: 
-    brglm2,
     chk,
     cli,
-    doRNG,
     foreach,
     ggplot2,
     ggpp,
     ggpubr,
-    grDevices,
-    MASS,
     Matching,
-    mclogit,
-    nnet,
     optmatch,
     productplots,
     rlang,
     rstatix,
     stats,
     utils,
-    VGAM,
     withr
 Suggests: 
-    doFuture,
-    future,
+    brglm2,
+    doRNG,
     knitr,
+    MASS,
+    mclogit,
+    nnet,
     parallel,
     progressr,
     rmarkdown,
     spelling,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    VGAM
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true

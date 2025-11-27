@@ -144,18 +144,23 @@ mosaic <- function(data = NULL,
     complete_sub <- stats::complete.cases(data[, colnames(data) %in% which_use])
     data <- as.data.frame(subset(data, complete_sub))
 
-    # defining conditions for facet, group and significance
-    use_facet <- ifelse(is.null(symlist[["facet"]]), FALSE, TRUE)
-    use_group <- ifelse(is.null(symlist[["group"]]), FALSE, TRUE)
-    use_signif <- significance
+    # flags
+    use_facet <- !is.null(symlist[["facet"]])
+    use_group <- !is.null(symlist[["group"]])
+    use_signif <- isTRUE(significance)
 
-    # defining levels of facet for the significance test
-    facet_levels <- NULL
+    # store facet levels ONCE and reuse everywhere
+    facet_var <- symlist[["facet"]]
     if (use_facet) {
-      facet_levels <- nunique(data[, symlist[["facet"]]])
+      if (!is.factor(data[[facet_var]])) {
+        data[[facet_var]] <- factor(data[[facet_var]])
+      }
+      facet_levels <- levels(data[[facet_var]])  # preserves user-defined order
+      n_facets <- length(facet_levels)
+    } else {
+      facet_levels <- character(0)
+      n_facets <- 1L
     }
-
-    if (facet_levels == 0 || is.null(facet_levels)) facet_levels <- 1
 
     ###################### SIGNIFICANCE TESTS ##################################
     # check and process the significance argument
@@ -186,12 +191,12 @@ mosaic <- function(data = NULL,
         rstatix::chisq_test
       )
 
-      # Predefine output lists
-      test_results <- vector("list", facet_levels)
-      res <- vector("list", facet_levels)
+      # Predefine output lists (one per facet level)
+      test_results <- vector("list", n_facets)
+      res <- vector("list", n_facets)
 
-      # Iterate through facet levels
-      for (i in seq_len(facet_levels)) {
+      # Iterate through facet levels in stored order
+      for (i in seq_len(n_facets)) {
         # Copy argument list
         args_signif <- args_signif_org
 
@@ -200,10 +205,7 @@ mosaic <- function(data = NULL,
           args_signif[c("x", "y")],
           function(x) {
             if (use_facet) {
-              x[data[, symlist[["facet"]]] == levels(data[
-                ,
-                symlist[["facet"]]
-              ])[i]]
+              x[data[, facet_var] == facet_levels[i]]
             } else {
               x
             }
@@ -251,7 +253,7 @@ mosaic <- function(data = NULL,
 
         # adding the facet var
         if (use_facet) {
-          facet_name <- levels(data[, symlist[["facet"]]])[i]
+          facet_name <- facet_levels[i]
           test_results[[i]] <- cbind(facet = facet_name, test_results[[i]])
           res[[i]] <- cbind(facet = facet_name, res[[i]])
         }
@@ -260,6 +262,16 @@ mosaic <- function(data = NULL,
       # process the resulting list to df
       test_results <- do.call(rbind, test_results)
       res <- do.call(rbind, res)
+
+      # enforce facet order from the original data (like in raincloud)
+      if (use_facet) {
+        test_results[["facet"]] <- factor(test_results[["facet"]],
+                                          levels = levels(data[, symlist[["facet"]]])
+        )
+        res[["facet"]] <- factor(res[["facet"]],
+                                 levels = levels(data[, symlist[["facet"]]])
+        )
+      }
 
       # rename colnames in res
       rename_ind <- match(c("x", "y"), colnames(res))
@@ -309,7 +321,7 @@ mosaic <- function(data = NULL,
 
     if (use_facet) {
       prodcoords$facet <- factor(prodcoords$facet,
-        levels = levels(data[, symlist[["facet"]]])
+                                 levels = facet_levels
       )
     }
     ## if group sizes, then calculate label coords
@@ -424,6 +436,12 @@ mosaic <- function(data = NULL,
 
         names(fill_vals) <- sig_labels
 
+        if (use_facet) {
+          prodcoords$facet <- factor(prodcoords$facet, levels = facet_levels)
+          ord <- order(match(prodcoords$facet, facet_levels))
+          prodcoords <- prodcoords[ord, , drop = FALSE]
+        }
+
         # customizing the fill scale
         main_layers <- main +
           # defining rectangle aesthetics
@@ -494,6 +512,8 @@ mosaic <- function(data = NULL,
     #### CASE 4 - facetting if facet specified
     if (use_facet) {
       prodcoords_facet <- split(prodcoords, prodcoords$facet)
+      # enforce original facet order
+      prodcoords_facet <- prodcoords_facet[facet_levels]
 
       # Create custom scales for x and y
       scales_custom_x <- if (use_group) {
@@ -505,7 +525,7 @@ mosaic <- function(data = NULL,
       scales_custom_y <- lapply(prodcoords_facet, scale_y_product)
 
       # Apply scale_facet to both x and y scales
-      for (i in 1:facet_levels) {
+      for (i in seq_along(prodcoords_facet)) {
         if (use_group) {
           scales_custom_x[[i]] <- scale_facet(i, scales_custom_x[[i]])
         }
@@ -516,10 +536,24 @@ mosaic <- function(data = NULL,
       scales_custom <- c(scales_custom_x, scales_custom_y)
 
       if (use_signif) {
-        facet_labels <- paste0(caption_df$facet, ":", "\n", caption_df$caption)
+        freq_table <- as.data.frame(table(data[, symlist[["facet"]]]))
+        names(freq_table) <- c("facet", "n")
+
+        caption_df <- merge(
+          caption_df,
+          freq_table,
+          by = "facet",
+          all.x = TRUE
+        )
+
+        facet_labels <- sprintf(
+          "%s (n = %s):\n%s",
+          caption_df$facet,
+          caption_df$n,
+          caption_df$caption
+        )
         names(facet_labels) <- caption_df$facet
 
-        # facetting using custom facet_wrap
         main_layers <- main_layers +
           facet_wrap_scales(
             "facet",
@@ -529,13 +563,25 @@ mosaic <- function(data = NULL,
             labeller = ggplot2::labeller(facet = facet_labels)
           )
       } else {
-        # facetting using custom facet_wrap
+        freq_table <- as.data.frame(table(data[, symlist[["facet"]]]))
+
+        labeller_vec <- character(nrow(freq_table))
+        for (i in seq_len(nrow(freq_table))) {
+          labeller_vec[i] <- sprintf(
+            "%s (n = %s)",
+            freq_table[i, 1],
+            freq_table[i, 2]
+          )
+          names(labeller_vec)[i] <- as.character(freq_table[i, 1])
+        }
+
         main_layers <- main_layers +
           facet_wrap_scales(
             "facet",
             ncol = ncol,
             scales = "free",
-            scales_custom = scales_custom
+            scales_custom = scales_custom,
+            labeller = ggplot2::labeller(facet = labeller_vec)
           )
       }
     } else {

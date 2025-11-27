@@ -124,8 +124,7 @@ names(vec_col_list) <- c(
   type <- match.arg(type)
   cols <- col_list[[n]]
 
-  palette <- switch(
-    type,
+  palette <- switch(type,
     discrete   = cols,
     continuous = .interpolate_palette(cols, n)
   )

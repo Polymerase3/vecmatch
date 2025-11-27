@@ -351,4 +351,3 @@ validate_optarg <- function(x,
   # delegate to chk::wrn()
   chk::wrn(...)
 }
-

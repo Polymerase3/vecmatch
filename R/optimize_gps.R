@@ -199,7 +199,6 @@ optimize_gps <- function(data = NULL,
 
     # get the '%do%' operator from the foreach namespace
     `%doparallel%` <- get("%do%", asNamespace("foreach"))
-
   } else {
     # parallel - foreach + doRNG needed
     rlang::check_installed(
@@ -1004,14 +1003,18 @@ print.summary.best_opt_result <- function(x,
   smd_range <- if (all(is.na(smd_vals))) {
     "<all NA>"
   } else {
-    sprintf("[%.3f, %.3f]", min(smd_vals, na.rm = TRUE),
-            max(smd_vals, na.rm = TRUE))
+    sprintf(
+      "[%.3f, %.3f]", min(smd_vals, na.rm = TRUE),
+      max(smd_vals, na.rm = TRUE)
+    )
   }
   pm_range <- if (all(is.na(pm_vals))) {
     "<all NA>"
   } else {
-    sprintf("[%.1f, %.1f]", min(pm_vals, na.rm = TRUE),
-            max(pm_vals, na.rm = TRUE))
+    sprintf(
+      "[%.1f, %.1f]", min(pm_vals, na.rm = TRUE),
+      max(pm_vals, na.rm = TRUE)
+    )
   }
 
   cli::cli_ul()
@@ -1662,7 +1665,8 @@ select_opt <- function(x,
   param_df <- merge(
     full_df[, colnames(full_df) %nin% remove_cols, drop = FALSE],
     best_rows_final[, colnames(best_rows_final) %nin% "perc_matched",
-                    drop = FALSE],
+      drop = FALSE
+    ],
     by = "iter_ID"
   )
 
@@ -2139,7 +2143,6 @@ get_select_params <- function(x, smd_group = NULL) {
 #' get_select_params(select_results, smd_group = "0.05-0.10")
 #'
 #' # Rerun the analysis
-#'
 #' }
 #' @export
 run_selected_matching <- function(x,

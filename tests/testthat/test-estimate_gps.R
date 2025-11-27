@@ -480,7 +480,8 @@ test_that("str.gps prints structured header and underlying structure", {
 
   # header lines
   expect_true(grepl("gps object: generalized propensity scores", out,
-                    fixed = TRUE))
+    fixed = TRUE
+  ))
   expect_true(grepl("Dimensions: 4 rows x 3 columns", out, fixed = TRUE))
   expect_true(grepl("Treatment column: treatment", out, fixed = TRUE))
   expect_true(grepl("GPS columns: A, B", out, fixed = TRUE))

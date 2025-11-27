@@ -257,7 +257,8 @@ raincloud <- function(data = NULL,
     # check sig_label_size
     if (!is.null(sig_label_size)) {
       suppressWarnings(sig_label_size <- try(as.integer(sig_label_size),
-                                             silent = TRUE))
+        silent = TRUE
+      ))
 
       .chk_cond(
         length(sig_label_size) != 1L ||

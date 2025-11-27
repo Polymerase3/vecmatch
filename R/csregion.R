@@ -374,9 +374,11 @@ str.csr <- function(object, ...) {
   if (!is.null(group_sizes_after)) {
     cat(" Group sizes after CSR filtering:\n")
     gs_txt <- paste(
-      sprintf("  - %s: %d",
-              names(group_sizes_after),
-              as.integer(group_sizes_after)),
+      sprintf(
+        "  - %s: %d",
+        names(group_sizes_after),
+        as.integer(group_sizes_after)
+      ),
       collapse = "\n"
     )
     cat(gs_txt, "\n", sep = "")

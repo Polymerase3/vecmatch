@@ -232,7 +232,8 @@ mosaic <- function(data = NULL,
               )
 
               res[[i]] <- as.data.frame(rstatix::std_residuals(
-                test_results[[i]]))
+                test_results[[i]]
+              ))
             })
           },
           error = function(e) {

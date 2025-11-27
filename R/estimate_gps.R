@@ -79,7 +79,6 @@
 #'
 #' ## Example 1: multinomial bias-reduced model (brglm2) on `airquality`
 #' if (requireNamespace("brglm2", quietly = TRUE)) {
-#'
 #'   library(brglm2)
 #'
 #'   # Initial imbalance of means

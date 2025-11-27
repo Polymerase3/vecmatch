@@ -79,7 +79,8 @@ test_that("balqual: argument checks and basic run", {
 
   # check header string is present somewhere in the output
   expect_true(any(grepl("quality object: matching diagnostics", out,
-                        fixed = TRUE)))
+    fixed = TRUE
+  )))
 
   # str() should return the object invisibly
   expect_identical(res, quality_obj)

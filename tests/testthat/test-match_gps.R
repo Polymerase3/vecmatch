@@ -168,7 +168,8 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
   # strip ansi if present and check header line
   out_core_clean <- cli::ansi_strip(out_core)
   expect_true(any(grepl("Number of units after matching", out_core_clean,
-                        fixed = TRUE)))
+    fixed = TRUE
+  )))
 
   expect_identical(res_core, matched_obj)
 
@@ -210,7 +211,8 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
 
   out_ps_clean <- cli::ansi_strip(out_ps)
   expect_true(any(grepl("Summary of matched object", out_ps_clean,
-                        fixed = TRUE)))
+    fixed = TRUE
+  )))
 
   expect_identical(res_ps, s)
 
@@ -246,15 +248,18 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
   set.seed(535353)
   old_seed <- .Random.seed
   out_core2 <- utils::capture.output(.print_matched_core(matched_obj),
-                                     type = "message")
+    type = "message"
+  )
   expect_identical(.Random.seed, old_seed)
 
   set.seed(545454)
   out_core_a <- utils::capture.output(.print_matched_core(matched_obj),
-                                      type = "message")
+    type = "message"
+  )
   set.seed(545454)
   out_core_b <- utils::capture.output(.print_matched_core(matched_obj),
-                                      type = "message")
+    type = "message"
+  )
   expect_identical(out_core_a, out_core_b)
 
   # print.matched should not touch RNG and be reproducible

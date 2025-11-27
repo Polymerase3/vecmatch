@@ -6,6 +6,7 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/Polymerase3/vecmatch/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Polymerase3/vecmatch/actions/workflows/R-CMD-check.yaml)
+[![pkgcheck](https://github.com/Polymerase3/vecmatch/workflows/pkgcheck/badge.svg)](https://github.com/Polymerase3/vecmatch/actions?query=workflow%3Apkgcheck)
 [![Codecov test
 coverage](https://codecov.io/gh/Polymerase3/vecmatch/graph/badge.svg)](https://app.codecov.io/gh/Polymerase3/vecmatch)
 [![styler](https://github.com/Polymerase3/vecmatch/actions/workflows/style.yaml/badge.svg)](https://github.com/Polymerase3/vecmatch/actions/workflows/style.yaml)
@@ -72,8 +73,6 @@ raincloud(
   sig_label_size = 3,
   limits = c(7, 48)
 )
-#> Warning: Removed 9 rows containing missing values or values outside the scale range
-#> (`geom_flat_violin()`).
 ```
 
 <img src="man/figures/unnamed-chunk-2-1.png" width="100%" />
@@ -95,6 +94,14 @@ gps_matrix <- estimate_gps(formula_cancer,
 )
 
 head(gps_matrix, n = 7)
+#> gps object (generalized propensity scores)
+#>   • Number of units: 7
+#>   • Number of treatments: 4
+#>   • Treatment column: treatment
+#>   • GPS probability columns: control, adenoma, crc_beningn, crc_malignant
+#>   • Treatment levels: control, adenoma, crc_beningn, crc_malignant
+#>   • All columns except 'treatment' store probabilities in [0, 1].
+#> 
 #>   treatment   control   adenoma crc_beningn crc_malignant
 #> 1   control 0.3347396 0.2858184   0.1622951     0.2171469
 #> 2   control 0.2397453 0.3487326   0.2006854     0.2108367
@@ -119,20 +126,6 @@ function to the `gps_matrix` object:
 
 ``` r
 csr_matrix <- csregion(gps_matrix)
-#> 
-#> Rectangular CSR Borders Evaluation 
-#> ==================================
-#> 
-#> Treatment       | Lower CSR limit | Upper CSR limit | Number excluded 
-#> -------------------------------------------------------------------- 
-#> control         | 0.1900629       | 0.3530295       | 25              
-#> adenoma         | 0.2678156       | 0.3802609       | 18              
-#> crc_beningn     | 0.1429038       | 0.3802038       | 25              
-#> crc_malignant   | 0.1605948       | 0.2214335       | 25              
-#> 
-#> ===================================================
-#> The total number of excluded observations is:     37 
-#> Note: You can view the summary of the CSR calculation using the  `attr()` function.
 ```
 
 The `csregion()` function outputs a matrix of generalized propensity
@@ -177,42 +170,42 @@ balqual(matched_data,
 #> -------------------------------------------------- 
 #> Treatment                 | Before     | After      
 #> -------------------------------------------------- 
-#> adenoma                   | 355        | 148        
-#> control                   | 304        | 148        
-#> crc_beningn               | 279        | 148        
-#> crc_malignant             | 249        | 148        
+#> adenoma                   | 355        | 156        
+#> control                   | 304        | 156        
+#> crc_beningn               | 279        | 156        
+#> crc_malignant             | 249        | 156        
 #> -------------------------------------------------- 
 #> 
 #> 
 #> Matching summary statistics:
 #> ---------------------------------------- 
 #> Total n before matching:  1187 
-#> Total n after matching:       592 
-#> % of matched observations:    49.87 %
-#> Total  maximal   SMD value:   0.023 
-#> Total  maximal   r value:     0.002 
-#> Total  maximal   Var value:   1.015 
+#> Total n after matching:       624 
+#> % of matched observations:    52.57 %
+#> Total  maximal   SMD value:   0.04 
+#> Total  maximal   r value:     0.003 
+#> Total  maximal   Var value:   1.005 
 #> 
 #> 
 #> Maximal values :
 #> -------------------------------------------------------------------------------- 
 #> Variable                  | Coef  | Before       | After        | Quality      
 #> -------------------------------------------------------------------------------- 
-#> bmi                       | SMD   | 0.245        | 0.023        | Balanced     
-#> bmi                       | r     | 0.010        | 0.002        | Balanced     
-#> bmi                       | Var   | 1.101        | 1.015        | Balanced     
+#> bmi                       | SMD   | 0.245        | 0.040        | Balanced     
+#> bmi                       | r     | 0.010        | 0.003        | Balanced     
+#> bmi                       | Var   | 1.101        | 1.004        | Balanced     
 #> sexF                      | SMD   | 0.153        | 0.000        | Balanced     
 #> sexF                      | r     | 0.006        | 0.000        | Balanced     
 #> sexF                      | Var   | 1.004        | 1.000        | Balanced     
 #> sexM                      | SMD   | 0.153        | 0.000        | Balanced     
 #> sexM                      | r     | 0.006        | 0.000        | Balanced     
 #> sexM                      | Var   | 1.004        | 1.000        | Balanced     
-#> bmi:sexF                  | SMD   | 0.152        | 0.006        | Balanced     
+#> bmi:sexF                  | SMD   | 0.152        | 0.004        | Balanced     
 #> bmi:sexF                  | r     | 0.007        | 0.001        | Balanced     
-#> bmi:sexF                  | Var   | 1.042        | 1.005        | Balanced     
-#> bmi:sexM                  | SMD   | 0.151        | 0.003        | Balanced     
+#> bmi:sexF                  | Var   | 1.042        | 1.004        | Balanced     
+#> bmi:sexM                  | SMD   | 0.151        | 0.006        | Balanced     
 #> bmi:sexM                  | r     | 0.006        | 0.001        | Balanced     
-#> bmi:sexM                  | Var   | 1.023        | 1.003        | Balanced     
+#> bmi:sexM                  | Var   | 1.023        | 1.005        | Balanced     
 #> --------------------------------------------------------------------------------
 ```
 

@@ -1,4 +1,28 @@
-#--check custom condition-------------------------------------------------------
+#' @srrstats {G2.1} vecmatch enforces input types throughout the main API using
+#'   `chk` and internal helpers. Functions such as `estimate_gps()`,
+#'   `csregion()`, `match_gps()`, `raincloud()` and `make_opt_args()` use
+#'   type-checkers including `.check_df()`, `.check_gps_matrix()`,
+#'   `.check_method()`, `.check_vecl()`, `.check_integer()`,
+#'   `chk::chk_character()`, `chk::chk_flag()`, `chk::chk_list()`,
+#'   and `chk::chk_range()` to reject inputs of incorrect type with informative
+#'   errors.
+#' @srrstats {G2.2} vecmatch restricts multivariate inputs for arguments that
+#'   are intended to be univariate. Scalar parameters (e.g. `method`,
+#'   `link`, `density_scale`, `smd_type`, `significance`, `order`,
+#'   `verbose_output`, and similar flags) are validated with `chk`
+#'   helpers such as `chk::chk_length()` and internal utilities
+#'   (for example `.check_vecl()` and `.chk_vararg_length()`), which
+#'   enforce length-one inputs and raise errors otherwise. Where
+#'   vector-valued inputs are allowed (e.g. `caliper`, `ratio`,
+#'   `replace`, `min_controls`, `max_controls`, `kmeans_cluster`),
+#'   their lengths are explicitly constrained to either 1 or the
+#'   number of treatment combinations.
+#'
+#' Internal helper for conditional checks
+#'
+#' Evaluates a condition and, if true, aborts via `chk::abort_chk()` or issues
+#' a warning via `.vm_warn()`.
+#' @noRd
 .chk_cond <- function(condition, error_message, error = TRUE, ...) {
   if (condition && error) {
     chk::abort_chk(
@@ -6,14 +30,17 @@
       ...
     )
   } else if (condition && !error) {
-    chk::wrn(
+    .vm_warn(
       strwrap(error_message, prefix = " ", initial = ""),
       ...
     )
   }
 }
 
-#--check if name in the data----------------------------------------------------
+#' Internal helper to check presence of variable names in data
+#'
+#' Returns the names from `namlist` that are not found in the columns of `data`.
+#' @noRd
 .check_name <- function(data, namlist) {
   convert <- unlist(lapply(namlist, function(x) !is.character(x)))
   if (length(convert) != 0) {
@@ -29,7 +56,12 @@
   }
 }
 
-#--check if the object is a numeric vector of given length----------------------
+#' @srrstats {G2.0} vecmatch enforces input lengths throughout the API.
+#' Internal helper to validate atomic numeric vectors of a given length
+#'
+#' Returns `TRUE` if `x` is an atomic (non-matrix, non-array) vector, optionally
+#' of specified length and, by default, numeric.
+#' @noRd
 .check_vecl <- function(x, leng = NULL, check_numeric = TRUE) {
   ret <- all(
     is.atomic(x) && !is.matrix(x) && !is.array(x), # checks vector
@@ -39,7 +71,11 @@
   return(ret)
 }
 
-#--convert list with names to character and leave NULLs-------------------------
+#' Internal helper to convert quosured names to character
+#'
+#' Converts a list of (possibly NULL) names or quosures to character strings,
+#' optionally checking for valid R names.
+#' @noRd
 .conv_nam <- function(namlist, check_valid = TRUE) {
   # if NULL then leave
   # if not null then quote
@@ -54,7 +90,11 @@
   return(res)
 }
 
-#--convert data with error message----------------------------------------------
+#' Internal helper to convert quosured names to character
+#'
+#' Converts a list of (possibly NULL) names or quosures to character strings,
+#' optionally checking for valid R names.
+#' @noRd
 .conv_data <- function(data, type, varname, env) {
   if (is.null(varname)) invisible(return())
 
@@ -84,7 +124,7 @@
     length_unique <- length(unique(eval(parse(text = column))))
 
     if (length_unique > 10 && def_type) {
-      chk::wrn(strwrap(sprintf("The variable %s has more tha 10 unique values.
+      .vm_warn(strwrap(sprintf("The variable %s has more tha 10 unique values.
                                Are you sure you want to proceed?", varname),
         prefix = " ", initial = ""
       ))
@@ -106,7 +146,11 @@
   }
 }
 
-#--check if filename has given extension
+#' Internal helper to validate file extensions
+#'
+#' Checks whether a file name has one of the allowed extensions and aborts
+#' otherwise.
+#' @noRd
 .check_extension <- function(name, x_name, ext_vec) {
   ext <- substr(name, nchar(name) - 3, nchar(name))
   cond <- ext %in% ext_vec
@@ -118,7 +162,10 @@
   }
 }
 
-#--check data.frame-------------------------------------------------------------
+#' Internal helper to validate data frames
+#'
+#' Checks that the input is a (non-empty) data frame and aborts otherwise.
+#' @noRd
 .check_df <- function(data, data_name = "data") {
   .chk_cond(
     is.null(data) || !inherits(data, "data.frame") ||
@@ -130,7 +177,11 @@
   .chk_cond(length(data) == 0, "The provided data frame is empty")
 }
 
-#--check gps methods------------------------------------------------------------
+#' Internal helper to validate GPS method names
+#'
+#' Checks that the `method` argument is a single, non-missing string and matches
+#' one of the supported GPS methods.
+#' @noRd
 .check_method <- function(string) {
   .chk_cond(
     !(is.character(string) && length(string) == 1L && !anyNA(string)),
@@ -146,7 +197,11 @@
   )
 }
 
-## --check gps matrix-----------------------------------------------------------
+#' Internal helper to validate GPS matrices
+#'
+#' Checks structural properties of a `gps` object, including treatment column,
+#' column names, absence of missing values, and row-wise probability sums.
+#' @noRd
 .check_gps_matrix <- function(gps_matrix) {
   # check if treatment variable present and if its first column of all
   .chk_cond(
@@ -185,7 +240,11 @@
   }
 }
 
-## --check integer--------------------------------------------------------------
+#' Internal helper to validate integer arguments
+#'
+#' Checks whether an input can be safely interpreted as an integer and aborts
+#' otherwise.
+#' @noRd
 .check_integer <- function(x, x_name = NULL) {
   coerce_integer <- suppressWarnings(as.integer(x))
 
@@ -203,27 +262,10 @@
   ))
 }
 
-## --match discrete args--------------------------------------------------------
-.match_discrete_args <- function(x, choices, x_name) {
-  tryCatch(
-    {
-      unlist(lapply(x, match.arg, choices = choices))
-    },
-    error = function(e) {
-      chk::abort_chk(strwrap(sprintf(
-        "The `%s` argument can only have following
-                                   values: %s", x_name,
-        word_list(
-          add_quotes(
-            choices
-          )
-        )
-      )))
-    }
-  )
-}
-
-## --check null and replace with default----------------------------------------
+#' Internal helper to fill in default values
+#'
+#' Emits a warning when an argument is `NULL` and replaces it with a default.
+#' @noRd
 .chk_null_default <- function(x, x_name, method, default) {
   .chk_cond(is.null(x),
     error = FALSE,
@@ -241,6 +283,12 @@
   return(x)
 }
 
+#' @srrstats {G2.0} vecmatch enforces input lengths throughout the API.
+#' Internal helper to validate variable-length arguments
+#'
+#' Ensures an argument is either a single value or a vector of a given length,
+#' optionally checking that it is numeric.
+#' @noRd
 .chk_vararg_length <- function(x, x_name,
                                check_numeric = FALSE,
                                type_n = "integer",
@@ -254,7 +302,11 @@
   )
 }
 
-# -- check and validate argument for optarg ------------------------------------
+#' Internal helper to validate optimization argument values
+#'
+#' Checks length, uniqueness, and membership of an argument against a set of
+#' allowed values for optimization grids.
+#' @noRd
 validate_optarg <- function(x,
                             allowed_values,
                             max_length = length(allowed_values),
@@ -284,3 +336,19 @@ validate_optarg <- function(x,
     )
   )
 }
+
+#' Internal warning helper
+#'
+#' All package warnings should go through this helper so we can globally
+#' silence them (e.g. in tests) via an option.
+#' @noRd
+.vm_warn <- function(...) {
+  # honour global option, default is to show warnings
+  if (isTRUE(getOption("vecmatch.suppress_warnings", FALSE))) {
+    return(invisible(NULL))
+  }
+
+  # delegate to chk::wrn()
+  chk::wrn(...)
+}
+

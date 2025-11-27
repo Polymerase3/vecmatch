@@ -140,7 +140,7 @@ csregion <- function(gps_matrix,
     gps_matrix_refit <- tryCatch(
       eval(estimate_call),
       error = function(e) {
-        chk::wrn(strwrap(
+        .vm_warn(strwrap(
           "Refitting of the GPS model on the CSR-restricted data failed. ",
           "Falling back to the original GPS restricted to the common support ",
           "region (refit = FALSE).",
@@ -170,7 +170,7 @@ csregion <- function(gps_matrix,
 
   ## detect low number of observations in groups and print a warning
   if (any(table(gps_matrix[, "treatment"]) < 20)) {
-    chk::wrn(strwrap("Some groups have fewer than 20 observations, which may
+    .vm_warn(strwrap("Some groups have fewer than 20 observations, which may
     impact the performance of the matching process. Consider using
     `replace = TRUE`in `match_gps()` to address this.",
       prefix = " ", initial = ""

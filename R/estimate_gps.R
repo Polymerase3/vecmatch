@@ -46,6 +46,12 @@
 #'   the initial dataset. The original dataset used for estimation can be
 #'   accessed as the `original_data` attribute.
 #'
+#' @srrstats {G1.3} Key statistical terms used in `vecmatch`, including
+#'   generalized propensity scores (GPS), vector matching, common support
+#'   region, and treatment allocation probabilities, are defined and explained
+#'   in the documentation of `estimate_gps()`, `csregion()`, `match_gps()`
+#' @srrstats {G1.4} roxygen2 is used to document all functions
+#'
 #' @details The main goal of the `estimate_gps()` function is to calculate the
 #'   generalized propensity scores aka. treatment allocation probabilities. It
 #'   is the first step in the workflow of the vector matching algorithm and is
@@ -71,46 +77,76 @@
 #'   [match_gps()] for the matching of generalized propensity scores
 #' @examples
 #'
+#' ## Example 1: multinomial bias-reduced model (brglm2) on `airquality`
 #' if (requireNamespace("brglm2", quietly = TRUE)) {
 #'
-#' library(brglm2)
+#'   library(brglm2)
 #'
-#' # Conducting covariate balancing on the `airquality` dataset. Our goal was to
-#' # compare ozone levels by month, but we discovered that ozone levels are
-#' # strongly correlated with wind intensity (measured in mph), and the average
-#' # wind intensity varies across months. Therefore, we need to balance the
-#' # months by wind values to ensure a valid comparison of ozone levels.
+#'   # Initial imbalance of means
+#'   tapply(airquality$Wind, airquality$Month, mean, na.rm = TRUE)
 #'
-#' # Initial imbalance of means
-#' tapply(airquality$Wind, airquality$Month, mean)
+#'   # Formula definition
+#'   formula_air <- Month ~ Wind
 #'
-#' # Formula definition
-#' formula_air <- formula(Month ~ Wind)
+#'   # Estimating the generalized propensity scores using brglm2
+#'   gp_scores <- estimate_gps(
+#'     formula_air,
+#'     data = airquality,
+#'     method = "brglm2",
+#'     reference = "5",
+#'     verbose_output = TRUE,
+#'     control = brglm2::brglmControl(type = "MPL_Jeffreys")
+#'   )
 #'
-#' # Estimating the generalized propensity scores using brglm2 method using
-#' # maximum penalized likelihood estimators with powers of the Jeffreys
-#' gp_scores <- estimate_gps(formula_air,
-#'   data = airquality, method = "brglm2",
-#'   reference = "5", verbose_output = TRUE,
-#'   control = brglmControl(type = "MPL_Jeffreys")
-#' )
+#'   # Filtering the observations outside the csr region
+#'   gps_csr <- csregion(gp_scores)
+#'   filter_which <- attr(gps_csr, "filter_vector")
+#'   filtered_air <- airquality[filter_which, ]
 #'
-#' # Filtering the observations outside the csr region
-#' gps_csr <- csregion(gp_scores)
+#'   # Imbalance after csr
+#'   tapply(filtered_air$Wind, filtered_air$Month, mean, na.rm = TRUE)
 #'
-#' # Calculating imbalance after csr
-#' filter_which <- attr(gps_csr, "filter_vector")
-#' filtered_air <- airquality[filter_which, ]
-#'
-#' tapply(filtered_air$Wind, filtered_air$Month, mean)
-#'
-#' # We can also investigate the imbalance using the raincloud function
-#' raincloud(filtered_air,
-#'   y = Wind,
-#'   group = Month,
-#'   significance = "t_test"
-#' )
+#'   # Visual inspection using raincloud
+#'   raincloud(
+#'     filtered_air,
+#'     y = Wind,
+#'     group = Month,
+#'     significance = "t_test"
+#'   )
 #' }
+#'
+#' ## Example 2: ordered treatment, subset, by, and non-default link
+#' if (requireNamespace("MASS", quietly = TRUE)) {
+#'   library(MASS)
+#'
+#'   # Prepare a clean subset of `airquality`
+#'   aq <- subset(
+#'     airquality,
+#'     !is.na(Month) & !is.na(Wind) & !is.na(Temp)
+#'   )
+#'
+#'   # Grouping variable used in the `by` argument
+#'   aq$Temp_group <- ifelse(
+#'     aq$Temp > stats::median(aq$Temp, na.rm = TRUE),
+#'     "high",
+#'     "low"
+#'   )
+#'
+#'   # Explicit order for the (ordinal) treatment variable
+#'   ord_month <- sort(unique(aq$Month))
+#'
+#'   gps_ord <- estimate_gps(
+#'     Month ~ Wind + Temp,
+#'     data = aq,
+#'     method = "polr",
+#'     link = "probit",
+#'     subset = aq$Wind > stats::median(aq$Wind, na.rm = TRUE),
+#'     by = "Temp_group",
+#'     ordinal_treat = ord_month,
+#'     reference = "5"
+#'   )
+#' }
+#'
 #' @export
 estimate_gps <- function(formula,
                          data = NULL,

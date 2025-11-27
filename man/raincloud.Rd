@@ -43,11 +43,10 @@ variable in \code{data} to facet by. This argument is used in a call to
 \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}, creating separate distribution plots for each
 unique group in the \code{facet} variable.}
 
-\item{ncol}{A single integer. The value should be less than or equal to the
-number of unique categories in the \code{facet} variable. This argument is used
-only when \code{facet} is not NULL, specifying the number of columns in the
-\code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}} call. The distribution plots will be arranged into
-the number of columns defined by \code{ncol}.}
+\item{ncol}{A single integer giving the number of columns in the facet
+layout. When \code{facet} is not \code{NULL}, \code{ncol} must be between 1 and the
+number of unique categories in the \code{facet} variable; values outside this
+range result in an error. This argument is ignored when \code{facet} is \code{NULL}.}
 
 \item{significance}{A single string specifying the method for calculating
 p-values in multiple comparisons between groups defined by the \code{group}
@@ -58,9 +57,9 @@ methods refer to the \emph{Details} section. If the \code{significance} argument
 not \code{NULL}, standardized mean differences (SMDs) are also calculated and
 displayed on the right side of the jittered point plots.}
 
-\item{sig_label_size}{An integer specifying the size of the significance and
-SMD (standardized mean difference) labels displayed on the bars on the
-right side of the plot.}
+\item{sig_label_size}{A single integer between 1 and 20 specifying the size
+of the significance and standardized mean difference (SMD) labels shown on
+the left and right side of the plot.}
 
 \item{sig_label_color}{Logical flag. If \code{FALSE} (default), significance and
 SMD bars and text are displayed in the default color (black). If \code{TRUE},
@@ -176,12 +175,13 @@ library(ggpubr)
 
 p <- raincloud(ToothGrowth, len, dose, supp,
   significance = "t_test",
-  jitter = 0.15, alpha = 0.4
+  jitter = 0.15,
+  alpha = 0.4
 )
 
 ## As `p` is a valid `ggplot` object, we can manipulate its
-## characteristics usingthe `ggplot2` or `ggpubr` packages
-## to create publication grade plot:
+## characteristics using the `ggplot2` or `ggpubr` packages
+## to create a publication-grade plot:
 p <- p +
   theme_classic2() +
   theme(
@@ -193,6 +193,16 @@ p <- p +
 
 p
 
+## Example: demonstrate `limits` and `plot_name` (no file is saved
+## because `plot_name = NULL`)
+p2 <- raincloud(
+  ToothGrowth, len, dose, supp,
+  significance = "t_test",
+  limits = c(0, 40),
+  plot_name = NULL
+)
+
+p2
 }
 \seealso{
 \code{\link[=mosaic]{mosaic()}} which summarizes the distribution of discrete data

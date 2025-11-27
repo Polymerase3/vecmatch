@@ -1,3 +1,24 @@
+#' @title vecmatch: Vector Matching for Generalized Propensity Scores
+#'
+#' @description The `vecmatch` package implements vector matching methods based
+#' on eneralized propensity scores (GPS) for balancing multiple treatment
+#' groups, along with diagnostic tools and visualization functions.
+#'
+#' @section Life cycle:
+#' `vecmatch` is currently in a *stable* stage. The core matching and
+#' diagnostic functionality is implemented and covered by tests, and the
+#' package is actively maintained. Minor API changes may still occur in
+#' response to user feedback and further methodological development, but
+#' major breaking changes are not anticipated. Future work will focus on
+#' extending the set of matching algorithms, adding further diagnostics,
+#' and improving performance and documentation.
+#'
+#' @srrstats {G1.2} The package-level documentation includes a life
+#'   cycle statement describing the current  status of `vecmatch`
+#'
+#' @keywords internal
+"_PACKAGE"
+
 #' @title Patients with Colorectal Cancer and Adenoma
 #'
 #' @description This is a synthetically generated dataset containing metadata

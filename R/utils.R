@@ -1,6 +1,15 @@
 ## --extracting varaibles from a formula----------------------------------------
 ## --based on: https://github.com/ngreifer/WeightIt/blob/master/R/utils.R-------
 
+#' @srrstats {G1.4a} All helpers have roxygen2-style docstrings
+#' Internal helper to extract variables from a formula
+#'
+#' Parses a model formula and associated data to extract the treatment variable,
+#' reported covariates, and (optionally) a model matrix including interactions.
+#' Handles formulas with data.frame terms, checks that all variables exist in
+#' `data` or the parent environment, and prevents the treatment from appearing
+#' on the right-hand side. Adapted from utilities in the WeightIt package.
+#' @noRd
 .get_formula_vars <- function(formula, data = NULL, ...) {
   parent_env <- environment(formula)
   eval_model_matrx <- !(any(c("|", "||") %in% all.names(formula)))
@@ -199,7 +208,14 @@
   return(ret)
 }
 
-#--process formula--------------------------------------------------------------
+#' Internal helper to process model formulas for GPS estimation
+#'
+#' Validates the input formula, ensuring it has both treatment and predictor
+#' variables, and uses `.get_formula_vars()` to extract the treatment and
+#' covariate model matrix. Performs basic consistency checks (length, missing
+#' values, and number of treatment levels) and warns when the treatment has
+#' many levels before returning the parsed components.
+#' @noRd
 .process_formula <- function(formula, data) {
   # defining empty list for arg storage
   args <- list()
@@ -246,7 +262,7 @@
 
   n_levels <- nunique(args[["treat"]])
   if (n_levels > 10) {
-    chk::wrn(strwrap("The `treatment` variable has more than 10 unique levels.
+    .vm_warn(strwrap("The `treatment` variable has more than 10 unique levels.
     Consider dropping the number of groups, as the vector matching algorithm may
              not perform well", prefix = " ", initial = ""))
   }
@@ -255,7 +271,10 @@
   return(data_list)
 }
 
-# R Processing------------------------------------------------------------------
+#' Internal helper to construct lists
+#'
+#' Creates a list of the appropriate length, optionally named from `n`.
+#' @noRd
 .make_list <- function(n) {
   if (length(n) == 1L && is.numeric(n)) {
     vector("list", as.integer(n))
@@ -267,7 +286,11 @@
   }
 }
 
-# Uniqueness--------------------------------------------------------------------
+#' Internal helper to count unique values
+#'
+#' Returns the number of unique values in a vector, with special handling for
+#' factors and optional removal of missing values.
+#' @noRd
 nunique <- function(x, na_rm = TRUE) {
   if (is.null(x)) {
     return(0)
@@ -279,12 +302,20 @@ nunique <- function(x, na_rm = TRUE) {
   length(unique(x))
 }
 
+#' Internal helper to remove missing values
+#'
+#' A simple, fast `na.omit()` alternative for vectors.
+#' @noRd
 na_rem <- function(x) {
   # A faster na.omit for vectors
   x[!is.na(x)]
 }
 
-## --wordlists for error generation---------------------------------------------
+#' Internal helper to format word lists
+#'
+#' Builds human-readable lists for error and message text (e.g. "a and b" or
+#' "a, b, and c"), with optional quoting and verb agreement.
+#' @noRd
 word_list <- function(word_list = NULL, and_or = "and", is_are = FALSE,
                       quotes = FALSE) {
   # When given a vector of strings, creates a string of the form "a and b"
@@ -339,6 +370,11 @@ word_list <- function(word_list = NULL, and_or = "and", is_are = FALSE,
   out
 }
 
+#' Internal helper to add quotes around strings
+#'
+#' Wraps character vectors in single or double quotes, or leaves them unchanged,
+#' depending on the `quotes` argument.
+#' @noRd
 add_quotes <- function(x, quotes = 2L) {
   if (isFALSE(quotes)) {
     return(x)
@@ -371,7 +407,14 @@ add_quotes <- function(x, quotes = 2L) {
   x
 }
 
-## --processing `by` argument---------------------------------------------------
+#' Internal helper to process stratification variable
+#'
+#' Validates and processes the `by` argument used for stratifying matching or
+#' estimation, extracting the grouping column from `data`, checking for missing
+#' values, and ensuring that each stratum contains all treatment levels. Returns
+#' a one-column data frame with an attached `by.factor` attribute encoding the
+#' strata.
+#' @noRd
 .process_by <- function(by, data, treat) {
   ## Process by
   error_by <- FALSE
@@ -436,6 +479,11 @@ add_quotes <- function(x, quotes = 2L) {
 }
 
 ## --scaling the data-----------------------------------------------------------
+#' Internal helper to test for binary variables
+#'
+#' Checks whether a vector is binary, either restricted to 0/1 or allowing any
+#' two distinct values.
+#' @noRd
 is_binary <- function(x, null_one = TRUE) {
   if (null_one == TRUE) {
     return(all(stats::na.omit(x) %in% 0:1))
@@ -444,6 +492,10 @@ is_binary <- function(x, null_one = TRUE) {
   }
 }
 
+#' Internal helper to test if all values are identical
+#'
+#' Checks whether all (non-missing) elements of a vector are the same.
+#' @noRd
 all_the_same <- function(x, na_rm = TRUE) {
   if (anyNA(x)) {
     x <- x[!is.na(x)]
@@ -459,6 +511,11 @@ all_the_same <- function(x, na_rm = TRUE) {
   }
 }
 
+#' Internal helper to rescale variables to (0, 1)
+#'
+#' Leaves binary and constant variables unchanged, rescales numeric variables
+#' to (0, 1), and coerces two-level variables to factors.
+#' @noRd
 scale_0_to_1 <- function(x) {
   if (is_binary(x)) {
     return(x)
@@ -495,8 +552,11 @@ scale_0_to_1 <- function(x) {
   !(x %in% inx)
 }
 
-## --matching the arguments in a list to formals of other functions-------------
-## --changes the name of arglist to match names of funlist formals--------------
+#' Internal helper to align argument lists with function formals
+#'
+#' Matches names in an argument list to the formals of one or more functions,
+#' dropping unused entries and filling in defaults where needed.
+#' @noRd
 match_add_args <- function(arglist, funlist) {
   if (is.list(arglist) && length(arglist) == sum(names(arglist) != "",
     na.rm = TRUE
@@ -568,9 +628,12 @@ match_add_args <- function(arglist, funlist) {
   }
 }
 
-## --getting the treatment type from: binary, ordinal, multinomial--------------
-## --needed for further processing from link and method-------------------------
-## --use after converting treat to factor
+#' Internal helper to classify treatment type
+#'
+#' Converts the treatment variable to a factor, checks variability, and assigns
+#' it a type label (`"binary"`, `"ordinal"`, or `"multinom"`) via the
+#' `treat_type` attribute.
+#' @noRd
 .assign_treatment_type <- function(treat, ordinal_treat) {
   chk::chk_vector(treat)
 
@@ -591,6 +654,10 @@ match_add_args <- function(arglist, funlist) {
   treat
 }
 
+#' Internal helper to retrieve treatment type
+#'
+#' Returns the `treat_type` attribute from a treatment vector.
+#' @noRd
 .get_treat_type <- function(treat) {
   attr(treat, "treat_type")
 }
@@ -616,7 +683,12 @@ ignore_unused_imports <- function() {
   )
 }
 
-## --process reference----------------------------------------------------------
+#' Internal helper to process reference level
+#'
+#' Validates and sets the reference level of the treatment variable, optionally
+#' warning when `reference` is redundant given `ordinal_treat`. Returns the
+#' relevelled factor and the reference used.
+#' @noRd
 .process_ref <- function(data_vec,
                          reference = NULL,
                          ordinal_treat = NULL) {
@@ -624,7 +696,7 @@ ignore_unused_imports <- function() {
   levels_treat <- as.character(unique(data_vec))
 
   if (!is.null(ordinal_treat) && !is.null(reference)) {
-    chk::wrn(strwrap("There is no need to specify `reference` if `ordinal_treat`
+    .vm_warn(strwrap("There is no need to specify `reference` if `ordinal_treat`
                      was provided. Ignoring the `reference` argument",
       prefix = " ", initial = ""
     ))
@@ -657,12 +729,20 @@ ignore_unused_imports <- function() {
   return(ref_out)
 }
 
-## --logit transformation-------------------------------------------------------
+#' Internal helper for logit transformation
+#'
+#' Applies the logit transform \eqn{\log(x / (1 - x))} to probabilities in
+#' (0, 1).
+#' @noRd
 logit <- function(x) {
   log(x / (1 - x))
 }
 
-## --vectorize output-----------------------------------------------------------
+#' Internal helper to vectorize scalar arguments
+#'
+#' Recycles a length-1 argument to the requested length, otherwise returns it
+#' unchanged.
+#' @noRd
 .vectorize <- function(arg, times) {
   if (length(arg) == 1) {
     rep(arg, times)
@@ -671,7 +751,11 @@ logit <- function(x) {
   }
 }
 
-## --helper for dealing with balqual() tables-----------------------------------
+#' Internal helper to summarize balance quality tables
+#'
+#' Aggregates balance statistics across time, reshapes them, and classifies
+#' coefficients as balanced or not for use in `balqual()` output.
+#' @noRd
 create_balqual_output <- function(coeflist,
                                   coefnames,
                                   operation = c("+", "max"),
@@ -760,7 +844,11 @@ create_balqual_output <- function(coeflist,
   quality_table[filter_rows, ]
 }
 
-## --ordering function for match_gps()------------------------------------------
+#' Internal helper to order GPS vectors
+#'
+#' Produces indices ordering a GPS vector in descending, ascending, original, or
+#' random order for use in matching.
+#' @noRd
 .ordering_func <- function(gps_vec, order = "desc", ...) {
   if (order == "desc") {
     order(gps_vec, decreasing = TRUE, ...)

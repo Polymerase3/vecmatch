@@ -27,11 +27,10 @@
 #'   variable in `data` to facet by. This argument is used in a call to
 #'   [ggplot2::facet_wrap()], creating separate distribution plots for each
 #'   unique group in the `facet` variable.
-#' @param ncol A single integer. The value should be less than or equal to the
-#'   number of unique categories in the `facet` variable. This argument is used
-#'   only when `facet` is not NULL, specifying the number of columns in the
-#'   [ggplot2::facet_wrap()] call. The distribution plots will be arranged into
-#'   the number of columns defined by `ncol`.
+#' @param ncol A single integer giving the number of columns in the facet
+#'   layout. When `facet` is not `NULL`, `ncol` must be between 1 and the
+#'   number of unique categories in the `facet` variable; values outside this
+#'   range result in an error. This argument is ignored when `facet` is `NULL`.
 #' @param significance A single string specifying the method for calculating
 #'   p-values in multiple comparisons between groups defined by the `group`
 #'   argument. Significant comparisons are represented by bars connecting the
@@ -40,9 +39,9 @@
 #'   methods refer to the *Details* section. If the `significance` argument is
 #'   not `NULL`, standardized mean differences (SMDs) are also calculated and
 #'   displayed on the right side of the jittered point plots.
-#' @param sig_label_size An integer specifying the size of the significance and
-#'   SMD (standardized mean difference) labels displayed on the bars on the
-#'   right side of the plot.
+#' @param sig_label_size A single integer between 1 and 20 specifying the size
+#'   of the significance and standardized mean difference (SMD) labels shown on
+#'   the left and right side of the plot.
 #' @param sig_label_color Logical flag. If `FALSE` (default), significance and
 #'   SMD bars and text are displayed in the default color (black). If `TRUE`,
 #'   colors are applied dynamically based on value: nonsignificant tests and SMD
@@ -129,12 +128,13 @@
 #'
 #' p <- raincloud(ToothGrowth, len, dose, supp,
 #'   significance = "t_test",
-#'   jitter = 0.15, alpha = 0.4
+#'   jitter = 0.15,
+#'   alpha = 0.4
 #' )
 #'
 #' ## As `p` is a valid `ggplot` object, we can manipulate its
-#' ## characteristics usingthe `ggplot2` or `ggpubr` packages
-#' ## to create publication grade plot:
+#' ## characteristics using the `ggplot2` or `ggpubr` packages
+#' ## to create a publication-grade plot:
 #' p <- p +
 #'   theme_classic2() +
 #'   theme(
@@ -146,6 +146,16 @@
 #'
 #' p
 #'
+#' ## Example: demonstrate `limits` and `plot_name` (no file is saved
+#' ## because `plot_name = NULL`)
+#' p2 <- raincloud(
+#'   ToothGrowth, len, dose, supp,
+#'   significance = "t_test",
+#'   limits = c(0, 40),
+#'   plot_name = NULL
+#' )
+#'
+#' p2
 #' @export
 
 raincloud <- function(data = NULL,
@@ -169,8 +179,8 @@ raincloud <- function(data = NULL,
     args_signif <- list(...)
     .data <- rlang::.data # silence R CMD CHECK note
     #--check data frame---------------------------------------------------------
-    if ("matched" %in% class(data)) {
-      class(data) <- "data.frame"
+    if (!identical(class(data), "data.frame")) {
+      data <- as.data.frame(data)
     }
 
     ## must be an object of class data frame
@@ -214,11 +224,17 @@ raincloud <- function(data = NULL,
 
     ## check if density scale allowed
     chk::chk_character(density_scale)
+    chk::chk_length(density_scale, 1L)
+
+    # make matching case-insensitive
+    density_scale <- tolower(density_scale)
+
     .chk_cond(
       density_scale %nin% c("area", "count", "width"),
-      'The `density_scale` argument should be a single character. The allowed
-      values are: "area", "count" and "width".'
+      'The `density_scale` argument should be a single string. The allowed
+      values are: "area", "count" and "width" (matching is case-insensitive).'
     )
+
 
     ## check range for jitter
     chk::chk_range(jitter, range = c(0, 1))
@@ -238,25 +254,36 @@ raincloud <- function(data = NULL,
       )
     }
 
-    # check if sig_label_size is integer
+    # check sig_label_size
     if (!is.null(sig_label_size)) {
-      suppressWarnings(sig_label_size <- try(as.integer(sig_label_size)))
+      suppressWarnings(sig_label_size <- try(as.integer(sig_label_size),
+                                             silent = TRUE))
 
       .chk_cond(
-        is.na(sig_label_size) || inherits(sig_label_size, "try-error"),
-        "`sig_label_size` must be an integer."
+        length(sig_label_size) != 1L ||
+          is.na(sig_label_size) ||
+          inherits(sig_label_size, "try-error"),
+        "`sig_label_size` must be a single integer."
       )
 
-      chk::chk_integer(sig_label_size, x_name = "sig_label_size")
+      .chk_cond(
+        sig_label_size < 1L || sig_label_size > 20L,
+        "`sig_label_size` must be between 1 and 20."
+      )
     }
+
 
     # check smd_type
     chk::chk_character(smd_type)
     chk::chk_length(smd_type, length = 1)
+
+    # normalize case
+    smd_type <- tolower(smd_type)
+
     .chk_cond(
       smd_type %nin% c("mean", "median"),
       'The `smd_type` argument can only take one of the
-            following values: "mean", "median".'
+            following values: "mean", "median" (matching is case-insensitive).'
     )
 
     ####################### DATA PROCESSING ####################################
@@ -279,11 +306,37 @@ raincloud <- function(data = NULL,
     facet_levels <- length(unique(data[, symlist[["facet"]]]))
     facet_levels <- max(facet_levels, 1) # if facet_levels = 0
 
+    # --- validate ncol --------------------------------------------------------
+    # always check that it's a single integer
+    suppressWarnings(ncol <- try(as.integer(ncol), silent = TRUE))
+
+    .chk_cond(
+      length(ncol) != 1L || is.na(ncol) || inherits(ncol, "try-error"),
+      "`ncol` must be a single integer."
+    )
+
+    # if facet is used, enforce range [1, facet_levels]
+    if (!is.null(symlist[["facet"]])) {
+      .chk_cond(
+        ncol < 1L || ncol > facet_levels,
+        sprintf(
+          "`ncol` must be between 1 and the number of facet levels (%d).",
+          facet_levels
+        )
+      )
+    }
+
     # check and process the significance argument
     use_signif <- FALSE
     if (!is.null(significance)) {
       rlang::check_installed(c("rstatix", "ggpubr"))
       use_signif <- TRUE
+
+      chk::chk_character(significance)
+      chk::chk_length(significance, 1L)
+
+      # normalize case
+      significance <- tolower(significance)
 
       # check if more than 2 groups in the data
       .chk_cond(

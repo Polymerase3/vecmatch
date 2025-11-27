@@ -1,11 +1,15 @@
 #' @title Match the Data Based on Generalized Propensity Scores
 #'
+#' @srrstats {G1.1} It is the first implementation ever of the vector matching
+#' algorithm
 #' @description The `match_gps()` function performs sample matching based on
-#'   generalized propensity scores (GPS). It utilizes the k-means clustering
-#'   algorithm to partition the data into clusters and subsequently matches all
-#'   treatment groups within these clusters. This approach ensures efficient and
-#'   structured comparisons across treatment levels while accounting for the
-#'   propensity score distribution.
+#' generalized propensity scores (GPS). It applies a k-means clustering
+#' step to the GPS to partition the data into clusters and then matches
+#' all treatment groups within each cluster. This yields balanced
+#' comparisons across treatment levels while preserving the GPS
+#' structure. To our knowledge, `vecmatch` provides the first
+#' implementation in R of the vector-matching algorithm described by
+#' Lopez and Gutman (2017).
 #'
 #' @param csmatrix An object of class `gps` and/or `csr` representing a data
 #'   frame of generalized propensity scores. The first column must be the
@@ -113,6 +117,8 @@
 #' * `matching_filter`: A logical vector indicating which rows from
 #'   `original_data` were included in the final matched dataset.
 #'
+#' @srrstats {G1.0} We refer to this article all over the package. It was the
+#' main inspiration for vecmatch
 #' @references Michael J. Lopez, Roee Gutman "Estimation of Causal Effects with
 #' Multiple Treatments: A Review and New Ideas," Statistical Science, Statist.
 #' Sci. 32(3), 432-454, (August 2017)
@@ -123,11 +129,10 @@
 #'   [stats::kmeans()] for the documentation of the k-Means algorithm.
 #'
 #' @examples
-#' # Defining the formula used for gps estimation
-#' formula_cancer <- formula(status ~ age + sex)
 #'
 #' # Step 1.) Estimation of the generalized propensity scores
-#' gp_scores <- estimate_gps(formula_cancer,
+#' gp_scores <- estimate_gps(
+#'   formula(status ~ age * sex),
 #'   data = cancer,
 #'   method = "multinom",
 #'   reference = "control",
@@ -137,8 +142,9 @@
 #' # Step 2.) Defining the common support region
 #' gps_csr <- csregion(gp_scores)
 #'
-#' # Step 3.) Matching the gps
-#' matched_cancer <- match_gps(gps_csr,
+#' # Example 1: optimal full matching ("fullopt") with explicit tuning params
+#' matched_cancer_full <- match_gps(
+#'   gps_csr,
 #'   caliper = 0.25,
 #'   reference = "control",
 #'   method = "fullopt",
@@ -147,9 +153,25 @@
 #'     iter.max = 200,
 #'     algorithm = "Forgy"
 #'   ),
+#'   min_controls = 0,
+#'   max_controls = Inf,
+#'   order = "desc",
 #'   verbose_output = TRUE
 #' )
 #'
+#' # Example 2: nearest neighbour matching ("nnm") demonstrating ratio /
+#' # replace / order / ties
+#' matched_cancer_nnm <- match_gps(
+#'   gps_csr,
+#'   caliper = 0.25,
+#'   reference = "control",
+#'   method = "nnm",
+#'   ratio = 2,
+#'   replace = TRUE,
+#'   order = "asc",
+#'   ties = TRUE,
+#'   verbose_output = FALSE
+#' )
 #' @export
 match_gps <- function(csmatrix = NULL,
                       method = "nnm",

@@ -55,7 +55,8 @@
 #'   group = Sex,
 #'   facet = Class,
 #'   ncol = 2,
-#'   significance = TRUE
+#'   significance = TRUE,
+#'   plot_name = NUL
 #' )
 #'
 #' p <- p +

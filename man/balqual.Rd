@@ -10,8 +10,7 @@ balqual(
   type = c("smd", "r", "var_ratio"),
   statistic = c("mean", "max"),
   cutoffs = NULL,
-  round = 3,
-  print_out = TRUE
+  round = 3
 )
 }
 \arguments{
@@ -55,11 +54,8 @@ corresponding metric, below which the dataset is considered balanced. If
 \code{NULL}, the default cutoffs are used: 0.1 for \code{smd} and \code{r}, and 2 for
 \code{var_ratio}.}
 
-\item{round}{An integer specifying the number of decimal places to round the
-output to.}
-
-\item{print_out}{Logical. If \code{TRUE} (default), a matching quality summary
-will be printed to the console. Set to \code{FALSE} to suppress this output.}
+\item{round}{A single non-negative integer specifying the number of
+decimal places to round the output to.}
 }
 \value{
 If assigned to a name, returns a list of summary statistics of class
@@ -99,11 +95,8 @@ using user-specified cutoff values.
 # and sex covariates
 data(cancer)
 
-# Firstly, we define the formula
-formula_cancer <- formula(status ~ age * sex)
-
 # Then we can estimate the generalized propensity scores
-gps_cancer <- estimate_gps(formula_cancer,
+gps_cancer <- estimate_gps(formula(status ~ age * sex)
   cancer,
   method = "multinom",
   reference = "control",
@@ -125,7 +118,7 @@ matched_cancer <- match_gps(csr_cancer,
 # At the end we can assess the quality of matching using `balqual()`
 balqual(
   matched_data = matched_cancer,
-  formula = formula_cancer,
+  formula = formula(status ~ age * sex),
   type = "smd",
   statistic = "max",
   round = 3,

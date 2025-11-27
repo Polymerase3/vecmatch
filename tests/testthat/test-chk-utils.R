@@ -32,13 +32,4 @@ test_that("testing chk-utils", {
   expect_error(.check_integer(c("a", 1), x_name = "vector"),
     regexp = "integer"
   )
-
-  # testing match_discrete_args
-  expect_error(
-    .match_discrete_args("abc",
-      choices = c(1, 2, 3),
-      x_name = "arg"
-    ),
-    regexp = "following values"
-  )
 })

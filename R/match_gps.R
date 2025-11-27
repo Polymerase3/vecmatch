@@ -1,7 +1,5 @@
 #' @title Match the Data Based on Generalized Propensity Scores
 #'
-#' @srrstats {G1.1} It is the first implementation ever of the vector matching
-#' algorithm
 #' @description The `match_gps()` function performs sample matching based on
 #' generalized propensity scores (GPS). It applies a k-means clustering
 #' step to the GPS to partition the data into clusters and then matches
@@ -117,8 +115,6 @@
 #' * `matching_filter`: A logical vector indicating which rows from
 #'   `original_data` were included in the final matched dataset.
 #'
-#' @srrstats {G1.0} We refer to this article all over the package. It was the
-#' main inspiration for vecmatch
 #' @references Michael J. Lopez, Roee Gutman "Estimation of Causal Effects with
 #' Multiple Treatments: A Review and New Ideas," Statistical Science, Statist.
 #' Sci. 32(3), 432-454, (August 2017)

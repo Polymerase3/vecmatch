@@ -369,7 +369,7 @@ raincloud <- function(data = NULL,
       func_used <- switch(significance,
         "t_test" = rstatix::pairwise_t_test,
         "dunn_test" = rstatix::dunn_test,
-        "tukeyHSD_test" = rstatix::tukey_hsd,
+        "tukeyhsd_test" = rstatix::tukey_hsd,
         "games_howell_test" = rstatix::games_howell_test,
         "wilcoxon_test" = rstatix::pairwise_wilcox_test,
         "sign_test" = rstatix::pairwise_sign_test
@@ -407,7 +407,7 @@ raincloud <- function(data = NULL,
 
         # modify name of data argument for tukeyHSD
         names(args_signif)[names(args_signif) == "data"] <- {
-          ifelse(significance == "tukeyHSD_test", "x", "data")
+          ifelse(significance == "tukeyhsd_test", "x", "data")
         }
 
         ## call the rstatix func to calculate significance levels

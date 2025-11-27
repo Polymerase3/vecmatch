@@ -60,6 +60,5 @@ select_results <- select_opt(
 get_select_params(select_results, smd_group = "0.05-0.10")
 
 # Rerun the analysis
-
 }
 }

@@ -1,8 +1,5 @@
 ## --extracting varaibles from a formula----------------------------------------
 ## --based on: https://github.com/ngreifer/WeightIt/blob/master/R/utils.R-------
-
-#' @srrstats {G1.4a} All helpers have roxygen2-style docstrings
-#' Internal helper to extract variables from a formula
 #'
 #' Parses a model formula and associated data to extract the treatment variable,
 #' reported covariates, and (optionally) a model matrix including interactions.

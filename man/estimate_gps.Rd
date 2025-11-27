@@ -104,7 +104,6 @@ Available options: \code{link = c("logistic", "probit", "loglog", "cloglog",   "
 
 ## Example 1: multinomial bias-reduced model (brglm2) on `airquality`
 if (requireNamespace("brglm2", quietly = TRUE)) {
-
   library(brglm2)
 
   # Initial imbalance of means
@@ -165,7 +164,7 @@ if (requireNamespace("MASS", quietly = TRUE)) {
     data = aq,
     method = "polr",
     link = "probit",
-    subset = aq$Wind > stats::median(aq$Wind, na.rm = TRUE),
+    subset = NULL,
     by = "Temp_group",
     ordinal_treat = ord_month,
     reference = "5"

@@ -80,7 +80,7 @@
       rstatix::dunn_test
     )
   ),
-  "tukeyHSD_test" = list(
+  "tukeyhsd_test" = list(
     method_name = "tukeyHSD",
     package_used = "rstatix",
     args_check_fun = list(

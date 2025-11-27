@@ -46,12 +46,6 @@
 #'   the initial dataset. The original dataset used for estimation can be
 #'   accessed as the `original_data` attribute.
 #'
-#' @srrstats {G1.3} Key statistical terms used in `vecmatch`, including
-#'   generalized propensity scores (GPS), vector matching, common support
-#'   region, and treatment allocation probabilities, are defined and explained
-#'   in the documentation of `estimate_gps()`, `csregion()`, `match_gps()`
-#' @srrstats {G1.4} roxygen2 is used to document all functions
-#'
 #' @details The main goal of the `estimate_gps()` function is to calculate the
 #'   generalized propensity scores aka. treatment allocation probabilities. It
 #'   is the first step in the workflow of the vector matching algorithm and is
@@ -139,7 +133,7 @@
 #'     data = aq,
 #'     method = "polr",
 #'     link = "probit",
-#'     subset = aq$Wind > stats::median(aq$Wind, na.rm = TRUE),
+#'     subset = NULL,
 #'     by = "Temp_group",
 #'     ordinal_treat = ord_month,
 #'     reference = "5"

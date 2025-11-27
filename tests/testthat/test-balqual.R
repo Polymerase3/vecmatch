@@ -27,10 +27,10 @@ test_that("balqual: argument checks and basic run", {
   # basic test run
   expect_no_error(
     invisible(
-      capture.output(
-        balqual(matched_cancer, status ~ age),
-        file = NULL
-      )
+
+        balqual(matched_cancer,
+                status ~ age)
+
     )
   )
 

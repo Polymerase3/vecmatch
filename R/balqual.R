@@ -68,7 +68,7 @@
 #' data(cancer)
 #'
 #' # Then we can estimate the generalized propensity scores
-#' gps_cancer <- estimate_gps(formula(status ~ age * sex)
+#' gps_cancer <- estimate_gps(formula(status ~ age * sex),
 #'   cancer,
 #'   method = "multinom",
 #'   reference = "control",
@@ -157,7 +157,7 @@ balqual <- function(matched_data = NULL,
   allowed_type <- c("smd", "r", "var_ratio")
 
   .chk_cond(
-    !type %in% allowed_type,
+    !all(type %in% allowed_type),
     sprintf(
       "The `type` argument must be one of %s.",
       paste(add_quotes(allowed_type), collapse = ", ")
@@ -175,7 +175,7 @@ balqual <- function(matched_data = NULL,
   allowed_stat <- c("mean", "max")
 
   .chk_cond(
-    !statistic %in% allowed_stat,
+    !all(statistic %in% allowed_stat),
     sprintf(
       "The `statistic` argument must be one of %s.",
       paste(add_quotes(allowed_stat), collapse = ", ")

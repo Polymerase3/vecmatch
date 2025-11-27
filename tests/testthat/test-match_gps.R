@@ -1,4 +1,3 @@
-# test the csregion() with default multinom() gps estimation method
 test_that("match_gps checking arguments: csmatrix", {
   withr::with_seed(1643741, {
     data <- data.frame(

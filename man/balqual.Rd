@@ -96,7 +96,7 @@ using user-specified cutoff values.
 data(cancer)
 
 # Then we can estimate the generalized propensity scores
-gps_cancer <- estimate_gps(formula(status ~ age * sex)
+gps_cancer <- estimate_gps(formula(status ~ age * sex),
   cancer,
   method = "multinom",
   reference = "control",

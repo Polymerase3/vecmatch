@@ -56,7 +56,7 @@
 #'   facet = Class,
 #'   ncol = 2,
 #'   significance = TRUE,
-#'   plot_name = NUL
+#'   plot_name = NULL
 #' )
 #'
 #' p <- p +

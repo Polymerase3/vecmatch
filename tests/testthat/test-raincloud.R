@@ -3,7 +3,7 @@ test_that("Formals checking: data", {
   expect_error(raincloud(), regexp = "data.frame")
 
   datax <- character()
-  expect_error(raincloud(datax), regexp = "class")
+  expect_error(raincloud(datax), regexp = "not numeric")
 
   datax <- data.frame()
   expect_error(raincloud(datax), regexp = "empty")

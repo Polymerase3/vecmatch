@@ -7,7 +7,7 @@
 \title{vecmatch: Vector Matching for Generalized Propensity Scores}
 \description{
 The \code{vecmatch} package implements vector matching methods based
-on eneralized propensity scores (GPS) for balancing multiple treatment
+on generalized propensity scores (GPS) for balancing multiple treatment
 groups, along with diagnostic tools and visualization functions.
 }
 \section{Life cycle}{

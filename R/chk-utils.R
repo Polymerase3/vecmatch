@@ -1,23 +1,3 @@
-#' @srrstats {G2.1} vecmatch enforces input types throughout the main API using
-#'   `chk` and internal helpers. Functions such as `estimate_gps()`,
-#'   `csregion()`, `match_gps()`, `raincloud()` and `make_opt_args()` use
-#'   type-checkers including `.check_df()`, `.check_gps_matrix()`,
-#'   `.check_method()`, `.check_vecl()`, `.check_integer()`,
-#'   `chk::chk_character()`, `chk::chk_flag()`, `chk::chk_list()`,
-#'   and `chk::chk_range()` to reject inputs of incorrect type with informative
-#'   errors.
-#' @srrstats {G2.2} vecmatch restricts multivariate inputs for arguments that
-#'   are intended to be univariate. Scalar parameters (e.g. `method`,
-#'   `link`, `density_scale`, `smd_type`, `significance`, `order`,
-#'   `verbose_output`, and similar flags) are validated with `chk`
-#'   helpers such as `chk::chk_length()` and internal utilities
-#'   (for example `.check_vecl()` and `.chk_vararg_length()`), which
-#'   enforce length-one inputs and raise errors otherwise. Where
-#'   vector-valued inputs are allowed (e.g. `caliper`, `ratio`,
-#'   `replace`, `min_controls`, `max_controls`, `kmeans_cluster`),
-#'   their lengths are explicitly constrained to either 1 or the
-#'   number of treatment combinations.
-#'
 #' Internal helper for conditional checks
 #'
 #' Evaluates a condition and, if true, aborts via `chk::abort_chk()` or issues
@@ -56,7 +36,6 @@
   }
 }
 
-#' @srrstats {G2.0} vecmatch enforces input lengths throughout the API.
 #' Internal helper to validate atomic numeric vectors of a given length
 #'
 #' Returns `TRUE` if `x` is an atomic (non-matrix, non-array) vector, optionally
@@ -283,7 +262,6 @@
   return(x)
 }
 
-#' @srrstats {G2.0} vecmatch enforces input lengths throughout the API.
 #' Internal helper to validate variable-length arguments
 #'
 #' Ensures an argument is either a single value or a vector of a given length,

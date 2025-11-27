@@ -454,13 +454,13 @@ balqual <- function(matched_data = NULL,
   # canonicalise the stored call so equivalent inputs give identical objects
   fc <- match.call()
   if ("type" %in% names(fc)) {
-    fc[["type"]] <- type              # always lower-case
+    fc[["type"]] <- type # always lower-case
   }
   if ("statistic" %in% names(fc)) {
-    fc[["statistic"]] <- statistic    # always lower-case
+    fc[["statistic"]] <- statistic # always lower-case
   }
   if ("round" %in% names(fc)) {
-    fc[["round"]] <- round            # after you've coerced to integer earlier
+    fc[["round"]] <- round # after you've coerced to integer earlier
   }
 
   # assemble quality object with attributes and class in one go
@@ -604,7 +604,7 @@ str.quality <- function(object, ...) {
   }
 
   perc <- object$perc_matched %||% if (!is.na(n_before_attr) &&
-                                       n_before_attr > 0) {
+    n_before_attr > 0) {
     100 * n_after_attr / n_before_attr
   } else {
     NA_real_

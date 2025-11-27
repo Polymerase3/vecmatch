@@ -1,5 +1,5 @@
 ## Defining all the necessary variables
-status <- c("control", "adenoma", "crc_beningn", "crc_malignant")
+status <- c("control", "adenoma", "crc_benign", "crc_malignant")
 n_samples <- c(317, 374, 281, 252)
 number_f <- c(167, 191, 139, 122)
 age_mean <- c(64.52, 64.12, 65.66, 65.21)

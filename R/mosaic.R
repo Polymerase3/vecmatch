@@ -155,7 +155,7 @@ mosaic <- function(data = NULL,
       if (!is.factor(data[[facet_var]])) {
         data[[facet_var]] <- factor(data[[facet_var]])
       }
-      facet_levels <- levels(data[[facet_var]])  # preserves user-defined order
+      facet_levels <- levels(data[[facet_var]]) # preserves user-defined order
       n_facets <- length(facet_levels)
     } else {
       facet_levels <- character(0)
@@ -266,10 +266,10 @@ mosaic <- function(data = NULL,
       # enforce facet order from the original data (like in raincloud)
       if (use_facet) {
         test_results[["facet"]] <- factor(test_results[["facet"]],
-                                          levels = levels(data[, symlist[["facet"]]])
+          levels = levels(data[, symlist[["facet"]]])
         )
         res[["facet"]] <- factor(res[["facet"]],
-                                 levels = levels(data[, symlist[["facet"]]])
+          levels = levels(data[, symlist[["facet"]]])
         )
       }
 
@@ -321,7 +321,7 @@ mosaic <- function(data = NULL,
 
     if (use_facet) {
       prodcoords$facet <- factor(prodcoords$facet,
-                                 levels = facet_levels
+        levels = facet_levels
       )
     }
     ## if group sizes, then calculate label coords

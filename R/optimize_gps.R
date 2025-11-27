@@ -1327,7 +1327,7 @@ str.best_opt_result <- function(object, ...) {
 #'   x = opt_results,
 #'   smd_groups = list(
 #'     c("adenoma", "control"),
-#'     c("control", "crc_beningn"),
+#'     c("control", "crc_benign"),
 #'     c("crc_malignant", "control")
 #'   ),
 #'   smd_variables = "age",
@@ -2050,7 +2050,7 @@ str.select_result <- function(object, ...) {
 #'   x = opt_results,
 #'   smd_groups = list(
 #'     c("adenoma", "control"),
-#'     c("control", "crc_beningn"),
+#'     c("control", "crc_benign"),
 #'     c("crc_malignant", "control")
 #'   ),
 #'   smd_variables = "age",
@@ -2126,7 +2126,7 @@ get_select_params <- function(x, smd_group = NULL) {
 #'   x = opt_results,
 #'   smd_groups = list(
 #'     c("adenoma", "control"),
-#'     c("control", "crc_beningn"),
+#'     c("control", "crc_benign"),
 #'     c("crc_malignant", "control")
 #'   ),
 #'   smd_variables = "age",

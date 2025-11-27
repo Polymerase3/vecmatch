@@ -86,6 +86,7 @@ gps_matrix <- estimate_gps(formula_cancer,
 )
 
 head(gps_matrix, n = 7)
+
 ```
 
 As you can see, each row in the resulting GPS matrix contains treatment assignment probabilities for all levels of the treatment variable, summing to 1.

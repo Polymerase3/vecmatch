@@ -39,7 +39,7 @@ select_results <- select_opt(
   x = opt_results,
   smd_groups = list(
     c("adenoma", "control"),
-    c("control", "crc_beningn"),
+    c("control", "crc_benign"),
     c("crc_malignant", "control")
   ),
   smd_variables = "age",

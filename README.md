@@ -95,21 +95,21 @@ gps_matrix <- estimate_gps(formula_cancer,
 
 head(gps_matrix, n = 7)
 #> gps object (generalized propensity scores)
-#>   • Number of units: 7
-#>   • Number of treatments: 4
-#>   • Treatment column: treatment
-#>   • GPS probability columns: control, adenoma, crc_beningn, crc_malignant
-#>   • Treatment levels: control, adenoma, crc_beningn, crc_malignant
-#>   • All columns except 'treatment' store probabilities in [0, 1].
+#> • Number of units: 7
+#> • Number of treatments: 4
+#> • Treatment column: treatment
+#> • GPS probability columns: control, adenoma, crc_benign, crc_malignant
+#> • Treatment levels: control, adenoma, crc_benign, crc_malignant
+#> • All columns except 'treatment' store probabilities in [0, 1].
 #> 
-#>   treatment   control   adenoma crc_beningn crc_malignant
-#> 1   control 0.3347396 0.2858184   0.1622951     0.2171469
-#> 2   control 0.2397453 0.3487326   0.2006854     0.2108367
-#> 3   control 0.2400506 0.2885477   0.2533414     0.2180602
-#> 4   control 0.2478800 0.2856531   0.2783953     0.1880716
-#> 5   control 0.2398759 0.2848793   0.2568960     0.2183489
-#> 6   control 0.2652354 0.2878765   0.2518512     0.1950369
-#> 7   control 0.2806189 0.2888866   0.2297684     0.2007260
+#>   treatment   control   adenoma crc_benign crc_malignant
+#> 1   control 0.3347396 0.2858184  0.1622951     0.2171469
+#> 2   control 0.2397453 0.3487326  0.2006854     0.2108367
+#> 3   control 0.2400506 0.2885477  0.2533414     0.2180602
+#> 4   control 0.2478800 0.2856531  0.2783953     0.1880716
+#> 5   control 0.2398759 0.2848793  0.2568960     0.2183489
+#> 6   control 0.2652354 0.2878765  0.2518512     0.1950369
+#> 7   control 0.2806189 0.2888866  0.2297684     0.2007260
 ```
 
 As you can see, each row in the resulting GPS matrix contains treatment
@@ -170,20 +170,20 @@ balqual(matched_data,
 #> -------------------------------------------------- 
 #> Treatment                 | Before     | After      
 #> -------------------------------------------------- 
-#> adenoma                   | 355        | 156        
-#> control                   | 304        | 156        
-#> crc_beningn               | 279        | 156        
-#> crc_malignant             | 249        | 156        
+#> adenoma                   | 355        | 150        
+#> control                   | 304        | 150        
+#> crc_benign                | 279        | 150        
+#> crc_malignant             | 249        | 150        
 #> -------------------------------------------------- 
 #> 
 #> 
 #> Matching summary statistics:
 #> ---------------------------------------- 
 #> Total n before matching:  1187 
-#> Total n after matching:       624 
-#> % of matched observations:    52.57 %
-#> Total  maximal   SMD value:   0.04 
-#> Total  maximal   r value:     0.003 
+#> Total n after matching:       600 
+#> % of matched observations:    50.55 %
+#> Total  maximal   SMD value:   0.039 
+#> Total  maximal   r value:     0.002 
 #> Total  maximal   Var value:   1.005 
 #> 
 #> 
@@ -191,9 +191,9 @@ balqual(matched_data,
 #> -------------------------------------------------------------------------------- 
 #> Variable                  | Coef  | Before       | After        | Quality      
 #> -------------------------------------------------------------------------------- 
-#> bmi                       | SMD   | 0.245        | 0.040        | Balanced     
-#> bmi                       | r     | 0.010        | 0.003        | Balanced     
-#> bmi                       | Var   | 1.101        | 1.004        | Balanced     
+#> bmi                       | SMD   | 0.245        | 0.039        | Balanced     
+#> bmi                       | r     | 0.010        | 0.002        | Balanced     
+#> bmi                       | Var   | 1.101        | 1.005        | Balanced     
 #> sexF                      | SMD   | 0.153        | 0.000        | Balanced     
 #> sexF                      | r     | 0.006        | 0.000        | Balanced     
 #> sexF                      | Var   | 1.004        | 1.000        | Balanced     
@@ -203,7 +203,7 @@ balqual(matched_data,
 #> bmi:sexF                  | SMD   | 0.152        | 0.004        | Balanced     
 #> bmi:sexF                  | r     | 0.007        | 0.001        | Balanced     
 #> bmi:sexF                  | Var   | 1.042        | 1.004        | Balanced     
-#> bmi:sexM                  | SMD   | 0.151        | 0.006        | Balanced     
+#> bmi:sexM                  | SMD   | 0.151        | 0.005        | Balanced     
 #> bmi:sexM                  | r     | 0.006        | 0.001        | Balanced     
 #> bmi:sexM                  | Var   | 1.023        | 1.005        | Balanced     
 #> --------------------------------------------------------------------------------

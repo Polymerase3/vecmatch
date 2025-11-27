@@ -56,7 +56,7 @@ all specified values, reporting the total number of parameter combinations.
 opt_args <- make_opt_args(
   data            = cancer,
   formula         = formula_cancer,
-  reference       = c("control", "adenoma", "crc_beningn", "crc_malignant"),
+  reference       = c("control", "adenoma", "crc_benign", "crc_malignant"),
   gps_method      = c("m1", "m7", "m8"),
   matching_method = c("fullopt", "nnm"),
   caliper         = seq(0.01, 5, 0.01),

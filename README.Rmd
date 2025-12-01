@@ -33,7 +33,7 @@ The `vecmatch` package implements the Vector Matching algorithm introduced in th
 - Define the common support region.  
 - Perform matching across multiple treatment groups.  
 - Evaluate the quality of matching.  
-
+ 
 ## Installation
 
 You can install the latest version of `vecmatch` from [GitHub](https://github.com/Polymerase3/vecmatch) with:

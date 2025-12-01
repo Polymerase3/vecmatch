@@ -73,6 +73,8 @@ raincloud(
   sig_label_size = 3,
   limits = c(7, 48)
 )
+#> Warning: Removed 9 rows containing missing values or values outside the scale range
+#> (`geom_flat_violin()`).
 ```
 
 <img src="man/figures/unnamed-chunk-2-1.png" width="100%" />
@@ -170,30 +172,30 @@ balqual(matched_data,
 #> -------------------------------------------------- 
 #> Treatment                 | Before     | After      
 #> -------------------------------------------------- 
-#> adenoma                   | 355        | 150        
-#> control                   | 304        | 150        
-#> crc_benign                | 279        | 150        
-#> crc_malignant             | 249        | 150        
+#> adenoma                   | 355        | 148        
+#> control                   | 304        | 148        
+#> crc_benign                | 279        | 148        
+#> crc_malignant             | 249        | 148        
 #> -------------------------------------------------- 
 #> 
 #> 
 #> Matching summary statistics:
 #> ---------------------------------------- 
 #> Total n before matching:  1187 
-#> Total n after matching:       600 
-#> % of matched observations:    50.55 %
-#> Total  maximal   SMD value:   0.039 
-#> Total  maximal   r value:     0.002 
-#> Total  maximal   Var value:   1.005 
+#> Total n after matching:       592 
+#> % of matched observations:    49.87 %
+#> Total  maximal   SMD value:   0.041 
+#> Total  maximal   r value:     0.003 
+#> Total  maximal   Var value:   1.009 
 #> 
 #> 
 #> Maximal values :
 #> -------------------------------------------------------------------------------- 
 #> Variable                  | Coef  | Before       | After        | Quality      
 #> -------------------------------------------------------------------------------- 
-#> bmi                       | SMD   | 0.245        | 0.039        | Balanced     
-#> bmi                       | r     | 0.010        | 0.002        | Balanced     
-#> bmi                       | Var   | 1.101        | 1.005        | Balanced     
+#> bmi                       | SMD   | 0.245        | 0.041        | Balanced     
+#> bmi                       | r     | 0.010        | 0.003        | Balanced     
+#> bmi                       | Var   | 1.101        | 1.009        | Balanced     
 #> sexF                      | SMD   | 0.153        | 0.000        | Balanced     
 #> sexF                      | r     | 0.006        | 0.000        | Balanced     
 #> sexF                      | Var   | 1.004        | 1.000        | Balanced     
@@ -203,9 +205,9 @@ balqual(matched_data,
 #> bmi:sexF                  | SMD   | 0.152        | 0.004        | Balanced     
 #> bmi:sexF                  | r     | 0.007        | 0.001        | Balanced     
 #> bmi:sexF                  | Var   | 1.042        | 1.004        | Balanced     
-#> bmi:sexM                  | SMD   | 0.151        | 0.005        | Balanced     
+#> bmi:sexM                  | SMD   | 0.151        | 0.006        | Balanced     
 #> bmi:sexM                  | r     | 0.006        | 0.001        | Balanced     
-#> bmi:sexM                  | Var   | 1.023        | 1.005        | Balanced     
+#> bmi:sexM                  | Var   | 1.023        | 1.006        | Balanced     
 #> --------------------------------------------------------------------------------
 ```
 

@@ -1,6 +1,28 @@
 # vecmatch (development version)
 
-# vecmatch 1.2.0
+# vecmatch 1.3.0
+
+## Major changes
+
+- Refactored and unified the S3 class system across the package, and added
+  helper methods for inspecting the internal structure of vecmatch objects.
+- Added `get_select_params()` and `run_selected_matching()` to streamline
+  the re-estimation step after the main optimization workflow.
+- Reduced and cleaned up package dependencies in `DESCRIPTION`, and improved
+  how suggested packages are handled in the code.
+
+## Minor changes and bug fixes
+
+- Fixed a bug in `raincloud()`, where facet labels were reversed when using
+  `facet`.
+- Removed backend handling from `optimize_gps()`. The parallel backend must
+  now be registered outside the function.
+- Updated the optimization vignette to use `run_selected_matching()`.
+- Corrected a typo in the `cancer` dataset.
+- Added examples for all exported functions and wrapped long-running examples
+  in `\donttest{}`.
+- Updated badges in the `README`.
+- Added automated tests to check reproducibility of results.
 
 # vecmatch 1.2.0
 

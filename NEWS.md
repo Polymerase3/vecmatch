@@ -1,4 +1,4 @@
-# vecmatch (development version)
+# vecmatch 1.3.0
 
 # vecmatch 1.3.0
 

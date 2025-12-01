@@ -167,9 +167,10 @@ the standard workflow:
 ```{r estimate_gps}
 # estimating gps
 final_match <- run_selected_matching(select_results,
-                                     cancer,
-                                     formula_cancer,
-                                     smd_group = "0.05-0.10")
+  cancer,
+  formula_cancer,
+  smd_group = "0.05-0.10"
+)
 
 summary(final_match)
 ```

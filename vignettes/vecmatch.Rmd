@@ -239,6 +239,44 @@ balqual(matched_cancer,
 )
 ```
 
+The metrics above summarize *pairwise* comparisons between the treatment
+levels. To additionally compare the marginal distributions of the covariates
+between the unmatched and the matched dataset, add `desc_full` to the `type`
+argument. Numeric covariates are summarized by `N`, the mean, standard
+deviation, minimum, quartiles, median, maximum, skewness and excess kurtosis,
+while categorical covariates are cross-tabulated by the count and percentage of
+each level. Both are reported within every treatment level and are printed as
+two separate tables which, like the balance tables above, carry the statistics
+in the rows and the two matching stages in the `Before` and `After` columns:
+
+```{r}
+balqual(matched_cancer,
+  formula_cancer,
+  type = c("smd", "desc_full"),
+  statistic = "max",
+  round = 4
+)
+```
+
+If the full table is longer than comfortable, `desc_reduced` restricts the
+summary of the numeric covariates to `N`, the minimum, mean, median and
+maximum. The cross-tabulation of the categorical covariates is unaffected:
+
+```{r}
+balqual(matched_cancer,
+  formula_cancer,
+  type = c("smd", "desc_reduced"),
+  statistic = "max",
+  round = 4
+)
+```
+
+Note that the descriptive tables describe the covariates as they appear in the
+`formula`, whereas the balance metrics are computed on the model matrix. `sex`
+is therefore described once by its levels rather than once per dummy-coded
+column, and the `age:sex` interaction is covered by the balance metrics only,
+as it is a model term rather than a covariate.
+
 After assessing the quality with `balqual()`, we can combine both matched and unmatched datasets into a single data frame to visualize age and sex using `raincloud()` and `mosaic()`:
 
 ```{r}

@@ -1,5 +1,36 @@
 # vecmatch (development version)
 
+## Minor changes and bug fixes
+
+- `balqual()` gained two new `type` values, `"desc_full"` and `"desc_reduced"`,
+  which report standard descriptive statistics for every balancing variable,
+  separately for each treatment level and for the unmatched and matched
+  dataset. This makes it possible to compare the covariate distributions
+  between both datasets, in addition to the pairwise balance metrics. The
+  tables follow the layout of the balance tables, with the statistics as rows
+  and the two matching stages as the `Before` and `After` columns. Numeric
+  covariates are summarized by `N`, mean, standard deviation, minimum, first
+  quartile, median, third quartile, maximum, skewness and excess kurtosis for
+  `"desc_full"`, or by `N`, minimum, mean, median and maximum for
+  `"desc_reduced"`. Categorical covariates are instead cross-tabulated, with
+  the count and the percentage of every level within each treatment level,
+  computed separately for each matching stage and printed as a single `N (%)`
+  cell in a separate table. The two values are mutually exclusive, and both are
+  opt-in, so the default output is unchanged.
+- The descriptive metrics of `balqual()` describe the covariates as they are
+  given in the `formula`, while the balance metrics are computed on the model
+  matrix. A factor is therefore described once by its levels rather than once
+  per dummy-coded column, and interaction terms are covered by the balance
+  metrics only.
+- The `statistic` argument of `balqual()` is not used by the descriptive
+  metrics, and a warning is now issued when it is supplied together with
+  `type = "desc_full"` or `type = "desc_reduced"` alone.
+- Fixed a bug in `balqual()`, where the values of the `cutoffs` argument were
+  matched to the metrics by position across all three balance metrics rather
+  than by name. Passing a subset of the metrics, e.g.
+  `type = c("smd", "var_ratio")`, raised a recycling warning and could
+  evaluate a metric against the cutoff of another one.
+
 # vecmatch 1.3.0
 
 # vecmatch 1.3.0

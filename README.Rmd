@@ -21,6 +21,7 @@ knitr::opts_chunk$set(
 [![pkgcheck](https://github.com/Polymerase3/vecmatch/workflows/pkgcheck/badge.svg)](https://github.com/Polymerase3/vecmatch/actions?query=workflow%3Apkgcheck)
 [![Codecov test coverage](https://codecov.io/gh/Polymerase3/vecmatch/graph/badge.svg)](https://app.codecov.io/gh/Polymerase3/vecmatch)
 [![styler](https://github.com/Polymerase3/vecmatch/actions/workflows/style.yaml/badge.svg)](https://github.com/Polymerase3/vecmatch/actions/workflows/style.yaml)
+[![pkgdown](https://github.com/Polymerase3/vecmatch/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/Polymerase3/vecmatch/actions/workflows/pkgdown.yaml)
 
 <!-- badges: end -->
 
@@ -58,7 +59,7 @@ The vecmatch package has an exact workflow and it is advisable to follow it. It 
 ### *1. Initial imbalance assessment* 
 Visualize covariate imbalances in your dataset using the `raincloud()` function for continuous variables and the `mosaic()` function for categorical variables. Both functions support grouping by up to two categorical variables (`group` and `facet` arguments) and provide standardized mean differences and significance tests.  
 
-```{r results='hide', message = FALSE, fig.keep='all', fig.height=12}
+```{r results='hide', message = FALSE, fig.keep='all', fig.height=12, fig.alt = "Raincloud plots of the BMI distribution for each treatment group of the cancer dataset, faceted by sex, with pairwise t-test significance labels illustrating the initial covariate imbalance."}
 library(vecmatch)
 
 raincloud(

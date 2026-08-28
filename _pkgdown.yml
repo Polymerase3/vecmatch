@@ -1,0 +1,66 @@
+url: https://polymerase3.github.io/vecmatch/
+
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search, github]
+
+articles:
+- title: Articles
+  navbar: ~
+  contents:
+  - vecmatch
+  - optimizing-matching
+
+reference:
+- title: Assessing initial imbalance
+  desc: >
+    Visualize the covariate imbalances in the raw dataset before any
+    propensity score estimation.
+  contents:
+  - raincloud
+  - mosaic
+
+- title: Estimating generalized propensity scores
+  desc: >
+    Estimate the treatment allocation probabilities and define the common
+    support region.
+  contents:
+  - estimate_gps
+  - csregion
+
+- title: Matching
+  desc: >
+    Match the observations across multiple treatment groups based on the
+    estimated generalized propensity scores.
+  contents:
+  - match_gps
+
+- title: Evaluating matching quality
+  desc: >
+    Assess the balance of the covariates and the descriptive statistics
+    before and after matching.
+  contents:
+  - balqual
+
+- title: Optimizing the matching process
+  desc: >
+    Search the parameter space of the estimation and matching functions and
+    rerun the pipeline for the selected configurations.
+  contents:
+  - optimize_gps
+  - make_opt_args
+  - select_opt
+  - get_select_params
+  - run_selected_matching
+
+- title: Datasets
+  contents:
+  - cancer
+
+- title: Package overview
+  contents:
+  - vecmatch-package

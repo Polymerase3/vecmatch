@@ -11,3 +11,6 @@ inst/doc
 /Meta/
 revdep/
 .Renviron
+docs/
+vignettes/*_cache/
+vignettes/*_files/

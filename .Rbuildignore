@@ -11,3 +11,6 @@
 ^CRAN-SUBMISSION$
 ^codemeta\.json$
 ^CONTRIBUTING\.md$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

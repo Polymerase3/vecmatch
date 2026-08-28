@@ -826,7 +826,7 @@ print.quality <- function(x, ...) {
     }
   }
 
-  return(x)
+  invisible(x)
 }
 
 #' @export

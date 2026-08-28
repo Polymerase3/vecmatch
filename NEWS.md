@@ -30,6 +30,15 @@
   than by name. Passing a subset of the metrics, e.g.
   `type = c("smd", "var_ratio")`, raised a recycling warning and could
   evaluate a metric against the cutoff of another one.
+- `print.quality()` now returns its argument invisibly, as documented for
+  `print()` methods, instead of returning it visibly. The visible return value
+  made the quality tables be printed twice whenever the result of `print()` was
+  itself auto-printed, e.g. inside `capture.output()` or a knitted document.
+- The package documentation is now also available as a `pkgdown` website at
+  <https://polymerase3.github.io/vecmatch/>. The site collects the reference
+  pages of all exported functions, grouped by the five steps of the `vecmatch`
+  workflow, together with the vignettes and this changelog, and is rebuilt
+  automatically by a GitHub Actions workflow on every push to `main`.
 
 # vecmatch 1.3.0
 

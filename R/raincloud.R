@@ -427,7 +427,16 @@ raincloud <- function(data = NULL,
             the maintainer. \n
             Error message from `%s`: %s",
                   significance,
-                  as.character(func_used),
+                  switch(significance,
+                         "t_test"            = "rstatix::pairwise_t_test",
+                         "dunn_test"         = "rstatix::dunn_test",
+                         "tukeyhsd_test"     = "rstatix::tukey_hsd",
+                         "games_howell_test" = "rstatix::games_howell_test",
+                         "wilcoxon_test"     = "rstatix::pairwise_wilcox_test",
+                         "sign_test"         = "rstatix::pairwise_sign_test",
+                         # fallback (shouldn't happen if you validate earlier)
+                         "unknown"
+                  ),
                   conditionMessage(e)
                 ),
                 prefix = " ", initial = ""
@@ -435,6 +444,7 @@ raincloud <- function(data = NULL,
               tidy = FALSE
             )
           }
+
         )
 
         # calculating original add_xy_position to locate the pvalues

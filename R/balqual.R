@@ -11,8 +11,22 @@
 #' @param formula A valid R formula used to compute generalized propensity
 #'   scores during the first step of the vector matching algorithm in
 #'   [estimate_gps()]. This formula must match the one used in `estimate_gps()`.
-#' @param type A character vector specifying the quality metrics to calculate.
-#'   Can maximally contain 3 values in a vector created by the `c()`. Possible
+#' @param type A character vector specifying the quality metrics to calculate,
+#'   provided in a vector created by the `c()`. The values fall into two
+#'   groups. `smd`, `r` and `var_ratio` are balance metrics summarizing
+#'   *pairwise* comparisons between the treatment levels. `desc_full` and
+#'   `desc_reduced` instead describe the marginal distribution of each
+#'   covariate within every treatment level, which makes it possible to
+#'   directly compare the covariate distributions of the unmatched and the
+#'   matched dataset. Note that they describe the covariates as they are given
+#'   in the `formula`, whereas the balance metrics are computed on the model
+#'   matrix: a factor is described once, by its levels, rather than once per
+#'   dummy-coded column, and interaction terms are not described at all, since
+#'   they are model terms rather than covariates. The balance metrics still
+#'   cover them. Neither descriptive metric is part of the default, and both
+#'   have to be requested explicitly, either on their own or together with the
+#'   balance metrics, e.g. `type = c("smd", "desc_reduced")`. As `desc_reduced`
+#'   is a subset of `desc_full`, the two are mutually exclusive. Possible
 #'   values include:
 #' * `smd` - Calculates standardized mean differences (SMD) between groups,
 #'   defined as the difference in means divided by the standard deviation of the
@@ -21,6 +35,21 @@
 #'   U-Mann-Whitney test.
 #' * `var_ratio` - Measures the dispersion differences between groups,
 #'   calculated as the ratio of the larger variance to the smaller one.
+#' * `desc_full` - Computes standard descriptive statistics for every balancing
+#'   variable, separately for each treatment level, before and after matching.
+#'   Numeric covariates are summarized by the number of observations (`N`),
+#'   mean, standard deviation, minimum, first quartile, median, third quartile,
+#'   maximum, skewness and excess kurtosis, where skewness and excess kurtosis
+#'   are the classical moment (type 1) estimators. Categorical covariates
+#'   (factor, character and logical) are instead cross-tabulated, reporting the
+#'   count and the percentage of every level within each treatment level, as
+#'   means and quantiles are not meaningful for them. The two are printed as
+#'   two separate tables.
+#' * `desc_reduced` - As `desc_full`, but the summary of the numeric covariates
+#'   is restricted to the four most commonly reported statistics: minimum,
+#'   mean, median and maximum. The cross-tabulation of the categorical
+#'   covariates is unaffected. Useful when the full table is too wide to read
+#'   comfortably in the console.
 #' @param statistic A character vector specifying the type of statistics used to
 #'   summarize the quality metrics. Since quality metrics are calculated for all
 #'   pairwise comparisons between treatment levels, they need to be aggregated
@@ -29,12 +58,17 @@
 #'   argument (as suggested by Lopez and Gutman, 2017).
 #'   - `mean`: Returns the corresponding averages.
 #'
-#'   To compute both, provide both names using the `c()` function.
+#'   To compute both, provide both names using the `c()` function. This argument
+#'   is ignored by the `desc_full` and `desc_reduced` metrics, which are not
+#'   based on pairwise comparisons and are therefore never aggregated across
+#'   them.
 #' @param cutoffs A numeric vector with the same length as the number of
-#'   coefficients specified in the `type` argument. Defines the cutoffs for each
-#'   corresponding metric, below which the dataset is considered balanced. If
-#'   `NULL`, the default cutoffs are used: 0.1 for `smd` and `r`, and 2 for
-#'   `var_ratio`.
+#'   balance metrics specified in the `type` argument. Defines the cutoffs for
+#'   each corresponding metric, below which the dataset is considered balanced.
+#'   If `NULL`, the default cutoffs are used: 0.1 for `smd` and `r`, and 2 for
+#'   `var_ratio`. The descriptive metrics have no cutoff and are not counted
+#'   here, so `type = c("smd", "desc_full")` still requires a single cutoff
+#'   value.
 #' @param round A single non-negative integer specifying the number of
 #'   decimal places to round the output to.
 #'
@@ -46,6 +80,24 @@
 #'  * `quality_max` - A data frame with the maximal values of the statistics
 #'   specified in the `type` argument for all balancing variables used in
 #'   `formula`.
+#'  * `quality_desc` - A data frame with the descriptive statistics of every
+#'   balancing variable, laid out like the balance tables above: the statistics
+#'   are the rows and the two matching stages are the `Before` and `After`
+#'   columns. It holds the numeric and the categorical covariates in a single
+#'   table, with the columns `Variable`, `Group`, `Type`, `Statistic`,
+#'   `Before`, `After`, `Percent_Before` and `Percent_After`. `Type` is either
+#'   `"continuous"` or `"categorical"`. For a continuous covariate, `Statistic`
+#'   names the reported statistic - `N`, `Mean`, `SD`, `Min`, `Q1`, `Median`,
+#'   `Q3`, `Max`, `Skewness` and `Kurtosis` for `desc_full`, or `N`, `Min`,
+#'   `Mean`, `Median` and `Max` for `desc_reduced` - and the two `Percent`
+#'   columns are `NA`. For a categorical covariate, `Statistic` names a level
+#'   of that covariate, `Before` and `After` hold its counts, and the two
+#'   `Percent` columns hold its share within the treatment level, computed
+#'   separately for each matching stage. `NULL` unless one of the two
+#'   descriptive metrics is included in the `type` argument. When printed, the
+#'   counts and percentages of a categorical covariate are compressed into a
+#'   single `N (%)` cell, with the percentage always shown to one decimal
+#'   place.
 #'  * `perc_matched` - A single numeric value indicating the percentage of
 #'   observations in the original dataset that were matched.
 #'  * `statistic` - A single string defining which statistic will be displayed
@@ -92,6 +144,29 @@
 #'   matched_data = matched_cancer,
 #'   formula = formula(status ~ age * sex),
 #'   type = "smd",
+#'   statistic = "max",
+#'   round = 3,
+#'   cutoffs = 0.2
+#' )
+#'
+#' # Adding `desc_full` to `type` additionally reports the descriptive
+#' # statistics of every covariate per treatment level, before and after
+#' # matching, which allows a direct comparison of the covariate distributions
+#' balqual(
+#'   matched_data = matched_cancer,
+#'   formula = formula(status ~ age * sex),
+#'   type = c("smd", "desc_full"),
+#'   statistic = "max",
+#'   round = 3,
+#'   cutoffs = 0.2
+#' )
+#'
+#' # `desc_reduced` gives the same table restricted to the minimum, mean,
+#' # median and maximum
+#' balqual(
+#'   matched_data = matched_cancer,
+#'   formula = formula(status ~ age * sex),
+#'   type = c("smd", "desc_reduced"),
 #'   statistic = "max",
 #'   round = 3,
 #'   cutoffs = 0.2
@@ -154,7 +229,8 @@ balqual <- function(matched_data = NULL,
   # normalise to lower case
   type <- tolower(type)
 
-  allowed_type <- c("smd", "r", "var_ratio")
+  allowed_desc <- c("desc_full", "desc_reduced")
+  allowed_type <- c("smd", "r", "var_ratio", allowed_desc)
 
   .chk_cond(
     !all(type %in% allowed_type),
@@ -163,6 +239,23 @@ balqual <- function(matched_data = NULL,
       paste(add_quotes(allowed_type), collapse = ", ")
     )
   )
+
+  # `desc_reduced` is a subset of `desc_full`, so requesting both is ambiguous
+  .chk_cond(
+    all(allowed_desc %in% type),
+    sprintf(
+      "The %s and %s values of the `type` argument are mutually exclusive, as
+              the latter is a subset of the former.",
+      add_quotes("desc_full"), add_quotes("desc_reduced")
+    )
+  )
+
+  # the descriptive metrics are not pairwise balance metrics, so they are
+  # handled separately from the metrics that are aggregated, compared to
+  # cutoffs and summarized
+  desc_type <- intersect(type, allowed_desc)
+  compute_desc <- length(desc_type) > 0L
+  balance_type <- setdiff(type, allowed_desc)
 
   # --- check and process `statistic` -----------------------------------------
   .chk_cond(
@@ -182,9 +275,23 @@ balqual <- function(matched_data = NULL,
     )
   )
 
+  # `statistic` aggregates pairwise metrics, so it does nothing when the only
+  # requested metrics are the descriptive ones
+  .chk_cond(
+    compute_desc && length(balance_type) == 0L &&
+      "statistic" %in% names(match.call()),
+    sprintf(
+      "The `statistic` argument is ignored for the %s type, as descriptive
+              statistics are computed per treatment level and not aggregated
+              over pairwise comparisons.",
+      add_quotes(desc_type)
+    ),
+    error = FALSE
+  )
+
   # check cutoffs
   if (is.null(cutoffs)) {
-    cutoffs <- unlist(lapply(type, function(x) {
+    cutoffs <- unlist(lapply(balance_type, function(x) {
       switch(x,
         smd = 0.1,
         r = 0.1,
@@ -194,10 +301,21 @@ balqual <- function(matched_data = NULL,
   }
 
   .chk_cond(
-    !.check_vecl(cutoffs, length(type), check_numeric = TRUE),
+    length(balance_type) > 0L &&
+      !.check_vecl(cutoffs, length(balance_type), check_numeric = TRUE),
     "The argument `cutoffs` has to be an numeric vector, with length
-            equal to the length of `type` argument."
+            equal to the number of balance metrics in the `type` argument
+            (`desc` is not counted)."
   )
+
+  # `create_balqual_output()` expects one cutoff per metric, in the fixed order
+  # smd, r, var_ratio. Mapping by name keeps the requested cutoffs aligned with
+  # their metric and leaves the defaults in place for the unrequested ones.
+  cutoffs_full <- c(smd = 0.1, r = 0.1, var_ratio = 2)
+
+  if (length(balance_type) > 0L) {
+    cutoffs_full[balance_type] <- cutoffs
+  }
 
   # check round: single non-negative integer
   .chk_cond(
@@ -372,8 +490,8 @@ balqual <- function(matched_data = NULL,
     quality_dataframe,
     operation = "+",
     round = round,
-    which_coefs = type,
-    cutoffs = cutoffs
+    which_coefs = balance_type,
+    cutoffs = unname(cutoffs_full)
   )
 
   # maxes
@@ -381,9 +499,49 @@ balqual <- function(matched_data = NULL,
     quality_dataframe,
     operation = "max",
     round = round,
-    which_coefs = type,
-    cutoffs = cutoffs
+    which_coefs = balance_type,
+    cutoffs = unname(cutoffs_full)
   )
+
+  # descriptive statistics of the covariates, per treatment level
+  quality_desc <- NULL
+
+  if (compute_desc) {
+    # the descriptives describe the covariates as they appear in the `formula`,
+    # not the dummy-coded model matrix used for the balance metrics
+    desc_long <- rbind(
+      .desc_table(
+        data_before[["reported_covs"]],
+        data_before[["treat"]],
+        time = "Before",
+        round = round
+      ),
+      .desc_table(
+        data_after[["reported_covs"]],
+        data_after[["treat"]],
+        time = "After",
+        round = round
+      )
+    )
+
+    # `desc_reduced` keeps the four most commonly used statistics next to the
+    # number of observations. The counts of the categorical covariates have
+    # nothing to reduce.
+    stats_keep <- if (identical(desc_type, "desc_reduced")) {
+      c("N", "Min", "Mean", "Median", "Max")
+    } else {
+      .desc_stat_names
+    }
+
+    # the statistics become rows and the matching stages become columns, so
+    # that the table reads like the balance tables above it
+    quality_desc <- .desc_to_wide(
+      desc_long,
+      stats_keep = stats_keep,
+      var_order = names(data_before[["reported_covs"]]),
+      group_order = .desc_groups(data_before[["treat"]])
+    )
+  }
 
   # % Matched
   perc_matched <- length(data_after[["treat"]]) /
@@ -392,7 +550,7 @@ balqual <- function(matched_data = NULL,
   perc_matched <- round(perc_matched, 2)
 
   # calculating total maximas or means
-  type_recoded <- lapply(type, function(x) {
+  type_recoded <- lapply(balance_type, function(x) {
     switch(x,
       "smd" = "SMD",
       "r" = "r",
@@ -440,6 +598,7 @@ balqual <- function(matched_data = NULL,
   quality_core <- list(
     quality_mean  = quality_mean,
     quality_max   = quality_max,
+    quality_desc  = quality_desc,
     perc_matched  = perc_matched,
     statistic     = statistic,
     summary_head  = summary_head,
@@ -519,6 +678,44 @@ print.quality <- function(x, ...) {
     cat(separator, "\n")
   }
 
+  # Printer for tables with an arbitrary number of columns. Column widths are
+  # derived from the content, so narrow tables stay narrow in the console.
+  print_desc_table <- function(df) {
+    cells <- lapply(df, function(col) {
+      ifelse(is.na(col), "NA", as.character(col))
+    })
+
+    widths <- mapply(
+      function(col, nm) max(nchar(c(col, nm))),
+      cells,
+      names(df)
+    )
+
+    # 3 characters per separator (" | "), minus the trailing one
+    separator <- paste(
+      rep("-", sum(widths) + 3L * length(widths) - 3L),
+      collapse = ""
+    )
+
+    # character columns read better left-aligned, numbers right-aligned
+    align <- ifelse(vapply(df, is.numeric, logical(1L)), "", "-")
+    col_format <- sprintf("%%%s%ds", align, widths)
+
+    fmt_row <- function(row) {
+      paste(mapply(sprintf, col_format, row), collapse = " | ")
+    }
+
+    cat(separator, "\n")
+    cat(fmt_row(names(df)), "\n")
+    cat(separator, "\n")
+
+    for (i in seq_len(nrow(df))) {
+      cat(fmt_row(vapply(cells, `[`, character(1L), i)), "\n")
+    }
+
+    cat(separator, "\n")
+  }
+
   # Function to print quality statistics tables (mean and max)
   print_quality_table <- function(table, label) {
     cat(label, ":\n")
@@ -570,19 +767,66 @@ print.quality <- function(x, ...) {
   cat("\n\n")
 
   # Print mean and/or max quality tables based on the statistic
-  if (length(x$statistic) == 1) {
-    if (x$statistic == "mean") {
-      print_quality_table(x$quality_mean, "Mean values")
+  if (NROW(x$quality_mean) > 0L) {
+    if (length(x$statistic) == 1) {
+      if (x$statistic == "mean") {
+        print_quality_table(x$quality_mean, "Mean values")
+      } else {
+        print_quality_table(x$quality_max, "Maximal values")
+      }
     } else {
+      print_quality_table(x$quality_mean, "Mean values")
+      cat("\n")
       print_quality_table(x$quality_max, "Maximal values")
     }
-  } else {
-    print_quality_table(x$quality_mean, "Mean values")
-    cat("\n")
-    print_quality_table(x$quality_max, "Maximal values")
   }
 
-  return(x)
+  # Descriptive statistics of the covariates, requested via the `desc_*` types.
+  # Continuous and categorical covariates are described by different statistics
+  # and are therefore printed as two separate tables.
+  if (!is.null(x$quality_desc)) {
+    continuous <- x$quality_desc[x$quality_desc$Type == "continuous", ,
+      drop = FALSE
+    ]
+    categorical <- x$quality_desc[x$quality_desc$Type == "categorical", ,
+      drop = FALSE
+    ]
+
+    if (nrow(continuous) > 0L) {
+      cat("Descriptive statistics of the continuous covariates:\n")
+      print_desc_table(continuous[, c(
+        "Variable", "Group", "Statistic", "Before", "After"
+      )])
+      cat("\n")
+    }
+
+    if (nrow(categorical) > 0L) {
+      # the count and the percentage are compressed into a single cell, with
+      # the percentage always shown to one decimal to keep the cell narrow
+      count_percent <- function(count, percent) {
+        ifelse(
+          is.na(count),
+          "NA",
+          sprintf("%s (%.1f%%)", format(count), percent)
+        )
+      }
+
+      cat("Distribution of the categorical covariates:\n")
+      print_desc_table(data.frame(
+        Variable = categorical$Variable,
+        Group = categorical$Group,
+        Level = categorical$Statistic,
+        Before = count_percent(
+          categorical$Before, categorical$Percent_Before
+        ),
+        After = count_percent(categorical$After, categorical$Percent_After),
+        stringsAsFactors = FALSE
+      ))
+      cat("\n")
+    }
+  }
+
+  invisible(x)
 }
 
 #' @export
@@ -615,6 +859,7 @@ str.quality <- function(object, ...) {
   cutoffs <- object$cutoffs %||% NA_real_
   q_mean <- object$quality_mean
   q_max <- object$quality_max
+  q_desc <- object$quality_desc
   ct <- object$count_table
 
   # treatment levels from count_table, if available
@@ -689,6 +934,15 @@ str.quality <- function(object, ...) {
     ))
   } else {
     cat(" quality_max : <none>\n")
+  }
+
+  if (!is.null(q_desc)) {
+    cat(sprintf(
+      " quality_desc: %d x %d (variables x groups x stages)\n",
+      NROW(q_desc), NCOL(q_desc)
+    ))
+  } else {
+    cat(" quality_desc: <none>\n")
   }
 
   if (!is.null(ct)) {

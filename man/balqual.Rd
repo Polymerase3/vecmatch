@@ -23,8 +23,22 @@ compute the quality coefficients.}
 scores during the first step of the vector matching algorithm in
 \code{\link[=estimate_gps]{estimate_gps()}}. This formula must match the one used in \code{estimate_gps()}.}
 
-\item{type}{A character vector specifying the quality metrics to calculate.
-Can maximally contain 3 values in a vector created by the \code{c()}. Possible
+\item{type}{A character vector specifying the quality metrics to calculate,
+provided in a vector created by the \code{c()}. The values fall into two
+groups. \code{smd}, \code{r} and \code{var_ratio} are balance metrics summarizing
+\emph{pairwise} comparisons between the treatment levels. \code{desc_full} and
+\code{desc_reduced} instead describe the marginal distribution of each
+covariate within every treatment level, which makes it possible to
+directly compare the covariate distributions of the unmatched and the
+matched dataset. Note that they describe the covariates as they are given
+in the \code{formula}, whereas the balance metrics are computed on the model
+matrix: a factor is described once, by its levels, rather than once per
+dummy-coded column, and interaction terms are not described at all, since
+they are model terms rather than covariates. The balance metrics still
+cover them. Neither descriptive metric is part of the default, and both
+have to be requested explicitly, either on their own or together with the
+balance metrics, e.g. \code{type = c("smd", "desc_reduced")}. As \code{desc_reduced}
+is a subset of \code{desc_full}, the two are mutually exclusive. Possible
 values include:
 \itemize{
 \item \code{smd} - Calculates standardized mean differences (SMD) between groups,
@@ -34,6 +48,21 @@ treatment group (Rubin, 2001).
 U-Mann-Whitney test.
 \item \code{var_ratio} - Measures the dispersion differences between groups,
 calculated as the ratio of the larger variance to the smaller one.
+\item \code{desc_full} - Computes standard descriptive statistics for every balancing
+variable, separately for each treatment level, before and after matching.
+Numeric covariates are summarized by the number of observations (\code{N}),
+mean, standard deviation, minimum, first quartile, median, third quartile,
+maximum, skewness and excess kurtosis, where skewness and excess kurtosis
+are the classical moment (type 1) estimators. Categorical covariates
+(factor, character and logical) are instead cross-tabulated, reporting the
+count and the percentage of every level within each treatment level, as
+means and quantiles are not meaningful for them. The two are printed as
+two separate tables.
+\item \code{desc_reduced} - As \code{desc_full}, but the summary of the numeric covariates
+is restricted to the four most commonly reported statistics: minimum,
+mean, median and maximum. The cross-tabulation of the categorical
+covariates is unaffected. Useful when the full table is too wide to read
+comfortably in the console.
 }}
 
 \item{statistic}{A character vector specifying the type of statistics used to
@@ -46,13 +75,18 @@ argument (as suggested by Lopez and Gutman, 2017).
 \item \code{mean}: Returns the corresponding averages.
 }
 
-To compute both, provide both names using the \code{c()} function.}
+To compute both, provide both names using the \code{c()} function. This argument
+is ignored by the \code{desc_full} and \code{desc_reduced} metrics, which are not
+based on pairwise comparisons and are therefore never aggregated across
+them.}
 
 \item{cutoffs}{A numeric vector with the same length as the number of
-coefficients specified in the \code{type} argument. Defines the cutoffs for each
-corresponding metric, below which the dataset is considered balanced. If
-\code{NULL}, the default cutoffs are used: 0.1 for \code{smd} and \code{r}, and 2 for
-\code{var_ratio}.}
+balance metrics specified in the \code{type} argument. Defines the cutoffs for
+each corresponding metric, below which the dataset is considered balanced.
+If \code{NULL}, the default cutoffs are used: 0.1 for \code{smd} and \code{r}, and 2 for
+\code{var_ratio}. The descriptive metrics have no cutoff and are not counted
+here, so \code{type = c("smd", "desc_full")} still requires a single cutoff
+value.}
 
 \item{round}{A single non-negative integer specifying the number of
 decimal places to round the output to.}
@@ -67,6 +101,24 @@ specified in the \code{type} argument for all balancing variables used in
 \item \code{quality_max} - A data frame with the maximal values of the statistics
 specified in the \code{type} argument for all balancing variables used in
 \code{formula}.
+\item \code{quality_desc} - A data frame with the descriptive statistics of every
+balancing variable, laid out like the balance tables above: the statistics
+are the rows and the two matching stages are the \code{Before} and \code{After}
+columns. It holds the numeric and the categorical covariates in a single
+table, with the columns \code{Variable}, \code{Group}, \code{Type}, \code{Statistic},
+\code{Before}, \code{After}, \code{Percent_Before} and \code{Percent_After}. \code{Type} is either
+\code{"continuous"} or \code{"categorical"}. For a continuous covariate, \code{Statistic}
+names the reported statistic - \code{N}, \code{Mean}, \code{SD}, \code{Min}, \code{Q1}, \code{Median},
+\code{Q3}, \code{Max}, \code{Skewness} and \code{Kurtosis} for \code{desc_full}, or \code{N}, \code{Min},
+\code{Mean}, \code{Median} and \code{Max} for \code{desc_reduced} - and the two \code{Percent}
+columns are \code{NA}. For a categorical covariate, \code{Statistic} names a level
+of that covariate, \code{Before} and \code{After} hold its counts, and the two
+\code{Percent} columns hold its share within the treatment level, computed
+separately for each matching stage. \code{NULL} unless one of the two
+descriptive metrics is included in the \code{type} argument. When printed, the
+counts and percentages of a categorical covariate are compressed into a
+single \verb{N (\%)} cell, with the percentage always shown to one decimal
+place.
 \item \code{perc_matched} - A single numeric value indicating the percentage of
 observations in the original dataset that were matched.
 \item \code{statistic} - A single string defining which statistic will be displayed
@@ -120,6 +172,29 @@ balqual(
   matched_data = matched_cancer,
   formula = formula(status ~ age * sex),
   type = "smd",
+  statistic = "max",
+  round = 3,
+  cutoffs = 0.2
+)
+
+# Adding `desc_full` to `type` additionally reports the descriptive
+# statistics of every covariate per treatment level, before and after
+# matching, which allows a direct comparison of the covariate distributions
+balqual(
+  matched_data = matched_cancer,
+  formula = formula(status ~ age * sex),
+  type = c("smd", "desc_full"),
+  statistic = "max",
+  round = 3,
+  cutoffs = 0.2
+)
+
+# `desc_reduced` gives the same table restricted to the minimum, mean,
+# median and maximum
+balqual(
+  matched_data = matched_cancer,
+  formula = formula(status ~ age * sex),
+  type = c("smd", "desc_reduced"),
   statistic = "max",
   round = 3,
   cutoffs = 0.2

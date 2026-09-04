@@ -330,3 +330,104 @@ test_that("matched methods: str/print/summary/plot/as.data.frame", {
   df_b <- as.data.frame(matched_obj)
   expect_identical(df_a, df_b)
 })
+
+test_that("match_gps runs warning-free with default tuning parameters", {
+  # Regression test: leaving tuning parameters at their default must not
+  # produce any warnings of its own. Deliberately not wrapped in
+  # `withr::with_options(list(warn = -1), ...)`, which would mask exactly this
+  # class of regression.
+  gps_matrix <- estimate_gps(
+    formula(status ~ age * sex),
+    data = cancer,
+    method = "multinom",
+    reference = "control"
+  )
+
+  invisible(capture.output(csmatrix <- csregion(gps_matrix), file = NULL))
+
+  # the reviewer's reproduction: "fullopt" at its defaults must be silent
+  expect_no_warning(
+    match_gps(csmatrix, reference = "control", method = "fullopt")
+  )
+
+  # across methods, no warning may originate from `match_gps()` itself. The
+  # matching back ends may still warn about the data (e.g. Matching::Matchby()
+  # reporting unbalanced group sizes), which is not ours to suppress, so only
+  # the package's own default-setting and ignored-argument warnings are checked.
+  own_warnings <- function(expr) {
+    warns <- character()
+    withCallingHandlers(
+      invisible(force(expr)),
+      warning = function(w) {
+        warns <<- c(warns, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
+    )
+    grep("will default to|not[[:space:]]+allowed for the method",
+      warns,
+      value = TRUE
+    )
+  }
+
+  for (meth in c("nnm", "fullopt")) {
+    expect_identical(
+      own_warnings(match_gps(csmatrix, reference = "control", method = meth)),
+      character()
+    )
+  }
+})
+
+test_that("match_gps warns only about explicitly supplied inapplicable args", {
+  gps_matrix <- estimate_gps(
+    formula(status ~ age * sex),
+    data = cancer,
+    method = "multinom",
+    reference = "control"
+  )
+
+  invisible(capture.output(csmatrix <- csregion(gps_matrix), file = NULL))
+
+  # `replace` is an "nnm"-only argument, so passing it to "fullopt" must warn
+  expect_warning(
+    match_gps(
+      csmatrix,
+      reference = "control",
+      method = "fullopt",
+      replace = TRUE
+    ),
+    regexp = "not[\\s\\n]+allowed for the method",
+    perl = TRUE
+  )
+
+  # but the very same call is silent when `replace` is left at its default
+  expect_no_warning(
+    match_gps(csmatrix, reference = "control", method = "fullopt")
+  )
+})
+
+test_that("match_gps forwards max_controls to optmatch::fullmatch()", {
+  # Regression test: `max_controls` used to be passed under a name that
+  # `fullmatch()` does not accept, and carried the value of `caliper`, so it
+  # was silently dropped and had no effect on the matching at all.
+  gps_matrix <- estimate_gps(
+    formula(status ~ age * sex),
+    data = cancer,
+    method = "multinom",
+    reference = "control"
+  )
+
+  invisible(capture.output(csmatrix <- csregion(gps_matrix), file = NULL))
+
+  n_matched <- function(max_controls) {
+    withr::with_seed(42, {
+      nrow(match_gps(
+        csmatrix,
+        reference = "control",
+        method = "fullopt",
+        max_controls = max_controls
+      ))
+    })
+  }
+
+  expect_lt(n_matched(1), n_matched(Inf))
+})

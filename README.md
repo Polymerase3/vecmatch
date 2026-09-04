@@ -5,11 +5,18 @@
 
 <!-- badges: start -->
 
+[![CRAN
+status](https://www.r-pkg.org/badges/version/vecmatch)](https://CRAN.R-project.org/package=vecmatch)
+[![Lifecycle:
+stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
+[![CRAN
+downloads](https://cranlogs.r-pkg.org/badges/grand-total/vecmatch)](https://CRAN.R-project.org/package=vecmatch)
 [![R-CMD-check](https://github.com/Polymerase3/vecmatch/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Polymerase3/vecmatch/actions/workflows/R-CMD-check.yaml)
 [![pkgcheck](https://github.com/Polymerase3/vecmatch/workflows/pkgcheck/badge.svg)](https://github.com/Polymerase3/vecmatch/actions?query=workflow%3Apkgcheck)
 [![Codecov test
 coverage](https://codecov.io/gh/Polymerase3/vecmatch/graph/badge.svg)](https://app.codecov.io/gh/Polymerase3/vecmatch)
 [![styler](https://github.com/Polymerase3/vecmatch/actions/workflows/style.yaml/badge.svg)](https://github.com/Polymerase3/vecmatch/actions/workflows/style.yaml)
+[![pkgdown](https://github.com/Polymerase3/vecmatch/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/Polymerase3/vecmatch/actions/workflows/pkgdown.yaml)
 
 <!-- badges: end -->
 
@@ -77,7 +84,7 @@ raincloud(
 #> (`geom_flat_violin()`).
 ```
 
-<img src="man/figures/unnamed-chunk-2-1.png" width="100%" />
+<img src="man/figures/unnamed-chunk-2-1.png" alt="Raincloud plots of the BMI distribution for each treatment group of the cancer dataset, faceted by sex, with pairwise t-test significance labels illustrating the initial covariate imbalance." width="100%" />
 
 ### *2. Estimate Generalized Propensity Scores (GPS)*
 

@@ -581,8 +581,30 @@ optimize_gps <- function(data = NULL,
         ## one progressor for this loop
         p <- progressr::progressor(steps = n_steps)
 
-        # Precompute unique treatment names outside the foreach loop
-        all_treatments <- unique(estimate_results[[1]]$treatment)
+        # Precompute unique treatment names outside the foreach loop.
+        # `.errorhandling = "pass"` replaces a failed combination by the
+        # message of the underlying error, so the first result that really
+        # holds a GPS matrix has to be located instead of taking the first one
+        is_estimated <- vapply(
+          estimate_results,
+          function(x) is.data.frame(x) && "treatment" %in% names(x),
+          logical(1)
+        )
+
+        .chk_cond(
+          !any(is_estimated),
+          sprintf(
+            "The GPS could not be estimated for any of the %d requested
+             combinations of `gps_method` and `reference`. The first reported
+             reason was: %s",
+            length(is_estimated),
+            unlist(estimate_results[!is_estimated])[1]
+          )
+        )
+
+        all_treatments <- unique(
+          estimate_results[[which(is_estimated)[1]]][["treatment"]]
+        )
         treatment_cols <- paste0("p_", all_treatments)
 
         smd_colnames <- c("group1", "group2", attr(opt_args, "model_covs"))

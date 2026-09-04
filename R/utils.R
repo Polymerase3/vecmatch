@@ -863,3 +863,346 @@ create_balqual_output <- function(coeflist,
   # suppress spurious no-visible-binding notes for data-mask vars
   utils::globalVariables(c("gps_method", "min_controls", "max_controls", "i"))
 }
+
+#' Internal helper listing the columns of the descriptive tables
+#'
+#' Both descriptive helpers return the same set of columns, so that the
+#' continuous and the categorical rows can be combined into a single tidy
+#' data.frame. `.level_order` is an internal sorting key that `balqual()` drops
+#' before returning the table to the user.
+#' @noRd
+.desc_colnames <- c(
+  "Variable", "Level", "Type", "Group", "Time", "N", "Percent",
+  "Mean", "SD", "Min", "Q1", "Median", "Q3", "Max", "Skewness", "Kurtosis",
+  ".level_order"
+)
+
+#' Internal helper to list the treatment levels of a descriptive table
+#'
+#' Keeps the level order of a factor treatment, so that the descriptive tables
+#' list the groups in the same order as the count table.
+#' @noRd
+.desc_groups <- function(treat) {
+  if (is.factor(treat)) {
+    levels(droplevels(treat))
+  } else {
+    sort(unique(as.character(treat)))
+  }
+}
+
+#' Internal helper to compute descriptive statistics of continuous covariates
+#'
+#' Summarises every numeric covariate separately for each level of the
+#' treatment variable. Returns a long data.frame with one row per covariate and
+#' treatment level, used by `balqual()` to let the user compare the covariate
+#' distributions between the unmatched and the matched dataset. Always returns
+#' the full set of statistics; `balqual()` subsets the columns when
+#' `desc_reduced` is requested. Skewness and kurtosis are the classical moment
+#' (type 1) estimators, so no additional package dependency is required.
+#' @noRd
+.desc_stats_table <- function(covs, treat, time, round = 3) {
+  # moment based skewness (g1) and excess kurtosis (g2)
+  central_moment <- function(x, order) mean((x - mean(x))^order)
+
+  skewness <- function(x) {
+    m2 <- central_moment(x, 2)
+    if (m2 == 0) {
+      return(NA_real_)
+    }
+    central_moment(x, 3) / m2^(3 / 2)
+  }
+
+  kurtosis <- function(x) {
+    m2 <- central_moment(x, 2)
+    if (m2 == 0) {
+      return(NA_real_)
+    }
+    central_moment(x, 4) / m2^2 - 3
+  }
+
+  groups <- .desc_groups(treat)
+  treat <- as.character(treat)
+  covariates <- colnames(covs)
+
+  # one row per covariate and treatment level
+  out <- do.call(rbind, lapply(groups, function(g) {
+    rows <- which(treat == g)
+
+    stats_mat <- vapply(covariates, function(v) {
+      x <- na_rem(covs[rows, v])
+
+      if (length(x) == 0L) {
+        return(rep(NA_real_, 10L))
+      }
+
+      quartiles <- stats::quantile(x, c(0.25, 0.75), names = FALSE)
+
+      c(
+        length(x),
+        mean(x),
+        stats::sd(x),
+        min(x),
+        quartiles[1L],
+        stats::median(x),
+        quartiles[2L],
+        max(x),
+        skewness(x),
+        kurtosis(x)
+      )
+    }, numeric(10L))
+
+    stats_df <- as.data.frame(t(stats_mat))
+    colnames(stats_df) <- c(
+      "N", "Mean", "SD", "Min", "Q1", "Median", "Q3", "Max",
+      "Skewness", "Kurtosis"
+    )
+
+    cbind(
+      data.frame(
+        Variable = covariates,
+        Level = NA_character_,
+        Type = "continuous",
+        Group = g,
+        Time = time,
+        stringsAsFactors = FALSE
+      ),
+      stats_df,
+      data.frame(Percent = NA_real_, .level_order = 0L)
+    )
+  }))
+
+  # N stays an integer, the remaining statistics are rounded
+  num_cols <- c(
+    "Mean", "SD", "Min", "Q1", "Median", "Q3", "Max", "Skewness", "Kurtosis"
+  )
+  out[num_cols] <- lapply(out[num_cols], round, digits = round)
+  out[["N"]] <- as.integer(out[["N"]])
+
+  out <- out[, .desc_colnames]
+  rownames(out) <- NULL
+  out
+}
+
+#' Internal helper to cross-tabulate categorical covariates
+#'
+#' Counts the observations of every level of a categorical covariate within
+#' each treatment level, together with the corresponding percentage. Summary
+#' statistics such as the mean or the standard deviation are not defined for
+#' categorical variables and are returned as `NA`, so that the counts can be
+#' combined with the output of `.desc_stats_table()` into a single table.
+#' @noRd
+.desc_counts_table <- function(covs, treat, time, round = 3) {
+  groups <- .desc_groups(treat)
+  treat <- as.character(treat)
+
+  out <- do.call(rbind, lapply(colnames(covs), function(v) {
+    covariate <- covs[[v]]
+
+    # keep the level order of a factor, fall back to sorting otherwise
+    lvls <- if (is.factor(covariate)) {
+      levels(droplevels(covariate))
+    } else {
+      sort(unique(as.character(na_rem(covariate))))
+    }
+
+    covariate <- as.character(covariate)
+
+    do.call(rbind, lapply(groups, function(g) {
+      in_group <- treat == g & !is.na(covariate)
+
+      # percentages are computed within a treatment level and matching stage,
+      # over the observed values only
+      total <- sum(in_group)
+      counts <- vapply(lvls, function(l) {
+        sum(in_group & covariate == l)
+      }, integer(1L))
+
+      percent <- if (total > 0L) 100 * counts / total else NA_real_
+
+      data.frame(
+        Variable = v,
+        Level = lvls,
+        Type = "categorical",
+        Group = g,
+        Time = time,
+        N = as.integer(counts),
+        Percent = round(percent, round),
+        Mean = NA_real_,
+        SD = NA_real_,
+        Min = NA_real_,
+        Q1 = NA_real_,
+        Median = NA_real_,
+        Q3 = NA_real_,
+        Max = NA_real_,
+        Skewness = NA_real_,
+        Kurtosis = NA_real_,
+        .level_order = seq_along(lvls),
+        stringsAsFactors = FALSE
+      )
+    }))
+  }))
+
+  out <- out[, .desc_colnames]
+  rownames(out) <- NULL
+  out
+}
+
+#' Internal helper to describe the covariates of a dataset
+#'
+#' Dispatches every covariate to the descriptive helper that suits its type:
+#' numeric covariates are summarised with `.desc_stats_table()`, while factor,
+#' character and logical covariates are cross-tabulated with
+#' `.desc_counts_table()`. The two results share the same columns and are
+#' combined into a single long data.frame.
+#' @noRd
+.desc_table <- function(covs, treat, time, round = 3) {
+  is_categorical <- vapply(covs, function(x) {
+    is.factor(x) || is.character(x) || is.logical(x)
+  }, logical(1L))
+
+  parts <- list()
+
+  if (any(!is_categorical)) {
+    parts[["continuous"]] <- .desc_stats_table(
+      covs[, !is_categorical, drop = FALSE],
+      treat,
+      time = time,
+      round = round
+    )
+  }
+
+  if (any(is_categorical)) {
+    parts[["categorical"]] <- .desc_counts_table(
+      covs[, is_categorical, drop = FALSE],
+      treat,
+      time = time,
+      round = round
+    )
+  }
+
+  if (length(parts) == 0L) {
+    empty <- data.frame(matrix(nrow = 0L, ncol = length(.desc_colnames)))
+    colnames(empty) <- .desc_colnames
+    return(empty)
+  }
+
+  out <- do.call(rbind, unname(parts))
+  rownames(out) <- NULL
+  out
+}
+
+#' Internal helper listing the statistics of the continuous descriptive table
+#'
+#' The order of the names defines the order in which the statistics are listed
+#' for every covariate and treatment level. `balqual()` passes a subset of them
+#' when `desc_reduced` is requested.
+#' @noRd
+.desc_stat_names <- c(
+  "N", "Mean", "SD", "Min", "Q1", "Median", "Q3", "Max", "Skewness", "Kurtosis"
+)
+
+#' Internal helper to place the matching stages side by side
+#'
+#' Reshapes the per-stage descriptive tables into the layout used by the
+#' balance tables of `balqual()`: the statistics become rows and the two
+#' matching stages become the `Before` and `After` columns. Continuous
+#' covariates contribute one row per requested statistic, categorical ones one
+#' row per level, carrying the percentage alongside the count so that the
+#' printing method can compress both into a single `N (%)` cell.
+#' @noRd
+.desc_to_wide <- function(desc_long, stats_keep, var_order, group_order) {
+  continuous <- desc_long[desc_long[["Type"]] == "continuous", , drop = FALSE]
+  categorical <- desc_long[desc_long[["Type"]] == "categorical", , drop = FALSE]
+
+  parts <- list()
+
+  # the statistics of a continuous covariate become one row each
+  if (nrow(continuous) > 0L) {
+    parts[["continuous"]] <- do.call(rbind, lapply(
+      seq_along(stats_keep),
+      function(i) {
+        data.frame(
+          Variable = continuous[["Variable"]],
+          Group = continuous[["Group"]],
+          Type = "continuous",
+          Statistic = stats_keep[i],
+          Time = continuous[["Time"]],
+          Value = continuous[[stats_keep[i]]],
+          Percent = NA_real_,
+          .stat_order = i,
+          stringsAsFactors = FALSE
+        )
+      }
+    ))
+  }
+
+  # the levels of a categorical covariate take the place of the statistics
+  if (nrow(categorical) > 0L) {
+    parts[["categorical"]] <- data.frame(
+      Variable = categorical[["Variable"]],
+      Group = categorical[["Group"]],
+      Type = "categorical",
+      Statistic = categorical[["Level"]],
+      Time = categorical[["Time"]],
+      Value = as.numeric(categorical[["N"]]),
+      Percent = categorical[["Percent"]],
+      .stat_order = categorical[[".level_order"]],
+      stringsAsFactors = FALSE
+    )
+  }
+
+  out_names <- c(
+    "Variable", "Group", "Type", "Statistic", "Before", "After",
+    "Percent_Before", "Percent_After"
+  )
+
+  if (length(parts) == 0L) {
+    empty <- data.frame(matrix(nrow = 0L, ncol = length(out_names)))
+    colnames(empty) <- out_names
+    return(empty)
+  }
+
+  long <- do.call(rbind, unname(parts))
+
+  # join the two stages on the row identifiers. The join has to keep rows that
+  # occur in one stage only, as matching can drop a level of a covariate
+  # entirely
+  keys <- c("Variable", "Group", "Type", "Statistic")
+  values <- c("Value", "Percent", ".stat_order")
+
+  out <- merge(
+    long[long[["Time"]] == "Before", c(keys, values)],
+    long[long[["Time"]] == "After", c(keys, values)],
+    by = keys,
+    all = TRUE,
+    suffixes = c("_before", "_after")
+  )
+
+  stat_order <- ifelse(
+    is.na(out[[".stat_order_before"]]),
+    out[[".stat_order_after"]],
+    out[[".stat_order_before"]]
+  )
+
+  colnames(out)[colnames(out) == "Value_before"] <- "Before"
+  colnames(out)[colnames(out) == "Value_after"] <- "After"
+  colnames(out)[colnames(out) == "Percent_before"] <- "Percent_Before"
+  colnames(out)[colnames(out) == "Percent_after"] <- "Percent_After"
+
+  # a level that no longer occurs after matching is observed zero times, which
+  # is informative and must not be reported as missing
+  is_cat <- out[["Type"]] == "categorical"
+
+  for (col in c("Before", "After", "Percent_Before", "Percent_After")) {
+    out[[col]][is_cat & is.na(out[[col]])] <- 0
+  }
+
+  out <- out[order(
+    match(out[["Variable"]], var_order),
+    match(out[["Group"]], group_order),
+    stat_order
+  ), out_names]
+
+  rownames(out) <- NULL
+  out
+}

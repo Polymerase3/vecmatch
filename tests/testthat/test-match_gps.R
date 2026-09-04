@@ -431,3 +431,78 @@ test_that("match_gps forwards max_controls to optmatch::fullmatch()", {
 
   expect_lt(n_matched(1), n_matched(Inf))
 })
+
+test_that("match_gps works for any `reference` with method = \"nnm\"", {
+  # Regression test: the columns kept for matching were selected with a
+  # logical mask built on the full csmatrix, but applied after the
+  # `treatment` column had already been dropped. Every position shifted by
+  # one, so the gps column of the reference was only ever retained when the
+  # reference happened to be the first gps column of the csmatrix.
+  gps_matrix <- estimate_gps(
+    formula(status ~ age * sex),
+    data = cancer,
+    method = "multinom",
+    reference = "control"
+  )
+
+  invisible(capture.output(csmatrix <- csregion(gps_matrix), file = NULL))
+
+  # "control" is the first gps column, the remaining ones used to fail with
+  # "undefined columns selected"
+  for (ref in colnames(csmatrix)[-1]) {
+    expect_s3_class(
+      withr::with_seed(42, {
+        match_gps(
+          csmatrix,
+          reference      = ref,
+          caliper        = 1e4,
+          kmeans_cluster = 3,
+          method         = "nnm"
+        )
+      }),
+      "matched"
+    )
+  }
+})
+
+test_that("match_gps matches \"nnm\" on a single gps column", {
+  # Regression test: when the reference was the first gps column no error was
+  # raised, but the shifted mask kept the neighbouring gps column as well, so
+  # `Matching::Matchby()` silently matched on two covariates instead of one.
+  gps_matrix <- estimate_gps(
+    formula(status ~ age * sex),
+    data = cancer,
+    method = "multinom",
+    reference = "control"
+  )
+
+  invisible(capture.output(csmatrix <- csregion(gps_matrix), file = NULL))
+
+  seen <- list()
+  methods_mock <- vecmatch:::.match_methods
+  methods_mock$nnm$matching_fun <- function(...) {
+    args <- list(...)
+    seen[[length(seen) + 1]] <<- colnames(args[["X"]])
+    do.call(Matching::Matchby, args)
+  }
+
+  testthat::local_mocked_bindings(
+    .match_methods = methods_mock,
+    .package = "vecmatch"
+  )
+
+  withr::with_seed(42, {
+    match_gps(
+      csmatrix,
+      reference      = "control",
+      caliper        = 1e4,
+      kmeans_cluster = 3,
+      method         = "nnm"
+    )
+  })
+
+  expect_true(length(seen) > 0)
+  for (cols in seen) {
+    expect_identical(cols, "control")
+  }
+})

@@ -267,30 +267,30 @@ balqual(
 #> -------------------------------------------------- 
 #> Treatment                 | Before     | After      
 #> -------------------------------------------------- 
-#> adenoma                   | 373        | 143        
-#> control                   | 313        | 143        
-#> crc_benign                | 271        | 143        
-#> crc_malignant             | 247        | 143        
+#> adenoma                   | 373        | 158        
+#> control                   | 313        | 158        
+#> crc_benign                | 271        | 158        
+#> crc_malignant             | 247        | 158        
 #> -------------------------------------------------- 
 #> 
 #> 
 #> Matching summary statistics:
 #> ---------------------------------------- 
 #> Total n before matching:  1204 
-#> Total n after matching:       572 
-#> % of matched observations:    47.51 %
-#> Total  maximal   SMD value:   0.036 
+#> Total n after matching:       632 
+#> % of matched observations:    52.49 %
+#> Total  maximal   SMD value:   0.044 
 #> 
 #> 
 #> Maximal values :
 #> -------------------------------------------------------------------------------- 
 #> Variable                  | Coef  | Before       | After        | Quality      
 #> -------------------------------------------------------------------------------- 
-#> age                       | SMD   | 0.215        | 0.036        | Balanced     
-#> sexF                      | SMD   | 0.148        | 0.000        | Balanced     
-#> sexM                      | SMD   | 0.148        | 0.000        | Balanced     
-#> age:sexF                  | SMD   | 0.155        | 0.004        | Balanced     
-#> age:sexM                  | SMD   | 0.159        | 0.005        | Balanced     
+#> age                       | SMD   | 0.215        | 0.044        | Balanced     
+#> sexF                      | SMD   | 0.148        | 0.038        | Balanced     
+#> sexM                      | SMD   | 0.148        | 0.038        | Balanced     
+#> age:sexF                  | SMD   | 0.155        | 0.028        | Balanced     
+#> age:sexM                  | SMD   | 0.159        | 0.030        | Balanced     
 #> -------------------------------------------------------------------------------- 
 #> 
 
@@ -313,90 +313,90 @@ balqual(
 #> -------------------------------------------------- 
 #> Treatment                 | Before     | After      
 #> -------------------------------------------------- 
-#> adenoma                   | 373        | 143        
-#> control                   | 313        | 143        
-#> crc_benign                | 271        | 143        
-#> crc_malignant             | 247        | 143        
+#> adenoma                   | 373        | 158        
+#> control                   | 313        | 158        
+#> crc_benign                | 271        | 158        
+#> crc_malignant             | 247        | 158        
 #> -------------------------------------------------- 
 #> 
 #> 
 #> Matching summary statistics:
 #> ---------------------------------------- 
 #> Total n before matching:  1204 
-#> Total n after matching:       572 
-#> % of matched observations:    47.51 %
-#> Total  maximal   SMD value:   0.036 
+#> Total n after matching:       632 
+#> % of matched observations:    52.49 %
+#> Total  maximal   SMD value:   0.044 
 #> 
 #> 
 #> Maximal values :
 #> -------------------------------------------------------------------------------- 
 #> Variable                  | Coef  | Before       | After        | Quality      
 #> -------------------------------------------------------------------------------- 
-#> age                       | SMD   | 0.215        | 0.036        | Balanced     
-#> sexF                      | SMD   | 0.148        | 0.000        | Balanced     
-#> sexM                      | SMD   | 0.148        | 0.000        | Balanced     
-#> age:sexF                  | SMD   | 0.155        | 0.004        | Balanced     
-#> age:sexM                  | SMD   | 0.159        | 0.005        | Balanced     
+#> age                       | SMD   | 0.215        | 0.044        | Balanced     
+#> sexF                      | SMD   | 0.148        | 0.038        | Balanced     
+#> sexM                      | SMD   | 0.148        | 0.038        | Balanced     
+#> age:sexF                  | SMD   | 0.155        | 0.028        | Balanced     
+#> age:sexM                  | SMD   | 0.159        | 0.030        | Balanced     
 #> -------------------------------------------------------------------------------- 
 #> 
 #> Descriptive statistics of the continuous covariates:
 #> ------------------------------------------------------ 
 #> Variable | Group         | Statistic | Before |  After 
 #> ------------------------------------------------------ 
-#> age      | adenoma       | N         |    373 |    143 
-#> age      | adenoma       | Mean      | 63.936 | 65.263 
-#> age      | adenoma       | SD        | 10.013 |  8.039 
-#> age      | adenoma       | Min       | 39.079 | 50.098 
-#> age      | adenoma       | Q1        | 56.491 | 59.456 
-#> age      | adenoma       | Median    | 63.099 | 63.575 
-#> age      | adenoma       | Q3        | 71.376 | 71.572 
+#> age      | adenoma       | N         |    373 |    158 
+#> age      | adenoma       | Mean      | 63.936 | 64.335 
+#> age      | adenoma       | SD        | 10.013 |  8.508 
+#> age      | adenoma       | Min       | 39.079 | 41.875 
+#> age      | adenoma       | Q1        | 56.491 | 59.056 
+#> age      | adenoma       | Median    | 63.099 | 63.061 
+#> age      | adenoma       | Q3        | 71.376 | 70.636 
 #> age      | adenoma       | Max       |  89.62 | 83.696 
-#> age      | adenoma       | Skewness  |  0.104 |  0.344 
-#> age      | adenoma       | Kurtosis  | -0.425 | -0.732 
-#> age      | control       | N         |    313 |    143 
-#> age      | control       | Mean      | 63.705 | 65.133 
-#> age      | control       | SD        |  9.893 |  8.046 
-#> age      | control       | Min       |   39.2 | 49.975 
-#> age      | control       | Q1        |  56.67 | 59.117 
-#> age      | control       | Median    | 64.574 | 63.633 
-#> age      | control       | Q3        |  70.29 | 71.553 
+#> age      | adenoma       | Skewness  |  0.104 |  0.177 
+#> age      | adenoma       | Kurtosis  | -0.425 |  -0.46 
+#> age      | control       | N         |    313 |    158 
+#> age      | control       | Mean      | 63.705 | 64.146 
+#> age      | control       | SD        |  9.893 |  8.612 
+#> age      | control       | Min       |   39.2 | 42.594 
+#> age      | control       | Q1        |  56.67 | 58.846 
+#> age      | control       | Median    | 64.574 | 62.926 
+#> age      | control       | Q3        |  70.29 | 70.476 
 #> age      | control       | Max       | 89.257 | 84.375 
-#> age      | control       | Skewness  |  -0.01 |   0.33 
-#> age      | control       | Kurtosis  | -0.328 | -0.714 
-#> age      | crc_benign    | N         |    271 |    143 
-#> age      | crc_benign    | Mean      | 65.243 | 65.425 
-#> age      | crc_benign    | SD        | 10.052 |  8.042 
-#> age      | crc_benign    | Min       |  39.87 | 50.031 
-#> age      | crc_benign    | Q1        | 58.063 | 59.589 
-#> age      | crc_benign    | Median    | 64.806 | 63.728 
-#> age      | crc_benign    | Q3        | 73.052 | 71.744 
+#> age      | control       | Skewness  |  -0.01 |  0.125 
+#> age      | control       | Kurtosis  | -0.328 | -0.446 
+#> age      | crc_benign    | N         |    271 |    158 
+#> age      | crc_benign    | Mean      | 65.243 | 64.369 
+#> age      | crc_benign    | SD        | 10.052 |  8.664 
+#> age      | crc_benign    | Min       |  39.87 | 43.979 
+#> age      | crc_benign    | Q1        | 58.063 | 58.873 
+#> age      | crc_benign    | Median    | 64.806 | 63.437 
+#> age      | crc_benign    | Q3        | 73.052 | 71.155 
 #> age      | crc_benign    | Max       | 87.522 | 84.588 
-#> age      | crc_benign    | Skewness  |  0.077 |   0.31 
-#> age      | crc_benign    | Kurtosis  | -0.685 | -0.727 
-#> age      | crc_malignant | N         |    247 |    143 
-#> age      | crc_malignant | Mean      | 65.758 |  65.36 
-#> age      | crc_malignant | SD        |  9.551 |  8.059 
-#> age      | crc_malignant | Min       | 43.872 | 49.669 
-#> age      | crc_malignant | Q1        |  59.15 | 59.439 
-#> age      | crc_malignant | Median    | 65.641 | 63.798 
-#> age      | crc_malignant | Q3        | 73.027 | 71.352 
+#> age      | crc_benign    | Skewness  |  0.077 |  0.113 
+#> age      | crc_benign    | Kurtosis  | -0.685 | -0.532 
+#> age      | crc_malignant | N         |    247 |    158 
+#> age      | crc_malignant | Mean      | 65.758 | 64.516 
+#> age      | crc_malignant | SD        |  9.551 |  8.491 
+#> age      | crc_malignant | Min       | 43.872 | 43.872 
+#> age      | crc_malignant | Q1        |  59.15 | 58.643 
+#> age      | crc_malignant | Median    | 65.641 | 63.117 
+#> age      | crc_malignant | Q3        | 73.027 | 71.067 
 #> age      | crc_malignant | Max       | 84.878 |  84.67 
-#> age      | crc_malignant | Skewness  | -0.075 |  0.347 
-#> age      | crc_malignant | Kurtosis  | -0.708 | -0.694 
+#> age      | crc_malignant | Skewness  | -0.075 |  0.186 
+#> age      | crc_malignant | Kurtosis  | -0.708 | -0.438 
 #> ------------------------------------------------------ 
 #> 
 #> Distribution of the categorical covariates:
 #> ----------------------------------------------------------- 
 #> Variable | Group         | Level | Before      | After      
 #> ----------------------------------------------------------- 
-#> sex      | adenoma       | F     | 175 (46.9%) | 67 (46.9%) 
-#> sex      | adenoma       | M     | 198 (53.1%) | 76 (53.1%) 
-#> sex      | control       | F     | 170 (54.3%) | 67 (46.9%) 
-#> sex      | control       | M     | 143 (45.7%) | 76 (53.1%) 
-#> sex      | crc_benign    | F     | 142 (52.4%) | 67 (46.9%) 
-#> sex      | crc_benign    | M     | 129 (47.6%) | 76 (53.1%) 
-#> sex      | crc_malignant | F     | 119 (48.2%) | 67 (46.9%) 
-#> sex      | crc_malignant | M     | 128 (51.8%) | 76 (53.1%) 
+#> sex      | adenoma       | F     | 175 (46.9%) | 79 (50.0%) 
+#> sex      | adenoma       | M     | 198 (53.1%) | 79 (50.0%) 
+#> sex      | control       | F     | 170 (54.3%) | 78 (49.4%) 
+#> sex      | control       | M     | 143 (45.7%) | 80 (50.6%) 
+#> sex      | crc_benign    | F     | 142 (52.4%) | 76 (48.1%) 
+#> sex      | crc_benign    | M     | 129 (47.6%) | 82 (51.9%) 
+#> sex      | crc_malignant | F     | 119 (48.2%) | 76 (48.1%) 
+#> sex      | crc_malignant | M     | 128 (51.8%) | 82 (51.9%) 
 #> ----------------------------------------------------------- 
 #> 
 
@@ -418,55 +418,55 @@ balqual(
 #> -------------------------------------------------- 
 #> Treatment                 | Before     | After      
 #> -------------------------------------------------- 
-#> adenoma                   | 373        | 143        
-#> control                   | 313        | 143        
-#> crc_benign                | 271        | 143        
-#> crc_malignant             | 247        | 143        
+#> adenoma                   | 373        | 158        
+#> control                   | 313        | 158        
+#> crc_benign                | 271        | 158        
+#> crc_malignant             | 247        | 158        
 #> -------------------------------------------------- 
 #> 
 #> 
 #> Matching summary statistics:
 #> ---------------------------------------- 
 #> Total n before matching:  1204 
-#> Total n after matching:       572 
-#> % of matched observations:    47.51 %
-#> Total  maximal   SMD value:   0.036 
+#> Total n after matching:       632 
+#> % of matched observations:    52.49 %
+#> Total  maximal   SMD value:   0.044 
 #> 
 #> 
 #> Maximal values :
 #> -------------------------------------------------------------------------------- 
 #> Variable                  | Coef  | Before       | After        | Quality      
 #> -------------------------------------------------------------------------------- 
-#> age                       | SMD   | 0.215        | 0.036        | Balanced     
-#> sexF                      | SMD   | 0.148        | 0.000        | Balanced     
-#> sexM                      | SMD   | 0.148        | 0.000        | Balanced     
-#> age:sexF                  | SMD   | 0.155        | 0.004        | Balanced     
-#> age:sexM                  | SMD   | 0.159        | 0.005        | Balanced     
+#> age                       | SMD   | 0.215        | 0.044        | Balanced     
+#> sexF                      | SMD   | 0.148        | 0.038        | Balanced     
+#> sexM                      | SMD   | 0.148        | 0.038        | Balanced     
+#> age:sexF                  | SMD   | 0.155        | 0.028        | Balanced     
+#> age:sexM                  | SMD   | 0.159        | 0.030        | Balanced     
 #> -------------------------------------------------------------------------------- 
 #> 
 #> Descriptive statistics of the continuous covariates:
 #> ------------------------------------------------------ 
 #> Variable | Group         | Statistic | Before |  After 
 #> ------------------------------------------------------ 
-#> age      | adenoma       | N         |    373 |    143 
-#> age      | adenoma       | Min       | 39.079 | 50.098 
-#> age      | adenoma       | Mean      | 63.936 | 65.263 
-#> age      | adenoma       | Median    | 63.099 | 63.575 
+#> age      | adenoma       | N         |    373 |    158 
+#> age      | adenoma       | Min       | 39.079 | 41.875 
+#> age      | adenoma       | Mean      | 63.936 | 64.335 
+#> age      | adenoma       | Median    | 63.099 | 63.061 
 #> age      | adenoma       | Max       |  89.62 | 83.696 
-#> age      | control       | N         |    313 |    143 
-#> age      | control       | Min       |   39.2 | 49.975 
-#> age      | control       | Mean      | 63.705 | 65.133 
-#> age      | control       | Median    | 64.574 | 63.633 
+#> age      | control       | N         |    313 |    158 
+#> age      | control       | Min       |   39.2 | 42.594 
+#> age      | control       | Mean      | 63.705 | 64.146 
+#> age      | control       | Median    | 64.574 | 62.926 
 #> age      | control       | Max       | 89.257 | 84.375 
-#> age      | crc_benign    | N         |    271 |    143 
-#> age      | crc_benign    | Min       |  39.87 | 50.031 
-#> age      | crc_benign    | Mean      | 65.243 | 65.425 
-#> age      | crc_benign    | Median    | 64.806 | 63.728 
+#> age      | crc_benign    | N         |    271 |    158 
+#> age      | crc_benign    | Min       |  39.87 | 43.979 
+#> age      | crc_benign    | Mean      | 65.243 | 64.369 
+#> age      | crc_benign    | Median    | 64.806 | 63.437 
 #> age      | crc_benign    | Max       | 87.522 | 84.588 
-#> age      | crc_malignant | N         |    247 |    143 
-#> age      | crc_malignant | Min       | 43.872 | 49.669 
-#> age      | crc_malignant | Mean      | 65.758 |  65.36 
-#> age      | crc_malignant | Median    | 65.641 | 63.798 
+#> age      | crc_malignant | N         |    247 |    158 
+#> age      | crc_malignant | Min       | 43.872 | 43.872 
+#> age      | crc_malignant | Mean      | 65.758 | 64.516 
+#> age      | crc_malignant | Median    | 65.641 | 63.117 
 #> age      | crc_malignant | Max       | 84.878 |  84.67 
 #> ------------------------------------------------------ 
 #> 
@@ -474,14 +474,14 @@ balqual(
 #> ----------------------------------------------------------- 
 #> Variable | Group         | Level | Before      | After      
 #> ----------------------------------------------------------- 
-#> sex      | adenoma       | F     | 175 (46.9%) | 67 (46.9%) 
-#> sex      | adenoma       | M     | 198 (53.1%) | 76 (53.1%) 
-#> sex      | control       | F     | 170 (54.3%) | 67 (46.9%) 
-#> sex      | control       | M     | 143 (45.7%) | 76 (53.1%) 
-#> sex      | crc_benign    | F     | 142 (52.4%) | 67 (46.9%) 
-#> sex      | crc_benign    | M     | 129 (47.6%) | 76 (53.1%) 
-#> sex      | crc_malignant | F     | 119 (48.2%) | 67 (46.9%) 
-#> sex      | crc_malignant | M     | 128 (51.8%) | 76 (53.1%) 
+#> sex      | adenoma       | F     | 175 (46.9%) | 79 (50.0%) 
+#> sex      | adenoma       | M     | 198 (53.1%) | 79 (50.0%) 
+#> sex      | control       | F     | 170 (54.3%) | 78 (49.4%) 
+#> sex      | control       | M     | 143 (45.7%) | 80 (50.6%) 
+#> sex      | crc_benign    | F     | 142 (52.4%) | 76 (48.1%) 
+#> sex      | crc_benign    | M     | 129 (47.6%) | 82 (51.9%) 
+#> sex      | crc_malignant | F     | 119 (48.2%) | 76 (48.1%) 
+#> sex      | crc_malignant | M     | 128 (51.8%) | 82 (51.9%) 
 #> ----------------------------------------------------------- 
 #> 
 ```

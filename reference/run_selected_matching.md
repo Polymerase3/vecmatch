@@ -2735,13 +2735,13 @@ select_results <- select_opt(
 # Extract the parameter grid from select_results for smd_group = "0.05-0.10"
 get_select_params(select_results, smd_group = "0.05-0.10")
 #>    iter_ID  gps_model method_match caliper  order kmeans_cluster replace  ties
-#> 20   ID858 estimate_1          nnm    7.26 random              1   FALSE FALSE
+#> 15  ID1960 estimate_1          nnm    4.97 random              1   FALSE FALSE
 #>    ratio min_controls max_controls reference p_control p_adenoma p_crc_benign
-#> 20     1           NA           NA   control  77.95527  65.41555      90.0369
+#> 15     1           NA           NA   control  76.35783  64.07507     88.19188
 #>    p_crc_malignant method_gps              link        age overall_stat
-#> 20        98.78543   multinom generalized_logit 0.09354837   0.09354837
+#> 15        96.76113   multinom generalized_logit 0.09136969   0.09136969
 #>    smd_group
-#> 20 0.05-0.10
+#> 15 0.05-0.10
 
 # Rerun the analysis
 # }

@@ -638,22 +638,25 @@ match_gps <- function(csmatrix = NULL,
     # arg processing for Matching::Matchby
 
     if (method == "nnm" || method == "nnm_2t") {
-      # filtering the data frame for matching
-      args_loop[[data_name]] <- args_loop[[data_name]][, -1, drop = FALSE]
+      # filtering the data frame for matching; only the gps column of the
+      # first group of the current combination is used as the covariate
       args_loop[[data_name]] <- args_loop[[data_name]][
         obs_filter,
-        cols_matching
+        combos[i, 1],
+        drop = FALSE
       ]
 
       # defining data order
-      order_data <- .ordering_func(args_loop[[data_name]][, reference],
+      order_data <- .ordering_func(args_loop[[data_name]][, combos[i, 1]],
         order = sort_before_matching[i]
       )
       order_original <- seq_len(nrow(args_loop[[data_name]]))
       order_original <- order_original[order_data]
 
       # reordering the data
-      args_loop[[data_name]] <- args_loop[[data_name]][order_data, ]
+      args_loop[[data_name]] <- args_loop[[data_name]][order_data, ,
+        drop = FALSE
+      ]
 
       # adding the clusters to matching arguments
       if (n_treat > 2) {
@@ -691,7 +694,7 @@ match_gps <- function(csmatrix = NULL,
       args_loop[[data_name]] <- as.data.frame(args_loop[[data_name]])
 
       # defining the order
-      order_data <- .ordering_func(args_loop[[data_name]][, reference],
+      order_data <- .ordering_func(args_loop[[data_name]][, combos[i, 1]],
         order = order
       )
       order_original <- seq_len(nrow(args_loop[[data_name]]))

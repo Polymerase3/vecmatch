@@ -2,6 +2,19 @@
 
 ## Minor changes and bug fixes
 
+- `match_gps()` now works with any `reference` when `method = "nnm"`. The
+  columns kept for matching were selected with a logical mask built on the
+  full `csmatrix`, but the mask was applied after the `treatment` column had
+  already been dropped, so every position shifted by one. The gps column of
+  the reference was therefore only retained when the reference happened to be
+  the first gps column of the `csmatrix`; any other reference failed with
+  `undefined columns selected`. When it did not fail, the shifted mask kept
+  the neighbouring gps column as well, so [Matching::Matchby()] silently
+  matched on two covariates instead of one and returned a different set of
+  matches. Both branches now index the gps column of the first group of the
+  current combination by name, which also fixes the same error for a
+  user-supplied `combos` whose `group1` differs from `reference`.
+
 - `match_gps()` no longer warns when a method-specific tuning parameter is left
   at its default. Previously, a call such as
   `match_gps(csr, method = "fullopt")` emitted a warning for every unset

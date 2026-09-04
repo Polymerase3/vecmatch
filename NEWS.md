@@ -2,6 +2,21 @@
 
 ## Minor changes and bug fixes
 
+- `match_gps()` no longer warns when a method-specific tuning parameter is left
+  at its default. Previously, a call such as
+  `match_gps(csr, method = "fullopt")` emitted a warning for every unset
+  parameter (`order`, `min_controls`, `max_controls`), which made an ordinary
+  default call look like it had gone wrong. Defaults are now filled in
+  silently. Arguments that do not apply to the selected `method` are still
+  reported, but only when they were explicitly supplied by the user.
+
+- `match_gps()` now actually honours the `max_controls` argument for
+  `method = "fullopt"`. It was passed to [optmatch::fullmatch()] under a name
+  that function does not accept and carried the value of `caliper`, so it was
+  silently discarded and had no effect on the matching. Calls that set
+  `max_controls` to a non-default value will now produce different (correct)
+  results.
+
 - `balqual()` gained two new `type` values, `"desc_full"` and `"desc_reduced"`,
   which report standard descriptive statistics for every balancing variable,
   separately for each treatment level and for the unmatched and matched

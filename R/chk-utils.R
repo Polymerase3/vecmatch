@@ -241,27 +241,6 @@
   ))
 }
 
-#' Internal helper to fill in default values
-#'
-#' Emits a warning when an argument is `NULL` and replaces it with a default.
-#' @noRd
-.chk_null_default <- function(x, x_name, method, default) {
-  .chk_cond(is.null(x),
-    error = FALSE,
-    sprintf(
-      "The `%s` argument for the method %s was not provided
-                    and will default to `%s`.",
-      x_name,
-      add_quotes(method),
-      default
-    )
-  )
-
-  if (is.null(x)) x <- default
-
-  return(x)
-}
-
 #' Internal helper to validate variable-length arguments
 #'
 #' Ensures an argument is either a single value or a vector of a given length,

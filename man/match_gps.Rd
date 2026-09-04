@@ -155,6 +155,12 @@ observations. The available tuning parameters are \code{caliper},
 discrepancy matrix and finds matches that minimize its sum. The available
 tuning parameters are \code{caliper} and \code{ratio}.
 }
+
+Each method only accepts the tuning parameters listed above. Arguments
+that do not apply to the selected \code{method} are dropped, and a warning
+naming them is emitted only when they were explicitly supplied. Tuning
+parameters that are left at their default are filled in silently, so a
+call relying on the defaults runs without any warnings.
 }
 \examples{
 

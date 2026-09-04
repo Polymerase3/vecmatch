@@ -216,7 +216,6 @@ matched_cancer <- match_gps(csr_matrix,
   caliper = 0.21,
   kmeans_cluster = 2,
   reference = "control",
-  replace = TRUE,
   method = "fullopt",
   order = "desc"
 )

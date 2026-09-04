@@ -49,6 +49,23 @@
   `print()` methods, instead of returning it visibly. The visible return value
   made the quality tables be printed twice whenever the result of `print()` was
   itself auto-printed, e.g. inside `capture.output()` or a knitted document.
+- `csregion()` now stops with an informative message when the common support
+  region turns out to be empty, or when a treatment group loses all of its
+  observations. Previously such a call failed with
+  `non-numeric argument to binary operator`, which came from the fallback
+  warning of the internal refitting step rather than from the empty region
+  itself, and gave no hint about the actual cause. With `refit = FALSE` the
+  same situation returned a zero-row `csr` object silently, and the problem
+  only surfaced later in `match_gps()`. Emptying a group is now reported as
+  well, since dropping it would silently change the estimand. The new messages
+  name the groups involved and suggest a larger sample, fewer treatment
+  groups, a different `borders` value or a different model specification in
+  `estimate_gps()`.
+- Fixed the fallback warning of `csregion()`, which was emitted when refitting
+  the GPS model on the CSR-restricted data fails. Its message was split into
+  three fragments that `strwrap()` received as the `width` and `indent`
+  arguments instead of as text, so the warning aborted instead of being
+  shown.
 - The package documentation is now also available as a `pkgdown` website at
   <https://polymerase3.github.io/vecmatch/>. The site collects the reference
   pages of all exported functions, grouped by the five steps of the `vecmatch`

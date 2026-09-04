@@ -124,6 +124,41 @@ csregion <- function(gps_matrix,
   n_negative <- sum(!filter_vector)
   n_negative_matrix <- colSums(!filter_matrix)
 
+  ## group sizes within the common support region
+  n_within <- table(gps_matrix[filter_vector, "treatment"])
+
+  ## abort early if nothing survives the CSR filtering, otherwise the empty
+  ## data are silently passed on to the refit and to `match_gps()`
+  if (sum(filter_vector) == 0) {
+    cli::cli_abort(c(
+      "The common support region is empty: none of the
+       {length(filter_vector)} observations lie within the CSR boundaries of
+       all {length(n_within)} treatment groups.",
+      "i" = "This usually happens when the sample is small relative to the
+             number of treatment groups, or when the groups overlap only
+             marginally on the estimated generalized propensity scores.",
+      ">" = "Consider a larger sample, fewer treatment groups,
+             {.code borders = \"include\"} or a different model
+             specification in {.fn estimate_gps}."
+    ))
+  }
+
+  ## abort if a whole treatment group is lost, as `droplevels()` below would
+  ## silently remove it and thereby change the estimand
+  if (any(n_within == 0)) {
+    empty_groups <- names(n_within)[n_within == 0]
+
+    cli::cli_abort(c(
+      "Treatment group{?s} {.val {empty_groups}} {?has/have} no observations
+       within the common support region.",
+      "i" = "Matching requires at least one observation per treatment group,
+             and dropping a group would silently change the estimand.",
+      ">" = "Consider a larger sample, fewer treatment groups,
+             {.code borders = \"include\"} or a different model
+             specification in {.fn estimate_gps}."
+    ))
+  }
+
   ## refitting the gps_matrix
   if (refit) {
     # save original gps_matrix restricted to CSR as a fallback
@@ -141,9 +176,11 @@ csregion <- function(gps_matrix,
       eval(estimate_call),
       error = function(e) {
         .vm_warn(strwrap(
-          "Refitting of the GPS model on the CSR-restricted data failed. ",
-          "Falling back to the original GPS restricted to the common support ",
-          "region (refit = FALSE).",
+          c(
+            "Refitting of the GPS model on the CSR-restricted data failed.",
+            "Falling back to the original GPS restricted to the common",
+            "support region (refit = FALSE)."
+          ),
           prefix = " ",
           initial = ""
         ))

@@ -239,3 +239,79 @@ test_that("plot.csr handles gps_cols argument and layout branches", {
   p_b <- plot(csr_obj, gps_cols = all_gps_cols[1:4])
   expect_identical(p_a, p_b)
 })
+
+test_that("csregion() aborts informatively when the CSR is empty", {
+  # three perfectly separated groups -> no observation lies within the CSR
+  # boundaries of every group at once
+  data <- data.frame(
+    treat = rep(1:3, each = 10),
+    pred = 1:30
+  )
+
+  gps_matrix <- estimate_gps(treat ~ pred, data, method = "multinom")
+
+  # the empty region must be reported instead of being passed on to the refit,
+  # which previously failed while formatting its own fallback warning
+  expect_error(
+    csregion(gps_matrix),
+    regexp = "common support region is empty"
+  )
+
+  # the same guard has to apply when no refitting is requested, otherwise a
+  # zero-row csr object is returned silently
+  expect_error(
+    csregion(gps_matrix, refit = FALSE),
+    regexp = "common support region is empty"
+  )
+
+  # the message should name the cause and point to possible remedies
+  expect_error(csregion(gps_matrix), regexp = "estimate_gps")
+})
+
+test_that("csregion() aborts when a single treatment group is emptied", {
+  # group 3 is separated far enough to be dropped entirely, while groups 1 and
+  # 2 keep a few observations within the CSR
+  withr::with_seed(35, {
+    data <- data.frame(
+      treat = rep(1:3, times = c(40, 40, 6)),
+      pred = c(rnorm(40, 0, 1), rnorm(40, 0.3, 1), rnorm(6, 3, 0.2))
+    )
+  })
+
+  gps_matrix <- estimate_gps(treat ~ pred, data, method = "multinom")
+
+  expect_error(
+    csregion(gps_matrix),
+    regexp = "no observations within the common support region"
+  )
+
+  # the emptied group has to be named, so the change of estimand is visible
+  expect_error(csregion(gps_matrix), regexp = "1")
+})
+
+test_that("csregion() warns instead of erroring when the refit fails", {
+  withr::with_seed(6134423, {
+    data <- data.frame(
+      treat = rep(c(1, 2, 3, 4, 5), 120),
+      pred2 = rnorm(600)
+    )
+  })
+
+  gps_matrix <- estimate_gps(treat ~ pred2, data, method = "multinom")
+
+  # force the refit to fail by replacing the stored call with an invalid one
+  attr(gps_matrix, "function_call") <- quote(.vecmatch_missing_fun())
+
+  # the fallback warning used to abort with "non-numeric argument to binary
+  # operator", because its message fragments were passed to `strwrap()` as the
+  # `width` and `indent` arguments
+  expect_warning(
+    csr_obj <- csregion(gps_matrix),
+    regexp = "Refitting of the GPS model"
+  )
+
+  # the fallback has to return the non-refitted CSR-restricted object
+  expect_s3_class(csr_obj, "csr")
+  expect_gt(nrow(csr_obj), 0)
+  expect_identical(nrow(csr_obj), sum(attr(csr_obj, "filter_vector")))
+})

@@ -25,6 +25,7 @@ and improving performance and documentation.
 Useful links:
 \itemize{
   \item \url{https://github.com/Polymerase3/vecmatch}
+  \item \url{https://polymerase3.github.io/vecmatch/}
   \item Report bugs at \url{https://github.com/Polymerase3/vecmatch/issues}
 }
 

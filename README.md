@@ -5,6 +5,12 @@
 
 <!-- badges: start -->
 
+[![CRAN
+status](https://www.r-pkg.org/badges/version/vecmatch)](https://CRAN.R-project.org/package=vecmatch)
+[![Lifecycle:
+stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
+[![CRAN
+downloads](https://cranlogs.r-pkg.org/badges/grand-total/vecmatch)](https://CRAN.R-project.org/package=vecmatch)
 [![R-CMD-check](https://github.com/Polymerase3/vecmatch/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Polymerase3/vecmatch/actions/workflows/R-CMD-check.yaml)
 [![pkgcheck](https://github.com/Polymerase3/vecmatch/workflows/pkgcheck/badge.svg)](https://github.com/Polymerase3/vecmatch/actions?query=workflow%3Apkgcheck)
 [![Codecov test

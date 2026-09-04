@@ -659,3 +659,52 @@ test_that("best_opt_result / select_result methods and helpers work
   )
   expect_identical(rm1, rm2)
 })
+
+test_that("optimize_gps() reports a completely failed GPS estimation", {
+  # the treatment is almost perfectly determined by the predictor, so the
+  # common support region is empty for every GPS method and no combination of
+  # the estimation space returns a usable GPS matrix
+  withr::with_seed(4, {
+    data <- data.frame(
+      treat = rep(1:3, each = 30),
+      pred = rep(c(0, 1, 2), each = 30) + rnorm(90, 0, 0.05)
+    )
+  })
+
+  opt_args <- make_opt_args(
+    data,
+    treat ~ pred,
+    gps_method = c("m1", "m9"),
+    matching_method = "nnm",
+    caliper = 1,
+    order = "desc",
+    cluster = 2,
+    replace = FALSE,
+    ties = FALSE
+  )
+
+  # `.errorhandling = "pass"` replaces a failed combination by the message of
+  # the underlying error. Reading the treatment levels from the first result
+  # unconditionally used to abort with "$ operator is invalid for atomic
+  # vectors" whenever that first combination was the one that failed.
+  expect_error(
+    optimize_gps(
+      data = data,
+      formula = treat ~ pred,
+      n_iter = 2,
+      opt_args = opt_args
+    ),
+    regexp = "GPS could not be estimated"
+  )
+
+  # the reason reported by the underlying call has to be passed on
+  expect_error(
+    optimize_gps(
+      data = data,
+      formula = treat ~ pred,
+      n_iter = 2,
+      opt_args = opt_args
+    ),
+    regexp = "common support region is empty"
+  )
+})

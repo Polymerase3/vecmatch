@@ -66,6 +66,15 @@
   three fragments that `strwrap()` received as the `width` and `indent`
   arguments instead of as text, so the warning aborted instead of being
   shown.
+- `optimize_gps()` no longer aborts with
+  `$ operator is invalid for atomic vectors` when the GPS estimation fails for
+  the first combination of the search space. Failed combinations are passed
+  through as the message of the underlying error, but the treatment levels
+  were read from the first result unconditionally, so a single failure at the
+  head of the estimation space brought down the whole sweep. The first result
+  that actually holds a GPS matrix is now used instead. If every combination
+  fails, the function stops with a message that reports how many were tried
+  and the reason given by the first failure.
 - The package documentation is now also available as a `pkgdown` website at
   <https://polymerase3.github.io/vecmatch/>. The site collects the reference
   pages of all exported functions, grouped by the five steps of the `vecmatch`

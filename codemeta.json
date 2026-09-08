@@ -4,10 +4,11 @@
   "identifier": "vecmatch",
   "description": "Implements the Vector Matching algorithm to match multiple treatment groups based on previously estimated generalized propensity scores. The package includes tools for visualizing initial confounder imbalances, estimating treatment assignment probabilities using various methods, defining the common support region, performing matching across multiple groups, and evaluating matching quality. For more details, see Lopez and Gutman (2017) <doi:10.1214/17-STS612>.",
   "name": "vecmatch: Generalized Propensity Score Estimation and Matching for Multiple Groups",
+  "relatedLink": ["https://polymerase3.github.io/vecmatch/", "https://CRAN.R-project.org/package=vecmatch"],
   "codeRepository": "https://github.com/Polymerase3/vecmatch",
   "issueTracker": "https://github.com/Polymerase3/vecmatch/issues",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.2.0.9000",
+  "version": "1.4.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -62,6 +63,18 @@
     },
     {
       "@type": "SoftwareApplication",
+      "identifier": "doFuture",
+      "name": "doFuture",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=doFuture"
+    },
+    {
+      "@type": "SoftwareApplication",
       "identifier": "doRNG",
       "name": "doRNG",
       "provider": {
@@ -71,6 +84,18 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=doRNG"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "future",
+      "name": "future",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=future"
     },
     {
       "@type": "SoftwareApplication",
@@ -124,18 +149,6 @@
       "@type": "SoftwareApplication",
       "identifier": "parallel",
       "name": "parallel"
-    },
-    {
-      "@type": "SoftwareApplication",
-      "identifier": "progressr",
-      "name": "progressr",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=progressr"
     },
     {
       "@type": "SoftwareApplication",
@@ -304,6 +317,18 @@
     },
     "11": {
       "@type": "SoftwareApplication",
+      "identifier": "progressr",
+      "name": "progressr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=progressr"
+    },
+    "12": {
+      "@type": "SoftwareApplication",
       "identifier": "rlang",
       "name": "rlang",
       "provider": {
@@ -314,7 +339,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=rlang"
     },
-    "12": {
+    "13": {
       "@type": "SoftwareApplication",
       "identifier": "rstatix",
       "name": "rstatix",
@@ -326,17 +351,17 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=rstatix"
     },
-    "13": {
+    "14": {
       "@type": "SoftwareApplication",
       "identifier": "stats",
       "name": "stats"
     },
-    "14": {
+    "15": {
       "@type": "SoftwareApplication",
       "identifier": "utils",
       "name": "utils"
     },
-    "15": {
+    "16": {
       "@type": "SoftwareApplication",
       "identifier": "withr",
       "name": "withr",
@@ -350,8 +375,9 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "850.1KB",
+  "fileSize": "1005.399KB",
   "releaseNotes": "https://github.com/Polymerase3/vecmatch/blob/main/NEWS.md",
-  "readme": "https://github.com/Polymerase3/vecmatch/blob/master/README.md",
-  "contIntegration": ["https://github.com/Polymerase3/vecmatch/actions/workflows/R-CMD-check.yaml", "https://app.codecov.io/gh/Polymerase3/vecmatch", "https://github.com/Polymerase3/vecmatch/actions/workflows/style.yaml"]
+  "readme": "https://github.com/Polymerase3/vecmatch/blob/main/README.md",
+  "contIntegration": ["https://github.com/Polymerase3/vecmatch/actions/workflows/R-CMD-check.yaml", "https://github.com/Polymerase3/vecmatch/actions?query=workflow%3Apkgcheck", "https://app.codecov.io/gh/Polymerase3/vecmatch", "https://github.com/Polymerase3/vecmatch/actions/workflows/style.yaml", "https://github.com/Polymerase3/vecmatch/actions/workflows/pkgdown.yaml"],
+  "developmentStatus": "https://lifecycle.r-lib.org/articles/stages.html#stable"
 }

@@ -2823,7 +2823,7 @@ select_opt(
 #> 
 #> • Rows (selected configurations): 20
 #> • Columns: 5
-#> • Optimization time (sec): 290.45
+#> • Optimization time (sec): 257.56
 #> • Combinations tested: 2000
 #> • Treatments: control, adenoma, crc_benign, crc_malignant
 #> • Number of covariates in balance check: 5

@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vecmatch</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Optimizing the Matching Process with a Random Search Algorithm</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/Polymerase3/vecmatch/blob/v1.4.0/vignettes/optimizing-matching.Rmd" class="external-link"><code>vignettes/optimizing-matching.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Polymerase3/vecmatch/blob/main/vignettes/optimizing-matching.Rmd" class="external-link"><code>vignettes/optimizing-matching.Rmd</code></a></small>
       <div class="d-none name"><code>optimizing-matching.Rmd</code></div>
     </div>
 
@@ -188,9 +188,9 @@ seed. For reproducibility, set a seed before calling the optimizer.</p>
 <span><span class="co">#&gt; Optimization Summary</span></span>
 <span><span class="co">#&gt; --------------------</span></span>
 <span><span class="co">#&gt; Total combinations tested  : 6000</span></span>
-<span><span class="co">#&gt; Total optimization time [s]: 395.09</span></span></code></pre></div>
+<span><span class="co">#&gt; Total optimization time [s]: 369.11</span></span></code></pre></div>
 <p>We ran the optimization on a single core with
-<code>n_iter = 1500</code>; on our test machine this required 395.09
+<code>n_iter = 1500</code>; on our test machine this required 369.11
 seconds. Given the size of the parameter grid, increasing
 <code>n_iter</code> would improve the search’s coverage, but here we
 limited iterations to keep the vignette’s build time reasonable.</p>

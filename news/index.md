@@ -1,5 +1,7 @@
 # Changelog
 
+## vecmatch (development version)
+
 ## vecmatch 1.4.0
 
 ### Major changes

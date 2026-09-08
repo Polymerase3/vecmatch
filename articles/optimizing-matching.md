@@ -133,11 +133,11 @@ summary(opt_results)
 #> Optimization Summary
 #> --------------------
 #> Total combinations tested  : 6000
-#> Total optimization time [s]: 341.54
+#> Total optimization time [s]: 395.09
 ```
 
 We ran the optimization on a single core with `n_iter = 1500`; on our
-test machine this required 341.54 seconds. Given the size of the
+test machine this required 395.09 seconds. Given the size of the
 parameter grid, increasing `n_iter` would improve the search’s coverage,
 but here we limited iterations to keep the vignette’s build time
 reasonable.

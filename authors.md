@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/Polymerase3/vecmatch/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/Polymerase3/vecmatch/blob/v1.4.0/DESCRIPTION)
 
 Kolek M (2026). *vecmatch: Generalized Propensity Score Estimation and
 Matching for Multiple Groups*. R package version 1.4.0,

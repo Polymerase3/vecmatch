@@ -1,41 +1,8 @@
 # Changelog
 
-## vecmatch (development version)
+## vecmatch 1.4.0
 
-### Minor changes and bug fixes
-
-- [`match_gps()`](https://polymerase3.github.io/vecmatch/reference/match_gps.md)
-  now works with any `reference` when `method = "nnm"`. The columns kept
-  for matching were selected with a logical mask built on the full
-  `csmatrix`, but the mask was applied after the `treatment` column had
-  already been dropped, so every position shifted by one. The gps column
-  of the reference was therefore only retained when the reference
-  happened to be the first gps column of the `csmatrix`; any other
-  reference failed with `undefined columns selected`. When it did not
-  fail, the shifted mask kept the neighbouring gps column as well, so
-  \[Matching::Matchby()\] silently matched on two covariates instead of
-  one and returned a different set of matches. Both branches now index
-  the gps column of the first group of the current combination by name,
-  which also fixes the same error for a user-supplied `combos` whose
-  `group1` differs from `reference`.
-
-- [`match_gps()`](https://polymerase3.github.io/vecmatch/reference/match_gps.md)
-  no longer warns when a method-specific tuning parameter is left at its
-  default. Previously, a call such as
-  `match_gps(csr, method = "fullopt")` emitted a warning for every unset
-  parameter (`order`, `min_controls`, `max_controls`), which made an
-  ordinary default call look like it had gone wrong. Defaults are now
-  filled in silently. Arguments that do not apply to the selected
-  `method` are still reported, but only when they were explicitly
-  supplied by the user.
-
-- [`match_gps()`](https://polymerase3.github.io/vecmatch/reference/match_gps.md)
-  now actually honours the `max_controls` argument for
-  `method = "fullopt"`. It was passed to \[optmatch::fullmatch()\] under
-  a name that function does not accept and carried the value of
-  `caliper`, so it was silently discarded and had no effect on the
-  matching. Calls that set `max_controls` to a non-default value will
-  now produce different (correct) results.
+### Major changes
 
 - [`balqual()`](https://polymerase3.github.io/vecmatch/reference/balqual.md)
   gained two new `type` values, `"desc_full"` and `"desc_reduced"`,
@@ -54,6 +21,57 @@
   separately for each matching stage and printed as a single `N (%)`
   cell in a separate table. The two values are mutually exclusive, and
   both are opt-in, so the default output is unchanged.
+
+- [`match_gps()`](https://polymerase3.github.io/vecmatch/reference/match_gps.md)
+  now works with any `reference` when `method = "nnm"`. The columns kept
+  for matching were selected with a logical mask built on the full
+  `csmatrix`, but the mask was applied after the `treatment` column had
+  already been dropped, so every position shifted by one. The gps column
+  of the reference was therefore only retained when the reference
+  happened to be the first gps column of the `csmatrix`; any other
+  reference failed with `undefined columns selected`. When it did not
+  fail, the shifted mask kept the neighbouring gps column as well, so
+  \[Matching::Matchby()\] silently matched on two covariates instead of
+  one and returned a different set of matches. Both branches now index
+  the gps column of the first group of the current combination by name,
+  which also fixes the same error for a user-supplied `combos` whose
+  `group1` differs from `reference`.
+
+- [`match_gps()`](https://polymerase3.github.io/vecmatch/reference/match_gps.md)
+  now actually honours the `max_controls` argument for
+  `method = "fullopt"`. It was passed to \[optmatch::fullmatch()\] under
+  a name that function does not accept and carried the value of
+  `caliper`, so it was silently discarded and had no effect on the
+  matching. Calls that set `max_controls` to a non-default value will
+  now produce different (correct) results.
+
+- [`csregion()`](https://polymerase3.github.io/vecmatch/reference/csregion.md)
+  now stops with an informative message when the common support region
+  turns out to be empty, or when a treatment group loses all of its
+  observations. Previously such a call failed with
+  `non-numeric argument to binary operator`, which came from the
+  fallback warning of the internal refitting step rather than from the
+  empty region itself, and gave no hint about the actual cause. With
+  `refit = FALSE` the same situation returned a zero-row `csr` object
+  silently, and the problem only surfaced later in
+  [`match_gps()`](https://polymerase3.github.io/vecmatch/reference/match_gps.md).
+  Emptying a group is now reported as well, since dropping it would
+  silently change the estimand. The new messages name the groups
+  involved and suggest a larger sample, fewer treatment groups, a
+  different `borders` value or a different model specification in
+  [`estimate_gps()`](https://polymerase3.github.io/vecmatch/reference/estimate_gps.md).
+
+### Minor changes and bug fixes
+
+- [`match_gps()`](https://polymerase3.github.io/vecmatch/reference/match_gps.md)
+  no longer warns when a method-specific tuning parameter is left at its
+  default. Previously, a call such as
+  `match_gps(csr, method = "fullopt")` emitted a warning for every unset
+  parameter (`order`, `min_controls`, `max_controls`), which made an
+  ordinary default call look like it had gone wrong. Defaults are now
+  filled in silently. Arguments that do not apply to the selected
+  `method` are still reported, but only when they were explicitly
+  supplied by the user.
 
 - The descriptive metrics of
   [`balqual()`](https://polymerase3.github.io/vecmatch/reference/balqual.md)
@@ -86,22 +104,6 @@
   [`capture.output()`](https://rdrr.io/r/utils/capture.output.html) or a
   knitted document.
 
-- [`csregion()`](https://polymerase3.github.io/vecmatch/reference/csregion.md)
-  now stops with an informative message when the common support region
-  turns out to be empty, or when a treatment group loses all of its
-  observations. Previously such a call failed with
-  `non-numeric argument to binary operator`, which came from the
-  fallback warning of the internal refitting step rather than from the
-  empty region itself, and gave no hint about the actual cause. With
-  `refit = FALSE` the same situation returned a zero-row `csr` object
-  silently, and the problem only surfaced later in
-  [`match_gps()`](https://polymerase3.github.io/vecmatch/reference/match_gps.md).
-  Emptying a group is now reported as well, since dropping it would
-  silently change the estimand. The new messages name the groups
-  involved and suggest a larger sample, fewer treatment groups, a
-  different `borders` value or a different model specification in
-  [`estimate_gps()`](https://polymerase3.github.io/vecmatch/reference/estimate_gps.md).
-
 - Fixed the fallback warning of
   [`csregion()`](https://polymerase3.github.io/vecmatch/reference/csregion.md),
   which was emitted when refitting the GPS model on the CSR-restricted
@@ -121,16 +123,14 @@
   fails, the function stops with a message that reports how many were
   tried and the reason given by the first failure.
 
+### Documentation
+
 - The package documentation is now also available as a `pkgdown` website
   at <https://polymerase3.github.io/vecmatch/>. The site collects the
   reference pages of all exported functions, grouped by the five steps
   of the `vecmatch` workflow, together with the vignettes and this
   changelog, and is rebuilt automatically by a GitHub Actions workflow
   on every push to `main`.
-
-## vecmatch 1.3.0
-
-CRAN release: 2025-12-01
 
 ## vecmatch 1.3.0
 

@@ -183,6 +183,7 @@ if (requireNamespace("brglm2", quietly = TRUE)) {
     significance = "t_test"
   )
 }
+#> Warning: Some groups have fewer than 20 observations, which may impact the performance of the matching process. Consider using `replace = TRUE`in `match_gps()` to address this.
 #> Registered S3 methods overwritten by 'ggpp':
 #>   method                  from   
 #>   heightDetails.titleGrob ggplot2

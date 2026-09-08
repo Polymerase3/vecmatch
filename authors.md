@@ -11,13 +11,13 @@ Source:
 [`DESCRIPTION`](https://github.com/Polymerase3/vecmatch/blob/main/DESCRIPTION)
 
 Kolek M (2026). *vecmatch: Generalized Propensity Score Estimation and
-Matching for Multiple Groups*. R package version 1.3.0.9000,
+Matching for Multiple Groups*. R package version 1.4.0,
 <https://github.com/Polymerase3/vecmatch>.
 
     @Manual{,
       title = {vecmatch: Generalized Propensity Score Estimation and Matching for Multiple Groups},
       author = {Mateusz Kolek},
       year = {2026},
-      note = {R package version 1.3.0.9000},
+      note = {R package version 1.4.0},
       url = {https://github.com/Polymerase3/vecmatch},
     }

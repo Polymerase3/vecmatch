@@ -8,10 +8,13 @@ concurrency:
 on:
   # Manually trigger the Action under Actions/pkgcheck
   workflow_dispatch:
-  # Run on every push to main
-  push:
-    branches:
-      - main
+  # Run after R-CMD-check concludes on main, so pkgcheck's CI check reads a
+  # finished R-CMD-check run instead of an in-progress one (conclusion: null)
+  workflow_run:
+    workflows: ["R-CMD-check"]
+    branches: [main]
+    types:
+      - completed
 
 jobs:
   pkgcheck:

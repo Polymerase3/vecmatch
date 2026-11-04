@@ -46,8 +46,14 @@
 #'  * `filter_vector` - A vector indicating whether each observation was kept
 #'  (`TRUE`) or removed (`FALSE`), essentially a row-wise
 #'  sum of `filter_matrix`,
-#'  * `csr_summary` - A summary of the CSR calculation process, including
-#'  details of the boundaries and the number of observations filtered.
+#'  * `csr_summary` - A summary of the CSR calculation process, with one row
+#'  per GPS column: the boundaries (`csr_low`, `csr_high`), the number of
+#'  observations lying outside the boundaries of that column
+#'  (`n_negative_matrix`, which may count an observation several times if it
+#'  falls outside the boundaries of more than one column), the group size
+#'  before filtering (`n_before`) and the number of observations of that
+#'  treatment group removed by the CSR filtering (`n_excluded_group`, which
+#'  sums to the total number of removed observations).
 #'  * `csr_data` - The original dataset used for the estimation of generalized
 #'  propensity scores (`original_data` attribute of the `gps` object) filtered
 #'  by the `filter_vector`
@@ -122,7 +128,17 @@ csregion <- function(gps_matrix,
 
   ## defining the number of negatives
   n_negative <- sum(!filter_vector)
+
+  ## number of observations outside the bounds of each GPS column. An
+  ## observation can lie outside several columns at once, so these counts
+  ## overlap and must not be summed to obtain the number of excluded rows.
   n_negative_matrix <- colSums(!filter_matrix)
+
+  ## group sizes before filtering and the CSR exclusions per treatment group.
+  ## Both are taken from the unfiltered treatment column, before the refit
+  ## below replaces `gps_matrix`.
+  n_before_group <- table(gps_matrix[["treatment"]])
+  n_excluded_group <- table(gps_matrix[["treatment"]][!filter_vector])
 
   ## group sizes within the common support region
   n_within <- table(gps_matrix[filter_vector, "treatment"])
@@ -215,11 +231,15 @@ csregion <- function(gps_matrix,
   }
 
   ## assembling the print results list
+  gps_cols <- colnames(gps_matrix)[2:ncol(gps_matrix)]
+
   csr_summary <- data.frame(
-    treatment = colnames(gps_matrix)[2:ncol(gps_matrix)],
+    treatment = gps_cols,
     csr_low = csr_low,
     csr_high = csr_high,
-    n_negative_matrix = n_negative_matrix
+    n_negative_matrix = n_negative_matrix,
+    n_before = as.integer(n_before_group[gps_cols]),
+    n_excluded_group = as.integer(n_excluded_group[gps_cols])
   )
 
   ## add attributes and set class
@@ -259,7 +279,8 @@ summary.csr <- function(object, digits = 3, ...) {
   tr <- csr_summary$treatment
   after <- as.integer(group_sizes_after[tr])
   after[is.na(after)] <- 0L
-  before <- after + csr_summary$n_negative_matrix
+  before <- as.integer(csr_summary$n_before)
+  excluded <- as.integer(csr_summary$n_excluded_group)
 
   # store numeric tables, formatting happens in print.summary.csr()
   # enables programmatic use of summary.csr()
@@ -267,7 +288,7 @@ summary.csr <- function(object, digits = 3, ...) {
     Treatment = tr,
     csr_low = csr_summary$csr_low,
     csr_high = csr_summary$csr_high,
-    n_excluded = csr_summary$n_negative_matrix,
+    n_outside_bounds = csr_summary$n_negative_matrix,
     check.names = FALSE
   )
 
@@ -275,7 +296,7 @@ summary.csr <- function(object, digits = 3, ...) {
     Treatment = tr,
     n_before = before,
     n_after = after,
-    Excluded = csr_summary$n_negative_matrix,
+    Excluded = excluded,
     check.names = FALSE
   )
 
@@ -307,18 +328,26 @@ print.summary.csr <- function(x, digits = NULL, ...) {
     format(round(z, digits = digits), trim = TRUE, nsmall = digits)
   }
 
-  # local helper: fixed-width table; may convert in the future to a CLI-like
-  # table
+  # local helper: column widths follow the widest entry, with a floor of 18
+  # characters; may convert in the future to a CLI-like table
   print_table <- function(df) {
     colnames_df <- colnames(df)
 
-    cat("\n")
-    cat(paste(sprintf("%-18s", colnames_df), collapse = " | "), "\n")
-    cat(paste(rep("-", 20 * ncol(df)), collapse = ""), "\n")
+    widths <- vapply(
+      seq_along(df),
+      function(j) max(18L, nchar(colnames_df[j]), nchar(as.character(df[[j]]))),
+      integer(1)
+    )
 
-    apply(df, 1, function(row) {
-      cat(paste(sprintf("%-18s", row), collapse = " | "), "\n")
-    })
+    pad <- function(row) {
+      paste(mapply(formatC, as.character(row), width = -widths), collapse = " | ")
+    }
+
+    cat("\n")
+    cat(pad(colnames_df), "\n")
+    cat(paste(rep("-", sum(widths) + 3 * (ncol(df) - 1)), collapse = ""), "\n")
+
+    apply(df, 1, function(row) cat(pad(row), "\n"))
     cat("\n")
   }
 
@@ -330,7 +359,7 @@ print.summary.csr <- function(x, digits = NULL, ...) {
     Treatment = bounds_raw$Treatment,
     "Lower CSR limit" = fmt(bounds_raw$csr_low),
     "Upper CSR limit" = fmt(bounds_raw$csr_high),
-    "Number excluded" = bounds_raw$n_excluded,
+    "Outside bounds" = bounds_raw$n_outside_bounds,
     check.names = FALSE
   )
 
@@ -356,6 +385,10 @@ print.summary.csr <- function(x, digits = NULL, ...) {
 
   cli::cli_h2("Per-treatment CSR bounds")
   print_table(df_bounds)
+  cli::cli_text(
+    "Counts in the last column overlap: an observation outside the bounds of
+     several GPS columns is counted once for each."
+  )
 
   cli::cli_h2("Group sizes before and after CSR filtering")
   print_table(df_groups)

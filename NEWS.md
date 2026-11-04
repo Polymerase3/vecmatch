@@ -1,4 +1,33 @@
-# vecmatch (development version)
+# vecmatch 1.4.1
+
+## Bug fixes
+
+- `summary()` on a `csr` object reported wrong group sizes before filtering and
+  wrong per-group exclusion counts. Both were derived from the number of
+  observations lying outside the boundaries of each GPS column. That count is
+  taken column by column, so an observation outside the boundaries of several
+  columns was counted once per column, and the counts were attributed to the
+  treatment level naming the column rather than to the treatment group of the
+  observation. As a result the `N before` column could exceed the size of the
+  sample and the `Excluded` column could exceed the number of removed
+  observations. Both columns are now taken from the treatment variable itself,
+  before filtering, so that `N before` adds up to the size of the sample and
+  `Excluded` adds up to the number of removed observations reported in the
+  header.
+
+- The per-treatment bounds table printed the same count under the heading
+  `Number excluded`, which suggested that it could be added up. It is now
+  printed as `Outside bounds`, followed by a note stating that an observation
+  outside the bounds of several GPS columns is counted once for each, and the
+  corresponding field of the object returned by `summary()` was renamed from
+  `n_excluded` to `n_outside_bounds`.
+
+## Minor changes
+
+- The `csr_summary` attribute of a `csr` object gained the columns `n_before`
+  and `n_excluded_group`, holding the group sizes before filtering and the
+  number of observations of each treatment group removed by the filtering.
+
 
 # vecmatch 1.4.0
 

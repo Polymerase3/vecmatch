@@ -37,6 +37,47 @@ test_that("csregion() with multinom data", {
   expect_identical(csr1, csr2)
 })
 
+test_that("summary.csr reports group sizes that add up", {
+  withr::with_seed(6134423, {
+    data <- data.frame(
+      treat = rep(c(1, 2, 3, 4, 5), 120),
+      y     = rep(c(TRUE, FALSE), 300),
+      pred  = runif(600),
+      pred2 = rnorm(600)
+    )
+  })
+
+  gps_matrix <- estimate_gps(treat ~ pred, data, method = "multinom")
+  csr_obj <- csregion(gps_matrix)
+  s <- summary(csr_obj)
+
+  g <- s$groups_table
+
+  # the per-group exclusions are the CSR exclusions, so they must add up to
+  # the total reported in the header
+  expect_identical(sum(g$Excluded), s$n_excluded)
+
+  # the group sizes before filtering must add up to the whole sample, and the
+  # group sizes after filtering to the retained sample
+  expect_identical(sum(g$n_before), s$n_total)
+  expect_identical(sum(g$n_after), s$n_kept)
+
+  # the three columns must be mutually consistent row by row
+  expect_identical(g$n_before, g$n_after + g$Excluded)
+
+  # `n_before` must match the group sizes of the unfiltered gps matrix
+  expect_identical(
+    g$n_before,
+    as.integer(table(gps_matrix[["treatment"]])[g$Treatment])
+  )
+
+  # the bounds table counts observations outside the bounds of each GPS column
+  # separately, so an observation outside several bounds is counted several
+  # times; that column may therefore exceed, but never undercut, the number of
+  # excluded observations
+  expect_gte(sum(s$bounds_table$n_outside_bounds), s$n_excluded)
+})
+
 test_that("csr methods: summary/print/str/plot/as.data.frame", {
   # build a small csr object via the usual pipeline
   withr::with_seed(6134423, {
@@ -66,6 +107,8 @@ test_that("csr methods: summary/print/str/plot/as.data.frame", {
   expect_true(is.data.frame(s$groups_table))
   expect_true(all(c("Treatment", "n_before", "n_after", "Excluded") %in%
     names(s$groups_table)))
+  expect_true(all(c("Treatment", "csr_low", "csr_high", "n_outside_bounds") %in%
+    names(s$bounds_table)))
 
   ## print.summary.csr ---------------------------------------------------------
   out_sum <- utils::capture.output(

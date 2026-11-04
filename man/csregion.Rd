@@ -49,8 +49,14 @@ probabilities fall within the CSR boundaries,
 \item \code{filter_vector} - A vector indicating whether each observation was kept
 (\code{TRUE}) or removed (\code{FALSE}), essentially a row-wise
 sum of \code{filter_matrix},
-\item \code{csr_summary} - A summary of the CSR calculation process, including
-details of the boundaries and the number of observations filtered.
+\item \code{csr_summary} - A summary of the CSR calculation process, with one row
+per GPS column: the boundaries (\code{csr_low}, \code{csr_high}), the number of
+observations lying outside the boundaries of that column
+(\code{n_negative_matrix}, which may count an observation several times if it
+falls outside the boundaries of more than one column), the group size
+before filtering (\code{n_before}) and the number of observations of that
+treatment group removed by the CSR filtering (\code{n_excluded_group}, which
+sums to the total number of removed observations).
 \item \code{csr_data} - The original dataset used for the estimation of generalized
 propensity scores (\code{original_data} attribute of the \code{gps} object) filtered
 by the \code{filter_vector}

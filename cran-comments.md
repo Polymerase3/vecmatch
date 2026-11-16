@@ -1,3 +1,15 @@
+## Resubmission
+
+This is a resubmission. In this version I have:
+
+* Reduced the run time of the `optimizing-matching` vignette, which caused the
+  "Overall checktime 14 min > 10 min" NOTE on r-devel-windows-x86_64: the
+  random search now runs 600 instead of 6000 iterations, on 2 instead of 4
+  parallel workers, so the vignette no longer uses more than 2 cores.
+* Replaced an `expect_identical()` comparison of two model fits by
+  `expect_equal()`, fixing the test failure reported for 1.4.0 under the MKL
+  BLAS additional check, where the fits differed in the last significant digit.
+
 ## R CMD check results
 
 0 errors | 0 warnings | 0 notes

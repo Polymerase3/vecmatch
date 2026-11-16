@@ -22,6 +22,10 @@
   corresponding field of the object returned by `summary()` was renamed from
   `n_excluded` to `n_outside_bounds`.
 
+- `estimate_gps()` with `method = "mblogit"` passed a misspelled `quietly`
+  argument to `requireNamespace()`, which printed
+  `Failed with error: 'unused argument (quitely = TRUE)'` on every call.
+
 ## Minor changes
 
 - The `csr_summary` attribute of a `csr` object gained the columns `n_before`

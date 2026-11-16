@@ -2,15 +2,15 @@
 
 0 errors | 0 warnings | 0 notes
 
+## Reverse dependencies
 
-## vecmatch 1.4.0
+There are currently no reverse dependencies.
 
-* `balqual()` gained the `type` values `"desc_full"` and `"desc_reduced"`, reporting descriptive statistics per treatment level for the unmatched and matched dataset.
-* Fixed column selection in `match_gps()` for `method = "nnm"`, which failed with `undefined columns selected` for any `reference` other than the first gps column.
-* `match_gps()` now honours `max_controls` for `method = "fullopt"`; it was passed under a name `optmatch::fullmatch()` does not accept and carried the value of `caliper`.
-* `csregion()` now stops with an informative message when the common support region is empty or a treatment group loses all observations, and its refitting fallback warning is no longer malformed.
-* `match_gps()` no longer warns for method-specific tuning parameters left at their defaults.
-* Fixed `cutoffs` in `balqual()` being matched to metrics by position rather than by name.
-* `print.quality()` now returns its argument invisibly, as documented for `print()` methods.
-* `optimize_gps()` no longer aborts when GPS estimation fails for the first combination of the search space.
-* Added a `pkgdown` website at <https://polymerase3.github.io/vecmatch/>.
+
+## vecmatch 1.4.1
+
+This is a patch release fixing a bug in `summary()` for `csr` objects.
+
+* `summary()` on a `csr` object reported wrong group sizes before filtering and wrong per-group exclusion counts, because both were derived from per-column counts of observations outside the GPS bounds. Both are now taken from the treatment variable itself, so they add up to the sample size and to the number of removed observations.
+* The per-treatment bounds table now labels its overlapping count `Outside bounds` instead of `Number excluded`, and the corresponding field returned by `summary()` was renamed from `n_excluded` to `n_outside_bounds`.
+* The `csr_summary` attribute of a `csr` object gained the columns `n_before` and `n_excluded_group`.

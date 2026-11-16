@@ -68,8 +68,14 @@ calculation process of the CSR boundaries:
   kept (`TRUE`) or removed (`FALSE`), essentially a row-wise sum of
   `filter_matrix`,
 
-- `csr_summary` - A summary of the CSR calculation process, including
-  details of the boundaries and the number of observations filtered.
+- `csr_summary` - A summary of the CSR calculation process, with one row
+  per GPS column: the boundaries (`csr_low`, `csr_high`), the number of
+  observations lying outside the boundaries of that column
+  (`n_negative_matrix`, which may count an observation several times if
+  it falls outside the boundaries of more than one column), the group
+  size before filtering (`n_before`) and the number of observations of
+  that treatment group removed by the CSR filtering (`n_excluded_group`,
+  which sums to the total number of removed observations).
 
 - `csr_data` - The original dataset used for the estimation of
   generalized propensity scores (`original_data` attribute of the `gps`
@@ -241,10 +247,14 @@ attr(gps_csr, "filter_matrix")
 #> [149,]  FALSE       TRUE     FALSE
 #> [150,]  FALSE       TRUE     FALSE
 attr(gps_csr, "csr_summary")
-#>             treatment     csr_low  csr_high n_negative_matrix
-#> setosa         setosa 0.100597981 0.9184742                86
-#> versicolor versicolor 0.076518141 0.6392385                22
-#> virginica   virginica 0.005007632 0.2601635                86
+#>             treatment     csr_low  csr_high n_negative_matrix n_before
+#> setosa         setosa 0.100597981 0.9184742                86       50
+#> versicolor versicolor 0.076518141 0.6392385                22       50
+#> virginica   virginica 0.005007632 0.2601635                86       50
+#>            n_excluded_group
+#> setosa                   16
+#> versicolor               26
+#> virginica                44
 attr(gps_csr, "csr_data")
 #>     Sepal.Length Sepal.Width Petal.Length Petal.Width    Species
 #> 1            5.1         3.5          1.4         0.2     setosa

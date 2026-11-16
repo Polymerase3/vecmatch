@@ -101,7 +101,7 @@ old_plan <- future::plan()
 on.exit(future::plan(old_plan), add = TRUE)
 future::plan(
   future::multisession,
-  workers = 4
+  workers = 2
 )
 
 ## 3. Seeding before calling optimize_gps()
@@ -112,13 +112,13 @@ opt_results <- optimize_gps(
   data     = cancer,
   formula  = formula_cancer,
   opt_args = opt_args,
-  n_iter   = 6000
+  n_iter   = 600
 )
 
 summary(opt_results)
 ```
 
-We ran the optimization on a single core with `n_iter = 1500`; on our test
+We ran the optimization on two cores with `n_iter = 600`; on our test
 machine this required `r attr(opt_results, "optimization_time")` seconds. Given
 the size of the parameter grid, increasing `n_iter` would improve the search’s
 coverage, but here we limited iterations to keep the vignette’s build time

@@ -258,7 +258,7 @@
     if (method == "mblogit") {
       infos <- .gps_methods[["mblogit"]]
       rlang::check_installed(infos$packages_needed)
-      lapply(infos$packages_needed, requireNamespace, quitely = TRUE)
+      lapply(infos$packages_needed, requireNamespace, quietly = TRUE)
       names.matrix <- unique(args[["treat"]])
       ncol_matrix <- length(names.matrix)
 

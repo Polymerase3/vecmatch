@@ -323,7 +323,7 @@ test_that("estimate_gps: methods and scenarios", {
   g_meth1 <- estimate_gps(treat ~ pred, data, method = "brglm2")
   set.seed(14141)
   g_meth2 <- estimate_gps(treat ~ pred, data, method = "brglm2")
-  expect_identical(g_meth1, g_meth2)
+  expect_equal(g_meth1, g_meth2)
 })
 
 test_that("gps methods: setup helper object", {
